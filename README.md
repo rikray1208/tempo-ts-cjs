@@ -1,6 +1,6 @@
 # Tempo TS
 
-> [!INFO]
+> [!NOTE]
 > This is a temporary package for TypeScript tooling for Tempo.
 > It will be merged into [Wevm](https://github.com/wevm) repositories soon.
 
