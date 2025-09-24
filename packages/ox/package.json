@@ -1,0 +1,36 @@
+{
+	"name": "@tempo/ox",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"build": "zshy --project tsconfig.build.json",
+		"postinstall": "bun run build"
+	},
+	"zshy": {
+		"exports": {
+			".": "./src/index.ts"
+		},
+		"cjs": false,
+		"conditions": {
+			"src": "src"
+		}
+	},
+	"peerDependencies": {
+		"ox": "^0"
+	},
+	"author": "jxom <j@wevm.dev>",
+	"license": "MIT",
+	"files": [
+		"dist"
+	],
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"src": "./src/index.ts",
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	}
+}

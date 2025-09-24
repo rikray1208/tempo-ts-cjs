@@ -1,0 +1,27 @@
+{
+	"name": "tempo",
+	"private": true,
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"build": "bun run --filter='*' build",
+		"check": "biome check . --write --unsafe",
+		"check:types": "tsc -b",
+		"test": "bun test --conditions=src"
+	},
+	"devEngines": {
+		"runtime": {
+			"name": "bun",
+			"version": ">=1.2",
+			"onFail": "error"
+		}
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.4",
+		"@types/bun": "latest",
+		"ox": "latest",
+		"typescript": "^5.9.2",
+		"zshy": "^0.4.2"
+	}
+}
