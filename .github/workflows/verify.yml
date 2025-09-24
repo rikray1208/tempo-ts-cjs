@@ -41,3 +41,5 @@ jobs:
 
       - name: Run tests
         run: bun run test
+        env:
+          CI: true
