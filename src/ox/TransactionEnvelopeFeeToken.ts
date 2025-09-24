@@ -13,7 +13,7 @@ import type {
   Compute,
   PartialBy,
   UnionPartialBy,
-} from './internal/types.js'
+} from '../internal/types.js'
 
 export type TransactionEnvelopeFeeToken<
   signed extends boolean = boolean,

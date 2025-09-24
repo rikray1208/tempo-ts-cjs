@@ -40,27 +40,28 @@ test('default', async () => {
   expect(instance.messages.get()).toMatchInlineSnapshot('[]')
 })
 
-
 test('behavior: instance errored (duplicate ports)', async () => {
   const instance_1 = tempo({ port: 8545 })
   const instance_2 = tempo({ port: 8545 })
 
   await instance_1.start()
-  expect(instance_2.start()).rejects.toThrowError(
-    'shutting down due to error',
-  )
+  expect(instance_2.start()).rejects.toThrowError('shutting down due to error')
 })
 
-test('behavior: start and stop multiple times', async () => {
-  const instance = tempo()
+test(
+  'behavior: start and stop multiple times',
+  async () => {
+    const instance = tempo()
 
-  await instance.start()
-  await instance.stop()
-  await instance.start()
-  await instance.stop()
-  await instance.start()
-  await instance.stop()
-}, {timeout: 10_000})
+    await instance.start()
+    await instance.stop()
+    await instance.start()
+    await instance.stop()
+    await instance.start()
+    await instance.stop()
+  },
+  { timeout: 10_000 },
+)
 
 test('behavior: can subscribe to stdout', async () => {
   const messages: string[] = []
@@ -79,9 +80,7 @@ test('behavior: can subscribe to stderr', async () => {
 
   await instance_1.start()
   instance_2.on('stderr', (message) => messages.push(message))
-  expect(instance_2.start()).rejects.toThrow(
-    'Failed to start process "tempo"',
-  )
+  expect(instance_2.start()).rejects.toThrow('Failed to start process "tempo"')
 })
 
 test('behavior: exit when status is starting', async () => {
