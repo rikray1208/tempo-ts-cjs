@@ -1,15 +1,16 @@
 {
-	"name": "@tempo/ox",
+	"name": "tempo",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"build": "zshy --project tsconfig.build.json",
+		"build": "zshy --project ../tsconfig.build.json",
 		"postinstall": "bun run build"
 	},
 	"zshy": {
 		"exports": {
-			".": "./src/index.ts"
+			".": "./index.ts",
+			"./ox": "./ox/index.ts"
 		},
 		"cjs": false,
 		"conditions": {
@@ -28,9 +29,14 @@
 	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
-			"src": "./src/index.ts",
+			"src": "./index.ts",
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
+		},
+		"./ox": {
+			"src": "./ox/index.ts",
+			"types": "./dist/ox/index.d.ts",
+			"import": "./dist/ox/index.js"
 		}
 	}
 }

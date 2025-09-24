@@ -2,12 +2,13 @@
 	"name": "tempo",
 	"private": true,
 	"workspaces": [
-		"packages/*"
+		"src"
 	],
 	"scripts": {
 		"build": "bun run --filter='*' build",
 		"check": "biome check . --write --unsafe",
 		"check:types": "tsc -b",
+		"postinstall": "bun run build",
 		"test": "bun test --conditions=src"
 	},
 	"devEngines": {

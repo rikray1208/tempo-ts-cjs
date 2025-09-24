@@ -1,8 +1,9 @@
-import { Authorization, Hex, Rlp, Secp256k1, Value } from 'ox'
-import { TransactionEnvelopeFeeToken } from '@tempo/ox'
 import { describe, expect, test } from 'bun:test'
+import { TransactionEnvelopeFeeToken } from 'tempo/ox'
+import { Authorization, Hex, Rlp, Secp256k1, Value } from 'ox'
 
-const privateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+const privateKey =
+  '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
 describe('assert', () => {
   test('invalid chainId', () => {
@@ -20,9 +21,7 @@ describe('assert', () => {
         ],
         chainId: 1,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `"Chain ID "-1" is invalid."`,
-    )
+    ).toThrowErrorMatchingInlineSnapshot(`"Chain ID "-1" is invalid."`)
   })
 
   test('invalid address', () => {
