@@ -1,15 +1,42 @@
 {
 	"name": "tempo",
-	"private": true,
+	"type": "module",
+	"version": "0.0.0",
 	"workspaces": [
 		"src"
 	],
 	"scripts": {
-		"build": "bun run --filter='*' build",
+		"build": "zshy --project ./tsconfig.build.json",
 		"check": "biome check . --write --unsafe",
 		"check:types": "tsc -b",
 		"postinstall": "bun run build",
 		"test": "bun test --conditions=src"
+	},
+	"zshy": {
+		"exports": {
+			".": "./src/index.ts",
+			"./chains": "./src/chains.ts",
+			"./ox": "./src/ox/index.ts",
+			"./prool": "./src/prool/index.ts",
+			"./viem": "./src/viem/index.ts"
+		},
+		"cjs": false,
+		"conditions": {
+			"src": "src"
+		}
+	},
+	"peerDependencies": {
+		"ox": "^0",
+		"prool": "^0",
+		"viem": "^2"
+	},
+	"peerDependenciesMeta": {
+		"ox": {
+			"optional": true
+		},
+		"prool": {
+			"optional": true
+		}
 	},
 	"devEngines": {
 		"runtime": {
@@ -18,6 +45,8 @@
 			"onFail": "error"
 		}
 	},
+	"author": "jxom <j@wevm.dev>",
+	"license": "MIT",
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.4",
 		"@types/bun": "latest",
@@ -26,5 +55,37 @@
 		"typescript": "^5.9.2",
 		"viem": "latest",
 		"zshy": "^0.4.2"
+	},
+	"files": [
+		"dist"
+	],
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"src": "./src/index.ts",
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./chains": {
+			"src": "./src/chains.ts",
+			"types": "./dist/chains.d.ts",
+			"import": "./dist/chains.js"
+		},
+		"./ox": {
+			"src": "./src/ox/index.ts",
+			"types": "./dist/ox/index.d.ts",
+			"import": "./dist/ox/index.js"
+		},
+		"./prool": {
+			"src": "./src/prool/index.ts",
+			"types": "./dist/prool/index.d.ts",
+			"import": "./dist/prool/index.js"
+		},
+		"./viem": {
+			"src": "./src/viem/index.ts",
+			"types": "./dist/viem/index.d.ts",
+			"import": "./dist/viem/index.js"
+		}
 	}
 }
