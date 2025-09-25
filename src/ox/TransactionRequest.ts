@@ -3,6 +3,7 @@ import type * as Authorization from 'ox/Authorization'
 import type * as Errors from 'ox/Errors'
 import type * as Hex from 'ox/Hex'
 import * as ox_TransactionRequest from 'ox/TransactionRequest'
+import * as Transaction from './Transaction.js'
 import type { Compute } from '../internal/types.js'
 
 /** A Transaction Request that is generic to all transaction types, as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423). */
@@ -64,7 +65,10 @@ export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
  */
 export function toRpc(request: TransactionRequest): Rpc {
   const request_rpc = ox_TransactionRequest.toRpc(request) as Rpc
-  if (request.feeToken) request_rpc.feeToken = request.feeToken
+  if (request.feeToken) {
+    request_rpc.feeToken = request.feeToken
+    request_rpc.type = Transaction.toRpcType.feeToken
+  }
   return request_rpc
 }
 
