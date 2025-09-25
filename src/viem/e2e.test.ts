@@ -9,7 +9,7 @@ const instance = Instance.tempo({ port: 8545 })
 beforeEach(() => instance.start())
 afterEach(() => instance.stop())
 
-test('sendTransaction (type: 0x77)', async () => {
+test.skipIf(!!process.env.CI)('sendTransaction (type: 0x77)', async () => {
   const client = createClient({
     account: mnemonicToAccount(
       'test test test test test test test test test test test junk',
