@@ -1,9 +1,11 @@
+import type * as ox_Signature from 'ox/Signature'
 import {
   type Chain,
   type ChainConfig,
   defineTransaction,
   defineTransactionRequest,
   type OneOf,
+  type Signature,
   serializeTransaction,
   type TransactionSerializable,
 } from 'viem'
@@ -24,10 +26,11 @@ export const config = {
       transaction: OneOf<
         TxFeeToken.TransactionEnvelopeFeeToken | TransactionSerializable
       >,
+      signature?: Signature | undefined,
     ) {
-      if (transaction.type === 'feeToken')
-        return TxFeeToken.serialize(transaction)
-      return serializeTransaction(transaction)
+      if (transaction.type === 'feeToken' || transaction.feeToken)
+        return TxFeeToken.serialize(transaction, { signature: signature as never })
+      return serializeTransaction(transaction, signature)
     },
   },
 } satisfies Pick<Chain, 'blockTime'> & ChainConfig
