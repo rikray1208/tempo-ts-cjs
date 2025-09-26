@@ -18,6 +18,7 @@
 			"./prool": "./src/prool/index.ts",
 			"./viem": "./src/viem/index.ts",
 			"./viem/abis": "./src/viem/abis.ts",
+			"./viem/addresses": "./src/viem/addresses.ts",
 			"./viem/chain": "./src/viem/chain.ts",
 			"./viem/formatters": "./src/viem/formatters.ts",
 			"./viem/serializers": "./src/viem/serializers.ts"
@@ -94,6 +95,11 @@
 			"src": "./src/viem/abis.ts",
 			"types": "./dist/viem/abis.d.ts",
 			"import": "./dist/viem/abis.js"
+		},
+		"./viem/addresses": {
+			"src": "./src/viem/addresses.ts",
+			"types": "./dist/viem/addresses.d.ts",
+			"import": "./dist/viem/addresses.js"
 		},
 		"./viem/chain": {
 			"src": "./src/viem/chain.ts",
