@@ -12,7 +12,7 @@ import { feeManagerAddress, tip20FactoryAddress } from "./addresses.js";
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export function createTip20Token(client, parameters) {
+export function createToken(client, parameters) {
     const { account = client.account, chain = client.chain, name, symbol, currency, admin, } = parameters;
     return writeContract(client, {
         ...parameters,
@@ -34,8 +34,8 @@ export function createTip20Token(client, parameters) {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export function getUserToken(client, parameters) {
-    const { account: account_ = client.account } = parameters;
+export function getUserToken(client, ...parameters) {
+    const { account: account_ = client.account } = parameters[0] ?? {};
     if (!account_)
         throw new Error('account is required.');
     const account = parseAccount(account_);

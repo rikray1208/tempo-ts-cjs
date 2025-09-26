@@ -26,13 +26,13 @@ import type { GetAccountParameter } from './types.js'
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export function createTip20Token<
+export function createToken<
   chain extends Chain | undefined,
   account extends Account | undefined,
 >(
   client: Client<Transport, chain, account>,
-  parameters: createTip20Token.Parameters<chain, account>,
-): Promise<createTip20Token.ReturnType> {
+  parameters: createToken.Parameters<chain, account>,
+): Promise<createToken.ReturnType> {
   const {
     account = client.account,
     chain = client.chain,
@@ -52,7 +52,7 @@ export function createTip20Token<
   } as never)
 }
 
-export namespace createTip20Token {
+export namespace createToken {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,

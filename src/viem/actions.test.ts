@@ -28,8 +28,8 @@ const client = createClient({
   transport: http(),
 }).extend(publicActions)
 
-test.skipIf(!!process.env.CI)('createTip20Token', async () => {
-  const hash = await actions.createTip20Token(client, {
+test.skipIf(!!process.env.CI)('createToken', async () => {
+  const hash = await actions.createToken(client, {
     admin: client.account.address,
     currency: 'USD',
     name: 'Test USD',

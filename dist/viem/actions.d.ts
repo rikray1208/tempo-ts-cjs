@@ -12,8 +12,8 @@ import type { GetAccountParameter } from "./types.js";
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function createTip20Token<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: createTip20Token.Parameters<chain, account>): Promise<createTip20Token.ReturnType>;
-export declare namespace createTip20Token {
+export declare function createToken<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: createToken.Parameters<chain, account>): Promise<createToken.ReturnType>;
+export declare namespace createToken {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & {
         admin: Address;
         currency: string;
@@ -32,7 +32,7 @@ export declare namespace createTip20Token {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function getUserToken<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: getUserToken.Parameters<account>): Promise<getUserToken.ReturnType>;
+export declare function getUserToken<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, ...parameters: account extends Account ? [getUserToken.Parameters<account>] | [] : [getUserToken.Parameters<account>]): Promise<getUserToken.ReturnType>;
 export declare namespace getUserToken {
     type Parameters<account extends Account | undefined = Account | undefined> = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & GetAccountParameter<account>;
     type ReturnType = ReadContractReturnType<typeof feeManagerAbi, 'userTokens', never>;
