@@ -1116,8 +1116,6 @@ export async function setUserToken<
     abi: feeManagerAbi,
     chain,
     functionName: 'setUserToken',
-    // TODO: remove once eth_estimateGas is fixed
-    gas: 30_000n,
     args: [TokenId.toAddress(token)],
   } as never)
 }
