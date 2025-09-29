@@ -2,6 +2,7 @@
 // - add `.call` to namespaces
 // - add `.simulate` to namespaces
 // - add `.estimateGas` to namespaces
+// - add "watch" actions for events
 
 import * as Hex from 'ox/Hex'
 import * as Signature from 'ox/Signature'
@@ -625,13 +626,13 @@ export namespace getUserToken {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export async function grantTokenRole<
+export async function grantTokenRoles<
   chain extends Chain | undefined,
   account extends Account | undefined,
 >(
   client: Client<Transport, chain, account>,
-  parameters: grantTokenRole.Parameters<chain, account>,
-): Promise<grantTokenRole.ReturnType> {
+  parameters: grantTokenRoles.Parameters<chain, account>,
+): Promise<grantTokenRoles.ReturnType> {
   const {
     account = client.account,
     chain = client.chain,
@@ -639,7 +640,9 @@ export async function grantTokenRole<
     to,
     ...rest
   } = parameters
-  const role = TokenRole.serialize(parameters.role)
+  if (parameters.roles.length > 1)
+    throw new Error('granting multiple roles is not supported yet.')
+  const [role] = parameters.roles.map((role) => TokenRole.serialize(role))
   return writeContract(client, {
     ...rest,
     account,
@@ -651,7 +654,7 @@ export async function grantTokenRole<
   } as never)
 }
 
-export namespace grantTokenRole {
+export namespace grantTokenRoles {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
@@ -662,7 +665,7 @@ export namespace grantTokenRole {
     /** Address or ID of the TIP20 token. */
     token: TokenId.TokenIdOrAddress
     /** Role to grant. */
-    role: TokenRole.TokenRole
+    roles: readonly TokenRole.TokenRole[]
     /** Address to grant the role to. */
     to: Address
   }
@@ -873,20 +876,22 @@ export namespace permitToken {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export async function renounceTokenRole<
+export async function renounceTokenRoles<
   chain extends Chain | undefined,
   account extends Account | undefined,
 >(
   client: Client<Transport, chain, account>,
-  parameters: renounceTokenRole.Parameters<chain, account>,
-): Promise<renounceTokenRole.ReturnType> {
+  parameters: renounceTokenRoles.Parameters<chain, account>,
+): Promise<renounceTokenRoles.ReturnType> {
   const {
     account = client.account,
     chain = client.chain,
     token,
     ...rest
   } = parameters
-  const role = TokenRole.serialize(parameters.role)
+  if (parameters.roles.length > 1)
+    throw new Error('renouncing multiple roles is not supported yet.')
+  const [role] = parameters.roles.map(TokenRole.serialize)
   return writeContract(client, {
     ...rest,
     account,
@@ -898,7 +903,7 @@ export async function renounceTokenRole<
   } as never)
 }
 
-export namespace renounceTokenRole {
+export namespace renounceTokenRoles {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
@@ -908,8 +913,8 @@ export namespace renounceTokenRole {
   > & {
     /** Address or ID of the TIP20 token. */
     token: TokenId.TokenIdOrAddress
-    /** Role to renounce. */
-    role: TokenRole.TokenRole
+    /** Roles to renounce. */
+    roles: readonly TokenRole.TokenRole[]
   }
 
   export type ReturnType = WriteContractReturnType
@@ -925,13 +930,13 @@ export namespace renounceTokenRole {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export async function revokeTokenRole<
+export async function revokeTokenRoles<
   chain extends Chain | undefined,
   account extends Account | undefined,
 >(
   client: Client<Transport, chain, account>,
-  parameters: revokeTokenRole.Parameters<chain, account>,
-): Promise<revokeTokenRole.ReturnType> {
+  parameters: revokeTokenRoles.Parameters<chain, account>,
+): Promise<revokeTokenRoles.ReturnType> {
   const {
     account = client.account,
     chain = client.chain,
@@ -939,7 +944,9 @@ export async function revokeTokenRole<
     from,
     ...rest
   } = parameters
-  const role = TokenRole.serialize(parameters.role)
+  if (parameters.roles.length > 1)
+    throw new Error('revoking multiple roles is not supported yet.')
+  const [role] = parameters.roles.map(TokenRole.serialize)
   return writeContract(client, {
     ...rest,
     account,
@@ -951,7 +958,7 @@ export async function revokeTokenRole<
   } as never)
 }
 
-export namespace revokeTokenRole {
+export namespace revokeTokenRoles {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
@@ -962,7 +969,7 @@ export namespace revokeTokenRole {
     /** Address to revoke the role from. */
     from: Address
     /** Role to revoke. */
-    role: TokenRole.TokenRole
+    roles: readonly TokenRole.TokenRole[]
     /** Address or ID of the TIP20 token. */
     token: TokenId.TokenIdOrAddress
   }
@@ -1420,9 +1427,9 @@ export type Decorator<
    * @param parameters - Parameters.
    * @returns The transaction hash.
    */
-  grantTokenRole: (
-    parameters: grantTokenRole.Parameters<chain, account>,
-  ) => Promise<grantTokenRole.ReturnType>
+  grantTokenRoles: (
+    parameters: grantTokenRoles.Parameters<chain, account>,
+  ) => Promise<grantTokenRoles.ReturnType>
   /**
    * Mints TIP20 tokens to an address.
    *
@@ -1472,9 +1479,9 @@ export type Decorator<
    * @param parameters - Parameters.
    * @returns The transaction hash.
    */
-  renounceTokenRole: (
-    parameters: renounceTokenRole.Parameters<chain, account>,
-  ) => Promise<renounceTokenRole.ReturnType>
+  renounceTokenRoles: (
+    parameters: renounceTokenRoles.Parameters<chain, account>,
+  ) => Promise<renounceTokenRoles.ReturnType>
   /**
    * Revokes a role for a TIP20 token.
    *
@@ -1485,9 +1492,9 @@ export type Decorator<
    * @param parameters - Parameters.
    * @returns The transaction hash.
    */
-  revokeTokenRole: (
-    parameters: revokeTokenRole.Parameters<chain, account>,
-  ) => Promise<revokeTokenRole.ReturnType>
+  revokeTokenRoles: (
+    parameters: revokeTokenRoles.Parameters<chain, account>,
+  ) => Promise<revokeTokenRoles.ReturnType>
   /**
    * Sets the supply cap for a TIP20 token.
    *
@@ -1577,12 +1584,13 @@ export function decorator() {
       getTokenMetadata: (parameters) => getTokenMetadata(client, parameters),
       // @ts-expect-error
       getUserToken: (parameters) => getUserToken(client, parameters),
-      grantTokenRole: (parameters) => grantTokenRole(client, parameters),
+      grantTokenRoles: (parameters) => grantTokenRoles(client, parameters),
       mintToken: (parameters) => mintToken(client, parameters),
       pauseToken: (parameters) => pauseToken(client, parameters),
       permitToken: (parameters) => permitToken(client, parameters),
-      renounceTokenRole: (parameters) => renounceTokenRole(client, parameters),
-      revokeTokenRole: (parameters) => revokeTokenRole(client, parameters),
+      renounceTokenRoles: (parameters) =>
+        renounceTokenRoles(client, parameters),
+      revokeTokenRoles: (parameters) => revokeTokenRoles(client, parameters),
       setTokenSupplyCap: (parameters) => setTokenSupplyCap(client, parameters),
       setTokenRoleAdmin: (parameters) => setTokenRoleAdmin(client, parameters),
       setUserToken: (parameters) => setUserToken(client, parameters),

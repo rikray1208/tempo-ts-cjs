@@ -230,13 +230,13 @@ export declare namespace getUserToken {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function grantTokenRole<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: grantTokenRole.Parameters<chain, account>): Promise<grantTokenRole.ReturnType>;
-export declare namespace grantTokenRole {
+export declare function grantTokenRoles<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: grantTokenRoles.Parameters<chain, account>): Promise<grantTokenRoles.ReturnType>;
+export declare namespace grantTokenRoles {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & {
         /** Address or ID of the TIP20 token. */
         token: TokenId.TokenIdOrAddress;
         /** Role to grant. */
-        role: TokenRole.TokenRole;
+        roles: readonly TokenRole.TokenRole[];
         /** Address to grant the role to. */
         to: Address;
     };
@@ -322,13 +322,13 @@ export declare namespace permitToken {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function renounceTokenRole<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: renounceTokenRole.Parameters<chain, account>): Promise<renounceTokenRole.ReturnType>;
-export declare namespace renounceTokenRole {
+export declare function renounceTokenRoles<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: renounceTokenRoles.Parameters<chain, account>): Promise<renounceTokenRoles.ReturnType>;
+export declare namespace renounceTokenRoles {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & {
         /** Address or ID of the TIP20 token. */
         token: TokenId.TokenIdOrAddress;
-        /** Role to renounce. */
-        role: TokenRole.TokenRole;
+        /** Roles to renounce. */
+        roles: readonly TokenRole.TokenRole[];
     };
     type ReturnType = WriteContractReturnType;
 }
@@ -342,13 +342,13 @@ export declare namespace renounceTokenRole {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function revokeTokenRole<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: revokeTokenRole.Parameters<chain, account>): Promise<revokeTokenRole.ReturnType>;
-export declare namespace revokeTokenRole {
+export declare function revokeTokenRoles<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: revokeTokenRoles.Parameters<chain, account>): Promise<revokeTokenRoles.ReturnType>;
+export declare namespace revokeTokenRoles {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & {
         /** Address to revoke the role from. */
         from: Address;
         /** Role to revoke. */
-        role: TokenRole.TokenRole;
+        roles: readonly TokenRole.TokenRole[];
         /** Address or ID of the TIP20 token. */
         token: TokenId.TokenIdOrAddress;
     };
@@ -572,7 +572,7 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * @param parameters - Parameters.
      * @returns The transaction hash.
      */
-    grantTokenRole: (parameters: grantTokenRole.Parameters<chain, account>) => Promise<grantTokenRole.ReturnType>;
+    grantTokenRoles: (parameters: grantTokenRoles.Parameters<chain, account>) => Promise<grantTokenRoles.ReturnType>;
     /**
      * Mints TIP20 tokens to an address.
      *
@@ -616,7 +616,7 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * @param parameters - Parameters.
      * @returns The transaction hash.
      */
-    renounceTokenRole: (parameters: renounceTokenRole.Parameters<chain, account>) => Promise<renounceTokenRole.ReturnType>;
+    renounceTokenRoles: (parameters: renounceTokenRoles.Parameters<chain, account>) => Promise<renounceTokenRoles.ReturnType>;
     /**
      * Revokes a role for a TIP20 token.
      *
@@ -627,7 +627,7 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * @param parameters - Parameters.
      * @returns The transaction hash.
      */
-    revokeTokenRole: (parameters: revokeTokenRole.Parameters<chain, account>) => Promise<revokeTokenRole.ReturnType>;
+    revokeTokenRoles: (parameters: revokeTokenRoles.Parameters<chain, account>) => Promise<revokeTokenRoles.ReturnType>;
     /**
      * Sets the supply cap for a TIP20 token.
      *

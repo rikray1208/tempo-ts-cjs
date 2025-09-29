@@ -500,9 +500,9 @@ describe.skipIf(!!process.env.CI)('mintToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant issuer role
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
@@ -548,9 +548,9 @@ describe.skipIf(!!process.env.CI)('mintToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant issuer role
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
@@ -617,9 +617,9 @@ describe.skipIf(!!process.env.CI)('transferToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant issuer role and mint tokens
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
@@ -723,9 +723,9 @@ describe.skipIf(!!process.env.CI)('burnToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant issuer role
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
@@ -780,9 +780,9 @@ describe.skipIf(!!process.env.CI)('burnToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant issuer role to account2 (not us)
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: account2.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
@@ -829,17 +829,17 @@ describe.skipIf(!!process.env.CI)('pauseToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant pause role
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'pause',
+      roles: ['pause'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
 
     // Grant issuer role and mint tokens
-    const grantIssuerHash = await actions.grantTokenRole(client, {
+    const grantIssuerHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantIssuerHash })
@@ -914,9 +914,9 @@ describe.skipIf(!!process.env.CI)('pauseToken', () => {
     ).rejects.toThrow()
 
     // Grant pause role to account2
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'pause',
+      roles: ['pause'],
       to: account2.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
@@ -953,9 +953,9 @@ describe.skipIf(!!process.env.CI)('pauseToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant pause role
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'pause',
+      roles: ['pause'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantHash })
@@ -988,24 +988,24 @@ describe.skipIf(!!process.env.CI)('unpauseToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant pause and unpause roles
-    const grantPauseHash = await actions.grantTokenRole(client, {
+    const grantPauseHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'pause',
+      roles: ['pause'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantPauseHash })
 
-    const grantUnpauseHash = await actions.grantTokenRole(client, {
+    const grantUnpauseHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'unpause',
+      roles: ['unpause'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantUnpauseHash })
 
     // Grant issuer role and mint tokens
-    const grantIssuerHash = await actions.grantTokenRole(client, {
+    const grantIssuerHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantIssuerHash })
@@ -1086,9 +1086,9 @@ describe.skipIf(!!process.env.CI)('unpauseToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant pause role and pause the token
-    const grantPauseHash = await actions.grantTokenRole(client, {
+    const grantPauseHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'pause',
+      roles: ['pause'],
       to: client.account.address,
     })
     await waitForTransactionReceipt(client, { hash: grantPauseHash })
@@ -1106,9 +1106,9 @@ describe.skipIf(!!process.env.CI)('unpauseToken', () => {
     ).rejects.toThrow()
 
     // Grant unpause role to account2
-    const grantUnpauseHash = await actions.grantTokenRole(client, {
+    const grantUnpauseHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'unpause',
+      roles: ['unpause'],
       to: account2.address,
     })
     await waitForTransactionReceipt(client, { hash: grantUnpauseHash })
@@ -1146,17 +1146,17 @@ describe.skipIf(!!process.env.CI)('unpauseToken', () => {
     await waitForTransactionReceipt(client, { hash: createHash })
 
     // Grant pause role to account2
-    const grantPauseHash = await actions.grantTokenRole(client, {
+    const grantPauseHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'pause',
+      roles: ['pause'],
       to: account2.address,
     })
     await waitForTransactionReceipt(client, { hash: grantPauseHash })
 
     // Grant unpause role to account3
-    const grantUnpauseHash = await actions.grantTokenRole(client, {
+    const grantUnpauseHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'unpause',
+      roles: ['unpause'],
       to: account3.address,
     })
     await waitForTransactionReceipt(client, { hash: grantUnpauseHash })
@@ -1210,7 +1210,7 @@ describe.skipIf(!!process.env.CI)('unpauseToken', () => {
 
 describe.todo('setTokenSupplyCap')
 
-describe.skipIf(!!process.env.CI)('grantTokenRole', () => {
+describe.skipIf(!!process.env.CI)('grantTokenRoles', () => {
   test('default', async () => {
     // Create a new token where we're the admin
     const { address } = await actions.createToken(client, {
@@ -1223,9 +1223,9 @@ describe.skipIf(!!process.env.CI)('grantTokenRole', () => {
     await setTimeout(100)
 
     // Grant issuer role to account2
-    const grantHash = await actions.grantTokenRole(client, {
+    const grantHash = await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: account2.address,
     })
 
@@ -1248,18 +1248,18 @@ describe.skipIf(!!process.env.CI)('revokeTokenRole', async () => {
 
     await setTimeout(100)
 
-    await actions.grantTokenRole(client, {
+    await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: account2.address,
     })
 
     await setTimeout(100)
 
-    const revokeHash = await actions.revokeTokenRole(client, {
-      token: address,
-      role: 'issuer',
+    const revokeHash = await actions.revokeTokenRoles(client, {
       from: account2.address,
+      token: address,
+      roles: ['issuer'],
     })
 
     expect(revokeHash).toBeDefined()
@@ -1285,17 +1285,17 @@ describe.skip('renounceTokenRole', async () => {
 
     await setTimeout(100)
 
-    await actions.grantTokenRole(client, {
+    await actions.grantTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
       to: client.account.address,
     })
 
     await setTimeout(100)
 
-    const renounceHash = await actions.renounceTokenRole(client, {
+    const renounceHash = await actions.renounceTokenRoles(client, {
       token: address,
-      role: 'issuer',
+      roles: ['issuer'],
     })
 
     expect(renounceHash).toBeDefined()
@@ -1342,7 +1342,7 @@ describe.skipIf(!!process.env.CI)('decorator', () => {
         "getTokenBalance",
         "getTokenMetadata",
         "getUserToken",
-        "grantTokenRole",
+        "grantTokenRoles",
         "mintToken",
         "pauseToken",
         "permitToken",
