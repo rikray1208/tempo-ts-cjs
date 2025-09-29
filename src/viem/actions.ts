@@ -1,16 +1,21 @@
-import {
-  type Account,
-  type Address,
-  type Chain,
-  type Client,
-  type Hex,
-  hexToBigInt,
-  type ReadContractParameters,
-  type ReadContractReturnType,
-  type Transport,
-  type ValueOf,
-  type WriteContractParameters,
-  type WriteContractReturnType,
+// TODO:
+// - `token` default JSDoc
+// - add `.call` to namespaces
+// - add `.simulate` to namespaces
+
+import * as Hex from 'ox/Hex'
+import * as Signature from 'ox/Signature'
+import type {
+  Account,
+  Address,
+  Chain,
+  Client,
+  ReadContractParameters,
+  ReadContractReturnType,
+  Transport,
+  ValueOf,
+  WriteContractParameters,
+  WriteContractReturnType,
 } from 'viem'
 import { parseAccount } from 'viem/accounts'
 import {
@@ -19,7 +24,7 @@ import {
   simulateContract,
   writeContract,
 } from 'viem/actions'
-import type { Compute, UnionOmit } from '../internal/types.js'
+import type { Compute, OneOf, UnionOmit } from '../internal/types.js'
 import * as TokenId from '../ox/TokenId.js'
 import * as TokenRole from '../ox/TokenRole.js'
 import { feeManagerAbi, tip20Abi, tip20FactoryAbi } from './abis.js'
@@ -35,6 +40,233 @@ const transferPolicy = {
   1: 'always-allow',
 } as const
 type TransferPolicy = ValueOf<typeof transferPolicy>
+
+/**
+ * Approves a spender to transfer TIP20 tokens on behalf of the caller.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function approveTransferToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: approveTransferToken.Parameters<chain, account>,
+): Promise<approveTransferToken.ReturnType> {
+  const {
+    account = client.account,
+    amount,
+    chain = client.chain,
+    spender,
+    token = usdAddress,
+    ...rest
+  } = parameters
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'approve',
+    args: [spender, amount],
+  } as never)
+}
+
+export namespace approveTransferToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Amount of tokens to approve. */
+    amount: bigint
+    /** Address of the spender. */
+    spender: Address
+    /** Address or ID of the TIP20 token. */
+    token?: TokenId.TokenIdOrAddress | undefined
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
+ * Burns TIP20 tokens from a blocked address.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function burnBlockedToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: burnBlockedToken.Parameters<chain, account>,
+): Promise<burnBlockedToken.ReturnType> {
+  const {
+    account = client.account,
+    amount,
+    chain = client.chain,
+    from,
+    token,
+    ...rest
+  } = parameters
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'burnBlocked',
+    args: [from, amount],
+  } as never)
+}
+
+export namespace burnBlockedToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Amount of tokens to burn. */
+    amount: bigint
+    /** Address to burn tokens from. */
+    from: Address
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
+ * Burns TIP20 tokens from the caller's balance.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function burnToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: burnToken.Parameters<chain, account>,
+): Promise<burnToken.ReturnType> {
+  const {
+    account = client.account,
+    amount,
+    chain = client.chain,
+    memo,
+    token,
+    ...rest
+  } = parameters
+
+  const args = memo
+    ? ({
+        functionName: 'burnWithMemo',
+        args: [amount, memo],
+      } as const)
+    : ({
+        functionName: 'burn',
+        args: [amount],
+      } as const)
+
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    ...args,
+  } as never)
+}
+
+export namespace burnToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Amount of tokens to burn. */
+    amount: bigint
+    /** Memo to include in the transfer. */
+    memo?: Hex.Hex | undefined
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
+ * Changes the transfer policy ID for a TIP20 token.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function changeTokenTransferPolicy<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: changeTokenTransferPolicy.Parameters<chain, account>,
+): Promise<changeTokenTransferPolicy.ReturnType> {
+  const {
+    account = client.account,
+    chain = client.chain,
+    token,
+    policyId,
+    ...rest
+  } = parameters
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'changeTokenTransferPolicy',
+    args: [policyId],
+  } as never)
+}
+
+export namespace changeTokenTransferPolicy {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** New transfer policy ID. */
+    policyId: bigint
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
 
 /**
  * Creates a new TIP20 token.
@@ -60,11 +292,12 @@ export async function createToken<
     name,
     symbol,
     currency,
+    ...rest
   } = parameters
   const admin = admin_ ? parseAccount(admin_) : undefined
   if (!admin) throw new Error('admin is required.')
   const { request, result } = await simulateContract(client, {
-    ...parameters,
+    ...rest,
     account,
     address: tip20FactoryAddress,
     abi: tip20FactoryAbi,
@@ -73,7 +306,7 @@ export async function createToken<
     args: [name, symbol, currency, admin.address],
   } as never)
   const hash = await writeContract(client as never, request as never)
-  const id = hexToBigInt(result as Hex)
+  const id = Hex.toBigInt(result as Hex.Hex)
   const address = TokenId.toAddress(id)
   return {
     address,
@@ -104,7 +337,7 @@ export namespace createToken {
     /** Admin of the token. */
     admin: Address
     /** Transaction hash. */
-    hash: Hex
+    hash: Hex.Hex
     /** ID of the TIP20 token. */
     id: bigint
   }
@@ -127,11 +360,16 @@ export async function getTokenAllowance<
   client: Client<Transport, chain, account>,
   parameters: getTokenAllowance.Parameters<account>,
 ): Promise<getTokenAllowance.ReturnType> {
-  const { account = client.account, token = usdAddress, spender } = parameters
+  const {
+    account = client.account,
+    token = usdAddress,
+    spender,
+    ...rest
+  } = parameters
   const address = account ? parseAccount(account).address : undefined
   if (!address) throw new Error('account is required.')
   return readContract(client, {
-    ...parameters,
+    ...rest,
     address: TokenId.toAddress(token),
     abi: tip20Abi,
     functionName: 'allowance',
@@ -179,11 +417,15 @@ export async function getTokenBalance<
     ? [getTokenBalance.Parameters<account>] | []
     : [getTokenBalance.Parameters<account>]
 ): Promise<getTokenBalance.ReturnType> {
-  const { account = client.account, token = usdAddress } = parameters[0] ?? {}
+  const {
+    account = client.account,
+    token = usdAddress,
+    ...rest
+  } = parameters[0] ?? {}
   const address = account ? parseAccount(account).address : undefined
   if (!address) throw new Error('account is required.')
   return readContract(client, {
-    ...parameters,
+    ...rest,
     address: TokenId.toAddress(token),
     abi: tip20Abi,
     functionName: 'balanceOf',
@@ -342,11 +584,11 @@ export async function getUserToken<
     ? [getUserToken.Parameters<account>] | []
     : [getUserToken.Parameters<account>]
 ): Promise<getUserToken.ReturnType> {
-  const { account: account_ = client.account } = parameters[0] ?? {}
+  const { account: account_ = client.account, ...rest } = parameters[0] ?? {}
   if (!account_) throw new Error('account is required.')
   const account = parseAccount(account_)
   const address = await readContract(client, {
-    ...parameters,
+    ...rest,
     address: feeManagerAddress,
     abi: feeManagerAbi,
     functionName: 'userTokens',
@@ -395,10 +637,11 @@ export async function grantTokenRole<
     chain = client.chain,
     token,
     to,
+    ...rest
   } = parameters
   const role = TokenRole.serialize(parameters.role)
   return writeContract(client, {
-    ...parameters,
+    ...rest,
     account,
     address: TokenId.toAddress(token),
     abi: tip20Abi,
@@ -428,6 +671,199 @@ export namespace grantTokenRole {
 }
 
 /**
+ * Mints TIP20 tokens to an address.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function mintToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: mintToken.Parameters<chain, account>,
+): Promise<mintToken.ReturnType> {
+  const {
+    account = client.account,
+    amount,
+    chain = client.chain,
+    memo,
+    token,
+    to,
+    ...rest
+  } = parameters
+
+  const args = memo
+    ? ({
+        functionName: 'mintWithMemo',
+        args: [to, amount, Hex.padLeft(memo, 32)],
+      } as const)
+    : ({
+        functionName: 'mint',
+        args: [to, amount],
+      } as const)
+
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    // TODO: fix
+    gas: 30_000n,
+    ...args,
+  } as never)
+}
+
+export namespace mintToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Amount of tokens to mint. */
+    amount: bigint
+    /** Memo to include in the mint. */
+    memo?: Hex.Hex | undefined
+    /** Address to mint tokens to. */
+    to: Address
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
+ * Pauses a TIP20 token.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function pauseToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: pauseToken.Parameters<chain, account>,
+): Promise<pauseToken.ReturnType> {
+  const {
+    account = client.account,
+    chain = client.chain,
+    token,
+    ...rest
+  } = parameters
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'pause',
+    args: [],
+  } as never)
+}
+
+export namespace pauseToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
+ * Approves a spender using a signed permit.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function permitToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: permitToken.Parameters<chain, account>,
+): Promise<permitToken.ReturnType> {
+  const {
+    account = client.account,
+    chain = client.chain,
+    token = usdAddress,
+    owner,
+    spender,
+    value,
+    deadline,
+    signature,
+    ...rest
+  } = parameters
+  const { r, s, yParity } = Signature.from(signature)
+  const v = Signature.yParityToV(yParity)
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'permit',
+    args: [
+      owner,
+      spender,
+      value,
+      deadline,
+      v,
+      Hex.trimLeft(Hex.fromNumber(r!)),
+      Hex.trimLeft(Hex.fromNumber(s!)),
+    ],
+  } as never)
+}
+
+export namespace permitToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Deadline for the permit. */
+    deadline: bigint
+    /** Address of the owner. */
+    owner: Address
+    /** Signature. */
+    signature: Signature.Signature
+    /** Address of the spender. */
+    spender: Address
+    /** Address or ID of the TIP20 token. */
+    token?: TokenId.TokenIdOrAddress | undefined
+    /** Amount to approve. */
+    value: bigint
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
  * Renounces a role for a TIP20 token.
  *
  * @example
@@ -444,10 +880,15 @@ export async function renounceTokenRole<
   client: Client<Transport, chain, account>,
   parameters: renounceTokenRole.Parameters<chain, account>,
 ): Promise<renounceTokenRole.ReturnType> {
-  const { account = client.account, chain = client.chain, token } = parameters
+  const {
+    account = client.account,
+    chain = client.chain,
+    token,
+    ...rest
+  } = parameters
   const role = TokenRole.serialize(parameters.role)
   return writeContract(client, {
-    ...parameters,
+    ...rest,
     account,
     address: TokenId.toAddress(token),
     abi: tip20Abi,
@@ -496,10 +937,11 @@ export async function revokeTokenRole<
     chain = client.chain,
     token,
     from,
+    ...rest
   } = parameters
   const role = TokenRole.serialize(parameters.role)
   return writeContract(client, {
-    ...parameters,
+    ...rest,
     account,
     address: TokenId.toAddress(token),
     abi: tip20Abi,
@@ -529,6 +971,115 @@ export namespace revokeTokenRole {
 }
 
 /**
+ * Sets the supply cap for a TIP20 token.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function setTokenSupplyCap<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: setTokenSupplyCap.Parameters<chain, account>,
+): Promise<setTokenSupplyCap.ReturnType> {
+  const {
+    account = client.account,
+    chain = client.chain,
+    token,
+    supplyCap,
+    ...rest
+  } = parameters
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'setTokenSupplyCap',
+    args: [supplyCap],
+  } as never)
+}
+
+export namespace setTokenSupplyCap {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** New supply cap. */
+    supplyCap: bigint
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
+ * Sets the admin role for a specific role in a TIP20 token.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function setTokenRoleAdmin<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: setTokenRoleAdmin.Parameters<chain, account>,
+): Promise<setTokenRoleAdmin.ReturnType> {
+  const {
+    account = client.account,
+    adminRole,
+    chain = client.chain,
+    token,
+    role,
+    ...rest
+  } = parameters
+  const roleHash = TokenRole.serialize(role)
+  const adminRoleHash = TokenRole.serialize(adminRole)
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'setRoleAdmin',
+    args: [roleHash, adminRoleHash],
+  } as never)
+}
+
+export namespace setTokenRoleAdmin {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** New admin role. */
+    adminRole: TokenRole.TokenRole
+    /** Role to set admin for. */
+    role: TokenRole.TokenRole
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
  * Sets the user's default fee token.
  *
  * @example
@@ -545,9 +1096,14 @@ export async function setUserToken<
   client: Client<Transport, chain, account>,
   parameters: setUserToken.Parameters<chain, account>,
 ): Promise<setUserToken.ReturnType> {
-  const { account = client.account, chain = client.chain, token } = parameters
+  const {
+    account = client.account,
+    chain = client.chain,
+    token,
+    ...rest
+  } = parameters
   return writeContract(client, {
-    ...parameters,
+    ...rest,
     account,
     address: feeManagerAddress,
     abi: feeManagerAbi,
@@ -574,10 +1130,217 @@ export namespace setUserToken {
   export type ReturnType = WriteContractReturnType
 }
 
+/**
+ * Transfers TIP20 tokens to another address.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function transferToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: transferToken.Parameters<chain, account>,
+): Promise<transferToken.ReturnType> {
+  const {
+    account = client.account,
+    amount,
+    chain = client.chain,
+    from,
+    memo,
+    token = usdAddress,
+    to,
+    ...rest
+  } = parameters
+
+  const signature = parameters.signature
+    ? Signature.from(parameters.signature)
+    : undefined
+  const v = signature ? Signature.yParityToV(signature.yParity) : undefined
+
+  const args = (() => {
+    if (memo && from)
+      return {
+        functionName: 'transferFromWithMemo',
+        args: [from, to, amount, memo],
+      } as const
+    if (memo)
+      return {
+        functionName: 'transferWithMemo',
+        args: [to, amount, memo],
+      } as const
+    if (signature && v)
+      return {
+        functionName: 'transferWithSig',
+        args: [
+          to,
+          amount,
+          v,
+          Hex.trimLeft(Hex.fromNumber(signature.r!)),
+          Hex.trimLeft(Hex.fromNumber(signature.s!)),
+        ],
+      } as const
+    if (from)
+      return {
+        functionName: 'transferFrom',
+        args: [from, to, amount],
+      } as const
+    return {
+      functionName: 'transfer',
+      args: [to, amount],
+    } as const
+  })()
+
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    ...args,
+  } as never)
+}
+
+export namespace transferToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Amount of tokens to transfer. */
+    amount: bigint
+    /** Address or ID of the TIP20 token. */
+    token?: TokenId.TokenIdOrAddress | undefined
+    /** Address to transfer tokens to. */
+    to: Address
+  } & OneOf<
+      | {
+          /** Address to transfer tokens from. */
+          from?: Address | undefined
+          /** Memo to include in the transfer. */
+          memo?: Hex.Hex | undefined
+        }
+      | {
+          /** Signature to include in the transfer. */
+          signature?: Signature.Signature | undefined
+        }
+    >
+
+  export type ReturnType = WriteContractReturnType
+}
+
+/**
+ * Unpauses a TIP20 token.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction hash.
+ */
+export async function unpauseToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: unpauseToken.Parameters<chain, account>,
+): Promise<unpauseToken.ReturnType> {
+  const {
+    account = client.account,
+    chain = client.chain,
+    token,
+    ...rest
+  } = parameters
+  return writeContract(client, {
+    ...rest,
+    account,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    chain,
+    functionName: 'unpause',
+    args: [],
+  } as never)
+}
+
+export namespace unpauseToken {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = UnionOmit<
+    WriteContractParameters<never, never, never, chain, account>,
+    'abi' | 'address' | 'functionName' | 'args'
+  > & {
+    /** Address or ID of the TIP20 token. */
+    token: TokenId.TokenIdOrAddress
+  }
+
+  export type ReturnType = WriteContractReturnType
+}
+
 export type Decorator<
   chain extends Chain | undefined = Chain | undefined,
   account extends Account | undefined = Account | undefined,
 > = {
+  /**
+   * Approves a spender to transfer TIP20 tokens on behalf of the caller.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  approveTransferToken: (
+    parameters: approveTransferToken.Parameters<chain, account>,
+  ) => Promise<approveTransferToken.ReturnType>
+  /**
+   * Burns TIP20 tokens from a blocked address.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  burnBlockedToken: (
+    parameters: burnBlockedToken.Parameters<chain, account>,
+  ) => Promise<burnBlockedToken.ReturnType>
+  /**
+   * Burns TIP20 tokens from the caller's balance.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  burnToken: (
+    parameters: burnToken.Parameters<chain, account>,
+  ) => Promise<burnToken.ReturnType>
+  /**
+   * Changes the transfer policy ID for a TIP20 token.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  changeTokenTransferPolicy: (
+    parameters: changeTokenTransferPolicy.Parameters<chain, account>,
+  ) => Promise<changeTokenTransferPolicy.ReturnType>
   /**
    * Creates a new TIP20 token.
    *
@@ -661,6 +1424,45 @@ export type Decorator<
     parameters: grantTokenRole.Parameters<chain, account>,
   ) => Promise<grantTokenRole.ReturnType>
   /**
+   * Mints TIP20 tokens to an address.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  mintToken: (
+    parameters: mintToken.Parameters<chain, account>,
+  ) => Promise<mintToken.ReturnType>
+  /**
+   * Pauses a TIP20 token.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  pauseToken: (
+    parameters: pauseToken.Parameters<chain, account>,
+  ) => Promise<pauseToken.ReturnType>
+  /**
+   * Approves a spender using a signed permit.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  permitToken: (
+    parameters: permitToken.Parameters<chain, account>,
+  ) => Promise<permitToken.ReturnType>
+  /**
    * Renounces a role for a TIP20 token.
    *
    * @example
@@ -687,6 +1489,32 @@ export type Decorator<
     parameters: revokeTokenRole.Parameters<chain, account>,
   ) => Promise<revokeTokenRole.ReturnType>
   /**
+   * Sets the supply cap for a TIP20 token.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  setTokenSupplyCap: (
+    parameters: setTokenSupplyCap.Parameters<chain, account>,
+  ) => Promise<setTokenSupplyCap.ReturnType>
+  /**
+   * Sets the admin role for a specific role in a TIP20 token.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  setTokenRoleAdmin: (
+    parameters: setTokenRoleAdmin.Parameters<chain, account>,
+  ) => Promise<setTokenRoleAdmin.ReturnType>
+  /**
    * Sets the user's default fee token.
    *
    * @example
@@ -699,6 +1527,32 @@ export type Decorator<
   setUserToken: (
     parameters: setUserToken.Parameters<chain, account>,
   ) => Promise<setUserToken.ReturnType>
+  /**
+   * Transfers TIP20 tokens to another address.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  transferToken: (
+    parameters: transferToken.Parameters<chain, account>,
+  ) => Promise<transferToken.ReturnType>
+  /**
+   * Unpauses a TIP20 token.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns The transaction hash.
+   */
+  unpauseToken: (
+    parameters: unpauseToken.Parameters<chain, account>,
+  ) => Promise<unpauseToken.ReturnType>
 }
 
 export function decorator() {
@@ -710,6 +1564,12 @@ export function decorator() {
     client: Client<transport, chain, account>,
   ): Decorator<chain, account> => {
     return {
+      approveTransferToken: (parameters) =>
+        approveTransferToken(client, parameters),
+      burnBlockedToken: (parameters) => burnBlockedToken(client, parameters),
+      burnToken: (parameters) => burnToken(client, parameters),
+      changeTokenTransferPolicy: (parameters) =>
+        changeTokenTransferPolicy(client, parameters),
       createToken: (parameters) => createToken(client, parameters),
       getTokenAllowance: (parameters) => getTokenAllowance(client, parameters),
       // @ts-expect-error
@@ -718,9 +1578,16 @@ export function decorator() {
       // @ts-expect-error
       getUserToken: (parameters) => getUserToken(client, parameters),
       grantTokenRole: (parameters) => grantTokenRole(client, parameters),
+      mintToken: (parameters) => mintToken(client, parameters),
+      pauseToken: (parameters) => pauseToken(client, parameters),
+      permitToken: (parameters) => permitToken(client, parameters),
       renounceTokenRole: (parameters) => renounceTokenRole(client, parameters),
       revokeTokenRole: (parameters) => revokeTokenRole(client, parameters),
+      setTokenSupplyCap: (parameters) => setTokenSupplyCap(client, parameters),
+      setTokenRoleAdmin: (parameters) => setTokenRoleAdmin(client, parameters),
       setUserToken: (parameters) => setUserToken(client, parameters),
+      transferToken: (parameters) => transferToken(client, parameters),
+      unpauseToken: (parameters) => unpauseToken(client, parameters),
     }
   }
 }

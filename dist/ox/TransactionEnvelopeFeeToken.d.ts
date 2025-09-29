@@ -7,8 +7,8 @@ import * as Hex from 'ox/Hex';
 import * as Rlp from 'ox/Rlp';
 import * as Signature from 'ox/Signature';
 import * as TransactionEnvelope from 'ox/TransactionEnvelope';
-import * as TokenId from "./TokenId.js";
 import type { Assign, Compute, PartialBy, UnionPartialBy } from "../internal/types.js";
+import * as TokenId from "./TokenId.js";
 export type TransactionEnvelopeFeeToken<signed extends boolean = boolean, bigintType = bigint, numberType = number, type extends string = Type> = Compute<TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList.AccessList | undefined;
