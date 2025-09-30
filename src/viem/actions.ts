@@ -57,13 +57,13 @@ type TransferPolicy = ValueOf<typeof transferPolicy>
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export async function approveTransferToken<
+export async function approveToken<
   chain extends Chain | undefined,
   account extends Account | undefined,
 >(
   client: Client<Transport, chain, account>,
-  parameters: approveTransferToken.Parameters<chain, account>,
-): Promise<approveTransferToken.ReturnType> {
+  parameters: approveToken.Parameters<chain, account>,
+): Promise<approveToken.ReturnType> {
   const {
     account = client.account,
     amount,
@@ -83,7 +83,7 @@ export async function approveTransferToken<
   } as never)
 }
 
-export namespace approveTransferToken {
+export namespace approveToken {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
@@ -1273,6 +1273,118 @@ export namespace unpauseToken {
 }
 
 /**
+ * Watches for TIP20 token approval events.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns A function to unsubscribe from the event.
+ */
+export function watchApproveToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: watchApproveToken.Parameters,
+) {
+  const { onApproval, token = usdAddress, ...rest } = parameters
+  return watchContractEvent(client, {
+    ...rest,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    eventName: 'Approval',
+    onLogs: (logs) => {
+      for (const log of logs) onApproval(log.args, log)
+    },
+    strict: true,
+  })
+}
+
+export namespace watchApproveToken {
+  export type Args = GetEventArgs<
+    typeof tip20Abi,
+    'Approval',
+    { IndexedOnly: false; Required: true }
+  >
+
+  export type Log = viem_Log<
+    bigint,
+    number,
+    false,
+    ExtractAbiItem<typeof tip20Abi, 'Approval'>,
+    true
+  >
+
+  export type Parameters = UnionOmit<
+    WatchContractEventParameters<typeof tip20Abi, 'Approval', true>,
+    'abi' | 'address' | 'batch' | 'eventName' | 'onLogs' | 'strict'
+  > & {
+    /** Callback to invoke when tokens are approved. */
+    onApproval: (args: Args, log: Log) => void
+    /** Address or ID of the TIP20 token. @default `usdAddress` */
+    token?: TokenId.TokenIdOrAddress | undefined
+  }
+}
+
+/**
+ * Watches for TIP20 token burn events.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns A function to unsubscribe from the event.
+ */
+export function watchBurnToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: watchBurnToken.Parameters,
+) {
+  const { onBurn, token = usdAddress, ...rest } = parameters
+  return watchContractEvent(client, {
+    ...rest,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    eventName: 'Burn',
+    onLogs: (logs) => {
+      for (const log of logs) onBurn(log.args, log)
+    },
+    strict: true,
+  })
+}
+
+export namespace watchBurnToken {
+  export type Args = GetEventArgs<
+    typeof tip20Abi,
+    'Burn',
+    { IndexedOnly: false; Required: true }
+  >
+
+  export type Log = viem_Log<
+    bigint,
+    number,
+    false,
+    ExtractAbiItem<typeof tip20Abi, 'Burn'>,
+    true
+  >
+
+  export type Parameters = UnionOmit<
+    WatchContractEventParameters<typeof tip20Abi, 'Burn', true>,
+    'abi' | 'address' | 'batch' | 'eventName' | 'onLogs' | 'strict'
+  > & {
+    /** Callback to invoke when tokens are burned. */
+    onBurn: (args: Args, log: Log) => void
+    /** Address or ID of the TIP20 token. @default `usdAddress` */
+    token?: TokenId.TokenIdOrAddress | undefined
+  }
+}
+
+/**
  * Watches for new TIP20 tokens created.
  *
  * @example
@@ -1382,6 +1494,182 @@ export namespace watchMintToken {
   }
 }
 
+/**
+ * Watches for user token set events.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns A function to unsubscribe from the event.
+ */
+export function watchSetUserToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: watchSetUserToken.Parameters,
+) {
+  const { onUserTokenSet, ...rest } = parameters
+  return watchContractEvent(client, {
+    ...rest,
+    address: feeManagerAddress,
+    abi: feeManagerAbi,
+    eventName: 'UserTokenSet',
+    onLogs: (logs) => {
+      for (const log of logs) onUserTokenSet(log.args, log)
+    },
+    strict: true,
+  })
+}
+
+export namespace watchSetUserToken {
+  export type Args = GetEventArgs<
+    typeof feeManagerAbi,
+    'UserTokenSet',
+    { IndexedOnly: false; Required: true }
+  >
+
+  export type Log = viem_Log<
+    bigint,
+    number,
+    false,
+    ExtractAbiItem<typeof feeManagerAbi, 'UserTokenSet'>,
+    true
+  >
+
+  export type Parameters = UnionOmit<
+    WatchContractEventParameters<typeof feeManagerAbi, 'UserTokenSet', true>,
+    'abi' | 'address' | 'batch' | 'eventName' | 'onLogs' | 'strict'
+  > & {
+    /** Callback to invoke when a user token is set. */
+    onUserTokenSet: (args: Args, log: Log) => void
+  }
+}
+
+/**
+ * Watches for TIP20 token role membership updates.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns A function to unsubscribe from the event.
+ */
+export function watchTokenRole<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: watchTokenRole.Parameters,
+) {
+  const { onRoleMembershipUpdated, token = usdAddress, ...rest } = parameters
+  return watchContractEvent(client, {
+    ...rest,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    eventName: 'RoleMembershipUpdated',
+    onLogs: (logs) => {
+      for (const log of logs) {
+        const type = log.args.hasRole ? 'granted' : 'revoked'
+        onRoleMembershipUpdated({ ...log.args, type }, log)
+      }
+    },
+    strict: true,
+  })
+}
+
+export namespace watchTokenRole {
+  export type Args = GetEventArgs<
+    typeof tip20Abi,
+    'RoleMembershipUpdated',
+    { IndexedOnly: false; Required: true }
+  > & {
+    /** Type of role update. */
+    type: 'granted' | 'revoked'
+  }
+
+  export type Log = viem_Log<
+    bigint,
+    number,
+    false,
+    ExtractAbiItem<typeof tip20Abi, 'RoleMembershipUpdated'>,
+    true
+  >
+
+  export type Parameters = UnionOmit<
+    WatchContractEventParameters<
+      typeof tip20Abi,
+      'RoleMembershipUpdated',
+      true
+    >,
+    'abi' | 'address' | 'batch' | 'eventName' | 'onLogs' | 'strict'
+  > & {
+    /** Callback to invoke when a role membership is updated. */
+    onRoleMembershipUpdated: (args: Args, log: Log) => void
+    /** Address or ID of the TIP20 token. @default `usdAddress` */
+    token?: TokenId.TokenIdOrAddress | undefined
+  }
+}
+
+/**
+ * Watches for TIP20 token transfer events.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns A function to unsubscribe from the event.
+ */
+export function watchTransferToken<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: watchTransferToken.Parameters,
+) {
+  const { onTransfer, token = usdAddress, ...rest } = parameters
+  return watchContractEvent(client, {
+    ...rest,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    eventName: 'Transfer',
+    onLogs: (logs) => {
+      for (const log of logs) onTransfer(log.args, log)
+    },
+    strict: true,
+  })
+}
+
+export namespace watchTransferToken {
+  export type Args = GetEventArgs<
+    typeof tip20Abi,
+    'Transfer',
+    { IndexedOnly: false; Required: true }
+  >
+
+  export type Log = viem_Log<
+    bigint,
+    number,
+    false,
+    ExtractAbiItem<typeof tip20Abi, 'Transfer'>,
+    true
+  >
+
+  export type Parameters = UnionOmit<
+    WatchContractEventParameters<typeof tip20Abi, 'Transfer', true>,
+    'abi' | 'address' | 'batch' | 'eventName' | 'onLogs' | 'strict'
+  > & {
+    /** Callback to invoke when tokens are transferred. */
+    onTransfer: (args: Args, log: Log) => void
+    /** Address or ID of the TIP20 token. @default `usdAddress` */
+    token?: TokenId.TokenIdOrAddress | undefined
+  }
+}
+
 export type Decorator<
   chain extends Chain | undefined = Chain | undefined,
   account extends Account | undefined = Account | undefined,
@@ -1396,9 +1684,9 @@ export type Decorator<
    * @param parameters - Parameters.
    * @returns The transaction hash.
    */
-  approveTransferToken: (
-    parameters: approveTransferToken.Parameters<chain, account>,
-  ) => Promise<approveTransferToken.ReturnType>
+  approveToken: (
+    parameters: approveToken.Parameters<chain, account>,
+  ) => Promise<approveToken.ReturnType>
   /**
    * Burns TIP20 tokens from a blocked address.
    *
@@ -1651,6 +1939,28 @@ export type Decorator<
     parameters: unpauseToken.Parameters<chain, account>,
   ) => Promise<unpauseToken.ReturnType>
   /**
+   * Watches for TIP20 token approval events.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns A function to unsubscribe from the event.
+   */
+  watchApproveToken: (parameters: watchApproveToken.Parameters) => () => void
+  /**
+   * Watches for TIP20 token burn events.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns A function to unsubscribe from the event.
+   */
+  watchBurnToken: (parameters: watchBurnToken.Parameters) => () => void
+  /**
    * Watches for new TIP20 tokens created.
    *
    * @example
@@ -1672,6 +1982,39 @@ export type Decorator<
    * @returns A function to unsubscribe from the event.
    */
   watchMintToken: (parameters: watchMintToken.Parameters) => () => void
+  /**
+   * Watches for user token set events.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns A function to unsubscribe from the event.
+   */
+  watchSetUserToken: (parameters: watchSetUserToken.Parameters) => () => void
+  /**
+   * Watches for TIP20 token role membership updates.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns A function to unsubscribe from the event.
+   */
+  watchTokenRole: (parameters: watchTokenRole.Parameters) => () => void
+  /**
+   * Watches for TIP20 token transfer events.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns A function to unsubscribe from the event.
+   */
+  watchTransferToken: (parameters: watchTransferToken.Parameters) => () => void
 }
 
 export function decorator() {
@@ -1683,8 +2026,7 @@ export function decorator() {
     client: Client<transport, chain, account>,
   ): Decorator<chain, account> => {
     return {
-      approveTransferToken: (parameters) =>
-        approveTransferToken(client, parameters),
+      approveToken: (parameters) => approveToken(client, parameters),
       burnBlockedToken: (parameters) => burnBlockedToken(client, parameters),
       burnToken: (parameters) => burnToken(client, parameters),
       changeTokenTransferPolicy: (parameters) =>
@@ -1708,8 +2050,14 @@ export function decorator() {
       setUserToken: (parameters) => setUserToken(client, parameters),
       transferToken: (parameters) => transferToken(client, parameters),
       unpauseToken: (parameters) => unpauseToken(client, parameters),
+      watchApproveToken: (parameters) => watchApproveToken(client, parameters),
+      watchBurnToken: (parameters) => watchBurnToken(client, parameters),
       watchCreateToken: (parameters) => watchCreateToken(client, parameters),
       watchMintToken: (parameters) => watchMintToken(client, parameters),
+      watchSetUserToken: (parameters) => watchSetUserToken(client, parameters),
+      watchTokenRole: (parameters) => watchTokenRole(client, parameters),
+      watchTransferToken: (parameters) =>
+        watchTransferToken(client, parameters),
     }
   }
 }

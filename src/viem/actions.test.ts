@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { setTimeout } from 'node:timers/promises'
 import { Hex } from 'ox'
 import { tempoLocal } from 'tempo/chains'
 import { Instance } from 'tempo/prool'
@@ -33,11 +34,11 @@ const client = createClient({
   transport: http(),
 }).extend(publicActions)
 
-describe.skipIf(!!process.env.CI)('approveTransferToken', () => {
+describe.skipIf(!!process.env.CI)('approveToken', () => {
   test('default', async () => {
     {
       // approve
-      const hash = await actions.approveTransferToken(client, {
+      const hash = await actions.approveToken(client, {
         spender: account2.address,
         amount: parseEther('100'),
       })
@@ -92,7 +93,7 @@ describe.skipIf(!!process.env.CI)('approveTransferToken', () => {
   test('behavior: token address', async () => {
     {
       // approve
-      const hash = await actions.approveTransferToken(client, {
+      const hash = await actions.approveToken(client, {
         amount: parseEther('100'),
         token: usdAddress,
         spender: account2.address,
@@ -152,7 +153,7 @@ describe.skipIf(!!process.env.CI)('approveTransferToken', () => {
   test('behavior: token address', async () => {
     {
       // approve
-      const hash = await actions.approveTransferToken(client, {
+      const hash = await actions.approveToken(client, {
         amount: parseEther('100'),
         token: usdId,
         spender: account2.address,
@@ -659,7 +660,7 @@ describe.skipIf(!!process.env.CI)('transferToken', () => {
 
   test('behavior: from another account (transferFrom)', async () => {
     // First approve account2 to spend tokens
-    const approveHash = await actions.approveTransferToken(client, {
+    const approveHash = await actions.approveToken(client, {
       spender: account2.address,
       amount: parseEther('50'),
     })
@@ -1477,6 +1478,8 @@ describe.skipIf(!!process.env.CI)('watchMintToken', () => {
       })
       await waitForTransactionReceipt(client, { hash: hash2 })
 
+      await setTimeout(100)
+
       expect(receivedMints).toHaveLength(2)
 
       expect(receivedMints.at(0)!.args).toMatchInlineSnapshot(`
@@ -1580,6 +1583,860 @@ describe.skipIf(!!process.env.CI)('watchMintToken', () => {
   })
 })
 
+describe.skipIf(!!process.env.CI)('watchApproveToken', () => {
+  test('default', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Approval Watch Token',
+      symbol: 'APPR',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    const receivedApprovals: Array<{
+      args: actions.watchApproveToken.Args
+      log: actions.watchApproveToken.Log
+    }> = []
+
+    // Start watching for approval events
+    const unwatch = actions.watchApproveToken(client, {
+      token: address,
+      onApproval: (args, log) => {
+        receivedApprovals.push({ args, log })
+      },
+    })
+
+    try {
+      // Approve account2
+      const hash1 = await actions.approveToken(client, {
+        token: address,
+        spender: account2.address,
+        amount: parseEther('100'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Approve account3
+      const hash2 = await actions.approveToken(client, {
+        token: address,
+        spender: account3.address,
+        amount: parseEther('50'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      await setTimeout(100)
+
+      expect(receivedApprovals).toHaveLength(2)
+
+      expect(receivedApprovals.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 100000000000000000000n,
+          "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "spender": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+      expect(receivedApprovals.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 50000000000000000000n,
+          "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "spender": "0x98e503f35D0a019cB0a251aD243a4cCFCF371F46",
+        }
+      `)
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+
+  test('behavior: filter by spender address', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Filtered Approval Token',
+      symbol: 'FAPPR',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    const receivedApprovals: Array<{
+      args: actions.watchApproveToken.Args
+      log: actions.watchApproveToken.Log
+    }> = []
+
+    // Start watching for approval events only to account2
+    const unwatch = actions.watchApproveToken(client, {
+      token: address,
+      args: {
+        spender: account2.address,
+      },
+      onApproval: (args, log) => {
+        receivedApprovals.push({ args, log })
+      },
+    })
+
+    try {
+      // Approve account2 (should be captured)
+      const hash1 = await actions.approveToken(client, {
+        token: address,
+        spender: account2.address,
+        amount: parseEther('100'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Approve account3 (should NOT be captured)
+      const hash2 = await actions.approveToken(client, {
+        token: address,
+        spender: account3.address,
+        amount: parseEther('50'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      // Approve account2 again (should be captured)
+      const hash3 = await actions.approveToken(client, {
+        token: address,
+        spender: account2.address,
+        amount: parseEther('75'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash3 })
+
+      await setTimeout(100)
+
+      // Should only receive 2 events (for account2)
+      expect(receivedApprovals).toHaveLength(2)
+
+      expect(receivedApprovals.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 100000000000000000000n,
+          "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "spender": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+      expect(receivedApprovals.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 75000000000000000000n,
+          "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "spender": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+
+      // Verify all received approvals are for account2
+      for (const approval of receivedApprovals) {
+        expect(approval.args.spender).toBe(account2.address)
+      }
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+})
+
+describe.skipIf(!!process.env.CI)('watchBurnToken', () => {
+  test('default', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Burn Watch Token',
+      symbol: 'BURN',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    {
+      // Grant issuer role to mint/burn tokens
+      const grantHash = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: client.account.address,
+      })
+      await waitForTransactionReceipt(client, { hash: grantHash })
+    }
+    {
+      // Grant issuer role to mint/burn tokens
+      const grantHash = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: account2.address,
+      })
+      await waitForTransactionReceipt(client, { hash: grantHash })
+    }
+
+    // Mint tokens to burn later
+    const mintHash1 = await actions.mintToken(client, {
+      token: address,
+      to: client.account.address,
+      amount: parseEther('200'),
+    })
+    await waitForTransactionReceipt(client, { hash: mintHash1 })
+
+    const mintHash2 = await actions.mintToken(client, {
+      token: address,
+      to: account2.address,
+      amount: parseEther('100'),
+    })
+    await waitForTransactionReceipt(client, { hash: mintHash2 })
+
+    const receivedBurns: Array<{
+      args: actions.watchBurnToken.Args
+      log: actions.watchBurnToken.Log
+    }> = []
+
+    // Start watching for burn events
+    const unwatch = actions.watchBurnToken(client, {
+      token: address,
+      onBurn: (args, log) => {
+        receivedBurns.push({ args, log })
+      },
+    })
+
+    try {
+      // Burn first batch
+      const hash1 = await actions.burnToken(client, {
+        token: address,
+        amount: parseEther('50'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Transfer gas to account2
+      const gasHash = await writeContract(client, {
+        abi: tip20Abi,
+        address: usdAddress,
+        functionName: 'transfer',
+        args: [account2.address, parseEther('1')],
+      })
+      await waitForTransactionReceipt(client, { hash: gasHash })
+
+      // Burn second batch from account2
+      const hash2 = await actions.burnToken(client, {
+        account: account2,
+        token: address,
+        amount: parseEther('25'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      await setTimeout(100)
+
+      expect(receivedBurns).toHaveLength(2)
+
+      expect(receivedBurns.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 50000000000000000000n,
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        }
+      `)
+      expect(receivedBurns.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 25000000000000000000n,
+          "from": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+
+  test('behavior: filter by from address', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Filtered Burn Token',
+      symbol: 'FBURN',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    {
+      // Grant issuer role
+      const hash = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: client.account.address,
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+    {
+      // Grant issuer role
+      const hash = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: account2.address,
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+
+    {
+      // Mint tokens to multiple accounts
+      const hash = await actions.mintToken(client, {
+        token: address,
+        to: client.account.address,
+        amount: parseEther('200'),
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+
+    {
+      const hash = await actions.mintToken(client, {
+        token: address,
+        to: account2.address,
+        amount: parseEther('200'),
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+
+    const receivedBurns: Array<{
+      args: actions.watchBurnToken.Args
+      log: actions.watchBurnToken.Log
+    }> = []
+
+    // Start watching for burn events only from client.account
+    const unwatch = actions.watchBurnToken(client, {
+      token: address,
+      args: {
+        from: client.account.address,
+      },
+      onBurn: (args, log) => {
+        receivedBurns.push({ args, log })
+      },
+    })
+
+    try {
+      // Burn from client.account (should be captured)
+      const hash1 = await actions.burnToken(client, {
+        token: address,
+        amount: parseEther('50'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Transfer gas to account2
+      const gasHash = await writeContract(client, {
+        abi: tip20Abi,
+        address: usdAddress,
+        functionName: 'transfer',
+        args: [account2.address, parseEther('1')],
+      })
+      await waitForTransactionReceipt(client, { hash: gasHash })
+
+      // Burn from account2 (should NOT be captured)
+      const hash2 = await actions.burnToken(client, {
+        account: account2,
+        token: address,
+        amount: parseEther('25'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      // Burn from client.account again (should be captured)
+      const hash3 = await actions.burnToken(client, {
+        token: address,
+        amount: parseEther('75'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash3 })
+
+      await setTimeout(100)
+
+      // Should only receive 2 events (from client.account)
+      expect(receivedBurns).toHaveLength(2)
+
+      expect(receivedBurns.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 50000000000000000000n,
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        }
+      `)
+      expect(receivedBurns.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 75000000000000000000n,
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        }
+      `)
+
+      // Verify all received burns are from client.account
+      for (const burn of receivedBurns) {
+        expect(burn.args.from).toBe(client.account.address)
+      }
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+})
+
+describe.skipIf(!!process.env.CI)('watchSetUserToken', () => {
+  test('default', async () => {
+    const receivedSets: Array<{
+      args: actions.watchSetUserToken.Args
+      log: actions.watchSetUserToken.Log
+    }> = []
+
+    // Start watching for user token set events
+    const unwatch = actions.watchSetUserToken(client, {
+      onUserTokenSet: (args, log) => {
+        receivedSets.push({ args, log })
+      },
+    })
+
+    try {
+      // Set token for account2
+      {
+        const hash = await writeContract(client, {
+          abi: tip20Abi,
+          address: usdAddress,
+          functionName: 'transfer',
+          args: [account2.address, parseEther('1')],
+        })
+        await waitForTransactionReceipt(client, { hash })
+      }
+
+      const hash1 = await actions.setUserToken(client, {
+        account: account2,
+        token: '0x20c0000000000000000000000000000000000001',
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Set token for account3
+      {
+        const hash = await writeContract(client, {
+          abi: tip20Abi,
+          address: usdAddress,
+          functionName: 'transfer',
+          args: [account3.address, parseEther('1')],
+        })
+        await waitForTransactionReceipt(client, { hash })
+      }
+
+      const hash2 = await actions.setUserToken(client, {
+        account: account3,
+        token: '0x20c0000000000000000000000000000000000002',
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      await setTimeout(100)
+
+      expect(receivedSets).toHaveLength(2)
+
+      expect(receivedSets.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "token": "0x20C0000000000000000000000000000000000001",
+          "user": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+      expect(receivedSets.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "token": "0x20C0000000000000000000000000000000000002",
+          "user": "0x98e503f35D0a019cB0a251aD243a4cCFCF371F46",
+        }
+      `)
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+
+  test('behavior: filter by user address', async () => {
+    const receivedSets: Array<{
+      args: actions.watchSetUserToken.Args
+      log: actions.watchSetUserToken.Log
+    }> = []
+
+    // Start watching for user token set events only for account2
+    const unwatch = actions.watchSetUserToken(client, {
+      args: {
+        user: account2.address,
+      },
+      onUserTokenSet: (args, log) => {
+        receivedSets.push({ args, log })
+      },
+    })
+
+    try {
+      // Transfer gas to accounts
+      {
+        const hash = await writeContract(client, {
+          abi: tip20Abi,
+          address: usdAddress,
+          functionName: 'transfer',
+          args: [account2.address, parseEther('1')],
+        })
+        await waitForTransactionReceipt(client, { hash })
+      }
+
+      {
+        const hash = await writeContract(client, {
+          abi: tip20Abi,
+          address: usdAddress,
+          functionName: 'transfer',
+          args: [account3.address, parseEther('1')],
+        })
+        await waitForTransactionReceipt(client, { hash })
+      }
+
+      // Set token for account2 (should be captured)
+      const hash1 = await actions.setUserToken(client, {
+        account: account2,
+        token: '0x20c0000000000000000000000000000000000001',
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Set token for account3 (should NOT be captured)
+      const hash2 = await actions.setUserToken(client, {
+        account: account3,
+        token: '0x20c0000000000000000000000000000000000002',
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      // Set token for account2 again (should be captured)
+      const hash3 = await actions.setUserToken(client, {
+        account: account2,
+        feeToken: 0n,
+        token: 2n,
+      })
+      await waitForTransactionReceipt(client, { hash: hash3 })
+
+      await setTimeout(100)
+
+      // Should only receive 2 events (for account2)
+      expect(receivedSets).toHaveLength(2)
+
+      expect(receivedSets.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "token": "0x20C0000000000000000000000000000000000001",
+          "user": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+      expect(receivedSets.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "token": "0x20C0000000000000000000000000000000000002",
+          "user": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+
+      // Verify all received events are for account2
+      for (const set of receivedSets) {
+        expect(set.args.user).toBe(account2.address)
+      }
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+})
+
+describe.skipIf(!!process.env.CI)('watchTokenRole', () => {
+  test('default', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Role Watch Token',
+      symbol: 'ROLE',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    const receivedRoleUpdates: Array<{
+      args: actions.watchTokenRole.Args
+      log: actions.watchTokenRole.Log
+    }> = []
+
+    // Start watching for role membership updates
+    const unwatch = actions.watchTokenRole(client, {
+      token: address,
+      onRoleMembershipUpdated: (args, log) => {
+        receivedRoleUpdates.push({ args, log })
+      },
+    })
+
+    try {
+      // Grant issuer role to account2
+      const hash1 = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: account2.address,
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Grant pause role to account3
+      const hash2 = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['pause'],
+        to: account3.address,
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      // Revoke issuer role from account2
+      const hash3 = await actions.revokeTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        from: account2.address,
+      })
+      await waitForTransactionReceipt(client, { hash: hash3 })
+
+      await setTimeout(100)
+
+      expect(receivedRoleUpdates).toHaveLength(3)
+
+      // First event: grant issuer
+      expect(receivedRoleUpdates.at(0)!.args.type).toBe('granted')
+      expect(receivedRoleUpdates.at(0)!.args.account).toBe(account2.address)
+      expect(receivedRoleUpdates.at(0)!.args.hasRole).toBe(true)
+
+      // Second event: grant pause
+      expect(receivedRoleUpdates.at(1)!.args.type).toBe('granted')
+      expect(receivedRoleUpdates.at(1)!.args.account).toBe(account3.address)
+      expect(receivedRoleUpdates.at(1)!.args.hasRole).toBe(true)
+
+      // Third event: revoke issuer
+      expect(receivedRoleUpdates.at(2)!.args.type).toBe('revoked')
+      expect(receivedRoleUpdates.at(2)!.args.account).toBe(account2.address)
+      expect(receivedRoleUpdates.at(2)!.args.hasRole).toBe(false)
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+
+  test('behavior: filter by account address', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Filtered Role Token',
+      symbol: 'FROLE',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    const receivedRoleUpdates: Array<{
+      args: actions.watchTokenRole.Args
+      log: actions.watchTokenRole.Log
+    }> = []
+
+    // Start watching for role updates only for account2
+    const unwatch = actions.watchTokenRole(client, {
+      token: address,
+      args: {
+        account: account2.address,
+      },
+      onRoleMembershipUpdated: (args, log) => {
+        receivedRoleUpdates.push({ args, log })
+      },
+    })
+
+    try {
+      // Grant issuer role to account2 (should be captured)
+      const hash1 = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: account2.address,
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Grant pause role to account3 (should NOT be captured)
+      const hash2 = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['pause'],
+        to: account3.address,
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      // Revoke issuer role from account2 (should be captured)
+      const hash3 = await actions.revokeTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        from: account2.address,
+      })
+      await waitForTransactionReceipt(client, { hash: hash3 })
+
+      await setTimeout(100)
+
+      // Should only receive 2 events (for account2)
+      expect(receivedRoleUpdates).toHaveLength(2)
+
+      // First: grant to account2
+      expect(receivedRoleUpdates.at(0)!.args.type).toBe('granted')
+      expect(receivedRoleUpdates.at(0)!.args.account).toBe(account2.address)
+      expect(receivedRoleUpdates.at(0)!.args.hasRole).toBe(true)
+
+      // Second: revoke from account2
+      expect(receivedRoleUpdates.at(1)!.args.type).toBe('revoked')
+      expect(receivedRoleUpdates.at(1)!.args.account).toBe(account2.address)
+      expect(receivedRoleUpdates.at(1)!.args.hasRole).toBe(false)
+
+      // Verify all received events are for account2
+      for (const update of receivedRoleUpdates) {
+        expect(update.args.account).toBe(account2.address)
+      }
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+})
+
+describe.skipIf(!!process.env.CI)('watchTransferToken', () => {
+  test('default', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Transfer Watch Token',
+      symbol: 'XFER',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    {
+      // Grant issuer role to mint tokens
+      const hash = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: client.account.address,
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+
+    {
+      // Mint tokens to transfer
+      const hash = await actions.mintToken(client, {
+        token: address,
+        to: client.account.address,
+        amount: parseEther('500'),
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+
+    const receivedTransfers: Array<{
+      args: actions.watchTransferToken.Args
+      log: actions.watchTransferToken.Log
+    }> = []
+
+    // Start watching for transfer events
+    const unwatch = actions.watchTransferToken(client, {
+      token: address,
+      onTransfer: (args, log) => {
+        receivedTransfers.push({ args, log })
+      },
+    })
+
+    try {
+      // Transfer to account2
+      const hash1 = await actions.transferToken(client, {
+        token: address,
+        to: account2.address,
+        amount: parseEther('100'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Transfer to account3
+      const hash2 = await actions.transferToken(client, {
+        token: address,
+        to: account3.address,
+        amount: parseEther('50'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      await setTimeout(100)
+
+      expect(receivedTransfers).toHaveLength(2)
+
+      expect(receivedTransfers.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 100000000000000000000n,
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "to": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+      expect(receivedTransfers.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 50000000000000000000n,
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "to": "0x98e503f35D0a019cB0a251aD243a4cCFCF371F46",
+        }
+      `)
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+
+  test('behavior: filter by to address', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Filtered Transfer Token',
+      symbol: 'FXFER',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    {
+      // Grant issuer role
+      const hash = await actions.grantTokenRoles(client, {
+        token: address,
+        roles: ['issuer'],
+        to: client.account.address,
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+
+    {
+      // Mint tokens
+      const hash = await actions.mintToken(client, {
+        token: address,
+        to: client.account.address,
+        amount: parseEther('500'),
+      })
+      await waitForTransactionReceipt(client, { hash })
+    }
+
+    const receivedTransfers: Array<{
+      args: actions.watchTransferToken.Args
+      log: actions.watchTransferToken.Log
+    }> = []
+
+    // Start watching for transfer events only to account2
+    const unwatch = actions.watchTransferToken(client, {
+      token: address,
+      args: {
+        to: account2.address,
+      },
+      onTransfer: (args, log) => {
+        receivedTransfers.push({ args, log })
+      },
+    })
+
+    try {
+      // Transfer to account2 (should be captured)
+      const hash1 = await actions.transferToken(client, {
+        token: address,
+        to: account2.address,
+        amount: parseEther('100'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Transfer to account3 (should NOT be captured)
+      const hash2 = await actions.transferToken(client, {
+        token: address,
+        to: account3.address,
+        amount: parseEther('50'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      // Transfer to account2 again (should be captured)
+      const hash3 = await actions.transferToken(client, {
+        token: address,
+        to: account2.address,
+        amount: parseEther('75'),
+      })
+      await waitForTransactionReceipt(client, { hash: hash3 })
+
+      // Should only receive 2 events (to account2)
+      expect(receivedTransfers).toHaveLength(2)
+
+      expect(receivedTransfers.at(0)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 100000000000000000000n,
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "to": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+      expect(receivedTransfers.at(1)!.args).toMatchInlineSnapshot(`
+        {
+          "amount": 75000000000000000000n,
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "to": "0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650",
+        }
+      `)
+
+      // Verify all received transfers are to account2
+      for (const transfer of receivedTransfers) {
+        expect(transfer.args.to).toBe(account2.address)
+      }
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+})
+
 describe.skipIf(!!process.env.CI)('decorator', () => {
   const client2 = createClient({
     chain: tempoLocal,
@@ -1602,7 +2459,7 @@ describe.skipIf(!!process.env.CI)('decorator', () => {
         "type",
         "uid",
         "extend",
-        "approveTransferToken",
+        "approveToken",
         "burnBlockedToken",
         "burnToken",
         "changeTokenTransferPolicy",
@@ -1622,8 +2479,13 @@ describe.skipIf(!!process.env.CI)('decorator', () => {
         "setUserToken",
         "transferToken",
         "unpauseToken",
+        "watchApproveToken",
+        "watchBurnToken",
         "watchCreateToken",
         "watchMintToken",
+        "watchSetUserToken",
+        "watchTokenRole",
+        "watchTransferToken",
       ]
     `)
   })
