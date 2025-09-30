@@ -15,7 +15,19 @@ type TransferPolicy = ValueOf<typeof transferPolicy>;
  * Approves a spender to transfer TIP20 tokens on behalf of the caller.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.approveToken({
+ *   spender: '0x...',
+ *   amount: 100n,
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -37,7 +49,20 @@ export declare namespace approveToken {
  * Burns TIP20 tokens from a blocked address.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.burnBlockedToken({
+ *   from: '0x...',
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -59,7 +84,19 @@ export declare namespace burnBlockedToken {
  * Burns TIP20 tokens from the caller's balance.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.burnToken({
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -81,7 +118,19 @@ export declare namespace burnToken {
  * Changes the transfer policy ID for a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.changeTokenTransferPolicy({
+ *   token: '0x...',
+ *   policyId: 1n,
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -101,7 +150,20 @@ export declare namespace changeTokenTransferPolicy {
  * Creates a new TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const { hash, id, address } = await client.createToken({
+ *   name: 'My Token',
+ *   symbol: 'MTK',
+ *   currency: 'USD',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -133,7 +195,18 @@ export declare namespace createToken {
  * Gets TIP20 token allowance.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const allowance = await client.getTokenAllowance({
+ *   spender: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -153,7 +226,16 @@ export declare namespace getTokenAllowance {
  * Gets TIP20 token balance for an address.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const balance = await client.getTokenBalance()
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -171,7 +253,15 @@ export declare namespace getTokenBalance {
  * Gets TIP20 token metadata including name, symbol, currency, decimals, and total supply.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const metadata = await client.getTokenMetadata({
+ *   token: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -206,7 +296,16 @@ export declare namespace getTokenMetadata {
  * Gets the user's default fee token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const { address, id } = await client.getUserToken()
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -224,7 +323,20 @@ export declare namespace getUserToken {
  * Grants a role for a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.grantTokenRoles({
+ *   token: '0x...',
+ *   to: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -246,7 +358,20 @@ export declare namespace grantTokenRoles {
  * Mints TIP20 tokens to an address.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.mintToken({
+ *   to: '0x...',
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -270,7 +395,18 @@ export declare namespace mintToken {
  * Pauses a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.pauseToken({
+ *   token: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -288,7 +424,22 @@ export declare namespace pauseToken {
  * Approves a spender using a signed permit.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.permitToken({
+ *   owner: '0x...',
+ *   spender: '0x...',
+ *   value: 100n,
+ *   deadline: 1234567890n,
+ *   signature: { r: 0n, s: 0n, yParity: 0 },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -316,7 +467,19 @@ export declare namespace permitToken {
  * Renounces a role for a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.renounceTokenRoles({
+ *   token: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -336,7 +499,20 @@ export declare namespace renounceTokenRoles {
  * Revokes a role for a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.revokeTokenRoles({
+ *   token: '0x...',
+ *   from: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -358,7 +534,19 @@ export declare namespace revokeTokenRoles {
  * Sets the supply cap for a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.setTokenSupplyCap({
+ *   token: '0x...',
+ *   supplyCap: 1000000n,
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -378,7 +566,20 @@ export declare namespace setTokenSupplyCap {
  * Sets the admin role for a specific role in a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.setTokenRoleAdmin({
+ *   token: '0x...',
+ *   role: 'minter',
+ *   adminRole: 'admin',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -400,7 +601,18 @@ export declare namespace setTokenRoleAdmin {
  * Sets the user's default fee token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.setUserToken({
+ *   token: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -418,7 +630,19 @@ export declare namespace setUserToken {
  * Transfers TIP20 tokens to another address.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.transferToken({
+ *   to: '0x...',
+ *   amount: 100n,
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -444,7 +668,18 @@ export declare namespace transferToken {
  * Unpauses a TIP20 token.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createTempoClient({
+ *   account: privateKeyToAccount('0x...')
+ * })
+ *
+ * const hash = await client.unpauseToken({
+ *   token: '0x...',
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -462,7 +697,17 @@ export declare namespace unpauseToken {
  * Watches for TIP20 token approval events.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchApproveToken({
+ *   onApproval: (args, log) => {
+ *     console.log('Approval:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -486,7 +731,17 @@ export declare namespace watchApproveToken {
  * Watches for TIP20 token burn events.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchBurnToken({
+ *   onBurn: (args, log) => {
+ *     console.log('Burn:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -510,7 +765,17 @@ export declare namespace watchBurnToken {
  * Watches for new TIP20 tokens created.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchCreateToken({
+ *   onTokenCreated: (args, log) => {
+ *     console.log('Token created:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -532,7 +797,17 @@ export declare namespace watchCreateToken {
  * Watches for TIP20 token mint events.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchMintToken({
+ *   onMint: (args, log) => {
+ *     console.log('Mint:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -556,7 +831,17 @@ export declare namespace watchMintToken {
  * Watches for user token set events.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchSetUserToken({
+ *   onUserTokenSet: (args, log) => {
+ *     console.log('User token set:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -578,7 +863,17 @@ export declare namespace watchSetUserToken {
  * Watches for TIP20 token role admin updates.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchTokenAdminRole({
+ *   onRoleAdminUpdated: (args, log) => {
+ *     console.log('Role admin updated:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -602,7 +897,17 @@ export declare namespace watchTokenAdminRole {
  * Watches for TIP20 token role membership updates.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchTokenRole({
+ *   onRoleUpdated: (args, log) => {
+ *     console.log('Role updated:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -629,7 +934,17 @@ export declare namespace watchTokenRole {
  * Watches for TIP20 token transfer events.
  *
  * @example
- * TODO
+ * ```ts
+ * import { createTempoClient } from 'tempo/viem'
+ *
+ * const client = createTempoClient()
+ *
+ * const unwatch = client.watchTransferToken({
+ *   onTransfer: (args, log) => {
+ *     console.log('Transfer:', args)
+ *   },
+ * })
+ * ```
  *
  * @param client - Client.
  * @param parameters - Parameters.
@@ -654,7 +969,19 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Approves a spender to transfer TIP20 tokens on behalf of the caller.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.approveToken({
+     *   spender: '0x...',
+     *   amount: 100n,
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -665,7 +992,20 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Burns TIP20 tokens from a blocked address.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.burnBlockedToken({
+     *   from: '0x...',
+     *   amount: 100n,
+     *   token: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -676,7 +1016,19 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Burns TIP20 tokens from the caller's balance.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.burnToken({
+     *   amount: 100n,
+     *   token: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -687,7 +1039,19 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Changes the transfer policy ID for a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.changeTokenTransferPolicy({
+     *   token: '0x...',
+     *   policyId: 1n,
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -698,7 +1062,20 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Creates a new TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const { hash, id, address } = await client.createToken({
+     *   name: 'My Token',
+     *   symbol: 'MTK',
+     *   currency: 'USD',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -709,7 +1086,18 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Gets TIP20 token allowance.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const allowance = await client.getTokenAllowance({
+     *   spender: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -720,7 +1108,16 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Gets TIP20 token balance for an address.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const balance = await client.getTokenBalance()
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -731,7 +1128,15 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Gets TIP20 token metadata including name, symbol, currency, decimals, and total supply.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const metadata = await client.getTokenMetadata({
+     *   token: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -742,7 +1147,16 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Gets the user's default fee token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const { address, id } = await client.getUserToken()
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -753,7 +1167,20 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Grants a role for a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.grantTokenRoles({
+     *   token: '0x...',
+     *   to: '0x...',
+     *   roles: ['minter'],
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -764,7 +1191,20 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Mints TIP20 tokens to an address.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.mintToken({
+     *   to: '0x...',
+     *   amount: 100n,
+     *   token: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -775,7 +1215,18 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Pauses a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.pauseToken({
+     *   token: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -786,7 +1237,22 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Approves a spender using a signed permit.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.permitToken({
+     *   owner: '0x...',
+     *   spender: '0x...',
+     *   value: 100n,
+     *   deadline: 1234567890n,
+     *   signature: { r: 0n, s: 0n, yParity: 0 },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -797,7 +1263,19 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Renounces a role for a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.renounceTokenRoles({
+     *   token: '0x...',
+     *   roles: ['minter'],
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -808,7 +1286,20 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Revokes a role for a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.revokeTokenRoles({
+     *   token: '0x...',
+     *   from: '0x...',
+     *   roles: ['minter'],
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -819,7 +1310,19 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Sets the supply cap for a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.setTokenSupplyCap({
+     *   token: '0x...',
+     *   supplyCap: 1000000n,
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -830,7 +1333,20 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Sets the admin role for a specific role in a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.setTokenRoleAdmin({
+     *   token: '0x...',
+     *   role: 'minter',
+     *   adminRole: 'admin',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -841,7 +1357,18 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Sets the user's default fee token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.setUserToken({
+     *   token: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -852,7 +1379,19 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Transfers TIP20 tokens to another address.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.transferToken({
+     *   to: '0x...',
+     *   amount: 100n,
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -863,7 +1402,18 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Unpauses a TIP20 token.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.unpauseToken({
+     *   token: '0x...',
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -874,7 +1424,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for TIP20 token approval events.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchApproveToken({
+     *   onApproval: (args, log) => {
+     *     console.log('Approval:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -885,7 +1445,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for TIP20 token burn events.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchBurnToken({
+     *   onBurn: (args, log) => {
+     *     console.log('Burn:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -896,7 +1466,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for new TIP20 tokens created.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchCreateToken({
+     *   onTokenCreated: (args, log) => {
+     *     console.log('Token created:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -907,7 +1487,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for TIP20 token mint events.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchMintToken({
+     *   onMint: (args, log) => {
+     *     console.log('Mint:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -918,7 +1508,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for user token set events.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchSetUserToken({
+     *   onUserTokenSet: (args, log) => {
+     *     console.log('User token set:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -929,7 +1529,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for TIP20 token role admin updates.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchTokenAdminRole({
+     *   onRoleAdminUpdated: (args, log) => {
+     *     console.log('Role admin updated:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -940,7 +1550,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for TIP20 token role membership updates.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchTokenRole({
+     *   onRoleUpdated: (args, log) => {
+     *     console.log('Role updated:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
@@ -951,7 +1571,17 @@ export type Decorator<chain extends Chain | undefined = Chain | undefined, accou
      * Watches for TIP20 token transfer events.
      *
      * @example
-     * TODO
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.watchTransferToken({
+     *   onTransfer: (args, log) => {
+     *     console.log('Transfer:', args)
+     *   },
+     * })
+     * ```
      *
      * @param client - Client.
      * @param parameters - Parameters.
