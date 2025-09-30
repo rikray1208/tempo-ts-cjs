@@ -30,6 +30,7 @@ const account3 = mnemonicToAccount(
 
 const client = createTempoClient({
   account,
+  chain: tempoLocal,
   pollingInterval: 100,
 }).extend(publicActions)
 
@@ -2096,6 +2097,62 @@ describe.skipIf(!!process.env.CI)('watchSetUserToken', () => {
       for (const set of receivedSets) {
         expect(set.args.user).toBe(account2.address)
       }
+    } finally {
+      if (unwatch) unwatch()
+    }
+  })
+})
+
+describe.skipIf(!!process.env.CI)('watchTokenAdminRole', () => {
+  test('default', async () => {
+    // Create a new token for testing
+    const { address, hash: createHash } = await actions.createToken(client, {
+      currency: 'USD',
+      name: 'Admin Role Watch Token',
+      symbol: 'ADMIN',
+    })
+    await waitForTransactionReceipt(client, { hash: createHash })
+
+    const receivedAdminUpdates: Array<{
+      args: actions.watchTokenAdminRole.Args
+      log: actions.watchTokenAdminRole.Log
+    }> = []
+
+    // Start watching for role admin updates
+    const unwatch = actions.watchTokenAdminRole(client, {
+      token: address,
+      onRoleAdminUpdated: (args, log) => {
+        receivedAdminUpdates.push({ args, log })
+      },
+    })
+
+    try {
+      // Set role admin for issuer role
+      const hash1 = await actions.setTokenRoleAdmin(client, {
+        token: address,
+        role: 'issuer',
+        adminRole: 'pause',
+      })
+      await waitForTransactionReceipt(client, { hash: hash1 })
+
+      // Set role admin for pause role
+      const hash2 = await actions.setTokenRoleAdmin(client, {
+        token: address,
+        role: 'pause',
+        adminRole: 'unpause',
+      })
+      await waitForTransactionReceipt(client, { hash: hash2 })
+
+      await setTimeout(100)
+
+      expect(receivedAdminUpdates).toHaveLength(2)
+
+      expect(receivedAdminUpdates.at(0)!.args.sender).toBe(
+        client.account.address,
+      )
+      expect(receivedAdminUpdates.at(1)!.args.sender).toBe(
+        client.account.address,
+      )
     } finally {
       if (unwatch) unwatch()
     }

@@ -1549,6 +1549,62 @@ export namespace watchSetUserToken {
 }
 
 /**
+ * Watches for TIP20 token role admin updates.
+ *
+ * @example
+ * TODO
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns A function to unsubscribe from the event.
+ */
+export function watchTokenAdminRole<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: watchTokenAdminRole.Parameters,
+) {
+  const { onRoleAdminUpdated, token = usdAddress, ...rest } = parameters
+  return watchContractEvent(client, {
+    ...rest,
+    address: TokenId.toAddress(token),
+    abi: tip20Abi,
+    eventName: 'RoleAdminUpdated',
+    onLogs: (logs) => {
+      for (const log of logs) onRoleAdminUpdated(log.args, log)
+    },
+    strict: true,
+  })
+}
+
+export namespace watchTokenAdminRole {
+  export type Args = GetEventArgs<
+    typeof tip20Abi,
+    'RoleAdminUpdated',
+    { IndexedOnly: false; Required: true }
+  >
+
+  export type Log = viem_Log<
+    bigint,
+    number,
+    false,
+    ExtractAbiItem<typeof tip20Abi, 'RoleAdminUpdated'>,
+    true
+  >
+
+  export type Parameters = UnionOmit<
+    WatchContractEventParameters<typeof tip20Abi, 'RoleAdminUpdated', true>,
+    'abi' | 'address' | 'batch' | 'eventName' | 'onLogs' | 'strict'
+  > & {
+    /** Callback to invoke when a role admin is updated. */
+    onRoleAdminUpdated: (args: Args, log: Log) => void
+    /** Address or ID of the TIP20 token. @default `usdAddress` */
+    token?: TokenId.TokenIdOrAddress | undefined
+  }
+}
+
+/**
  * Watches for TIP20 token role membership updates.
  *
  * @example
@@ -1994,6 +2050,19 @@ export type Decorator<
    */
   watchSetUserToken: (parameters: watchSetUserToken.Parameters) => () => void
   /**
+   * Watches for TIP20 token role admin updates.
+   *
+   * @example
+   * TODO
+   *
+   * @param client - Client.
+   * @param parameters - Parameters.
+   * @returns A function to unsubscribe from the event.
+   */
+  watchTokenAdminRole: (
+    parameters: watchTokenAdminRole.Parameters,
+  ) => () => void
+  /**
    * Watches for TIP20 token role membership updates.
    *
    * @example
@@ -2055,6 +2124,8 @@ export function decorator() {
       watchCreateToken: (parameters) => watchCreateToken(client, parameters),
       watchMintToken: (parameters) => watchMintToken(client, parameters),
       watchSetUserToken: (parameters) => watchSetUserToken(client, parameters),
+      watchTokenAdminRole: (parameters) =>
+        watchTokenAdminRole(client, parameters),
       watchTokenRole: (parameters) => watchTokenRole(client, parameters),
       watchTransferToken: (parameters) =>
         watchTransferToken(client, parameters),
