@@ -1,16 +1,84 @@
-// TODO:
-// - add `.call` to namespaces
-// - add `.simulate` to namespaces
-// - add `.estimateGas` to namespaces
-// - add "watch" actions for events
-
 import type { Account, Chain, Client, Transport } from 'viem'
+import * as feeActions from './actions/fee.js'
 import * as tokenActions from './actions/token.js'
 
 export type Decorator<
   chain extends Chain | undefined = Chain | undefined,
   account extends Account | undefined = Account | undefined,
 > = {
+  fee: {
+    /**
+     * Gets the user's default fee token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const { address, id } = await client.token.getUserToken()
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction hash.
+     */
+    getUserToken: (
+      ...parameters: account extends Account
+        ? [feeActions.getUserToken.Parameters<account>] | []
+        : [feeActions.getUserToken.Parameters<account>]
+    ) => Promise<feeActions.getUserToken.ReturnType>
+    /**
+     * Sets the user's default fee token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const hash = await client.token.setUserToken({
+     *   token: '0x...',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction hash.
+     */
+    setUserToken: (
+      parameters: feeActions.setUserToken.Parameters<chain, account>,
+    ) => Promise<feeActions.setUserToken.ReturnType>
+    /**
+     * Watches for user token set events.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     *
+     * const client = createTempoClient()
+     *
+     * const unwatch = client.token.watchSetUserToken({
+     *   onUserTokenSet: (args, log) => {
+     *     console.log('User token set:', args)
+     *   },
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns A function to unsubscribe from the event.
+     */
+    watchSetUserToken: (
+      parameters: feeActions.watchSetUserToken.Parameters,
+    ) => () => void
+  }
   token: {
     /**
      * Approves a spender to transfer TIP20 tokens on behalf of the caller.
@@ -208,30 +276,6 @@ export type Decorator<
     getMetadata: (
       parameters: tokenActions.getMetadata.Parameters,
     ) => Promise<tokenActions.getMetadata.ReturnType>
-    /**
-     * Gets the user's default fee token.
-     *
-     * @example
-     * ```ts
-     * import { createTempoClient } from 'tempo/viem'
-     * import { privateKeyToAccount } from 'viem/accounts'
-     *
-     * const client = createTempoClient({
-     *   account: privateKeyToAccount('0x...')
-     * })
-     *
-     * const { address, id } = await client.token.getUserToken()
-     * ```
-     *
-     * @param client - Client.
-     * @param parameters - Parameters.
-     * @returns The transaction hash.
-     */
-    getUserToken: (
-      ...parameters: account extends Account
-        ? [tokenActions.getUserToken.Parameters<account>] | []
-        : [tokenActions.getUserToken.Parameters<account>]
-    ) => Promise<tokenActions.getUserToken.ReturnType>
     /**
      * Grants a role for a TIP20 token.
      *
@@ -439,30 +483,6 @@ export type Decorator<
       parameters: tokenActions.setRoleAdmin.Parameters<chain, account>,
     ) => Promise<tokenActions.setRoleAdmin.ReturnType>
     /**
-     * Sets the user's default fee token.
-     *
-     * @example
-     * ```ts
-     * import { createTempoClient } from 'tempo/viem'
-     * import { privateKeyToAccount } from 'viem/accounts'
-     *
-     * const client = createTempoClient({
-     *   account: privateKeyToAccount('0x...')
-     * })
-     *
-     * const hash = await client.token.setUserToken({
-     *   token: '0x...',
-     * })
-     * ```
-     *
-     * @param client - Client.
-     * @param parameters - Parameters.
-     * @returns The transaction hash.
-     */
-    setUserToken: (
-      parameters: tokenActions.setUserToken.Parameters<chain, account>,
-    ) => Promise<tokenActions.setUserToken.ReturnType>
-    /**
      * Transfers TIP20 tokens to another address.
      *
      * @example
@@ -598,29 +618,6 @@ export type Decorator<
      */
     watchMint: (parameters: tokenActions.watchMint.Parameters) => () => void
     /**
-     * Watches for user token set events.
-     *
-     * @example
-     * ```ts
-     * import { createTempoClient } from 'tempo/viem'
-     *
-     * const client = createTempoClient()
-     *
-     * const unwatch = client.token.watchSetUserToken({
-     *   onUserTokenSet: (args, log) => {
-     *     console.log('User token set:', args)
-     *   },
-     * })
-     * ```
-     *
-     * @param client - Client.
-     * @param parameters - Parameters.
-     * @returns A function to unsubscribe from the event.
-     */
-    watchSetUserToken: (
-      parameters: tokenActions.watchSetUserToken.Parameters,
-    ) => () => void
-    /**
      * Watches for TIP20 token role admin updates.
      *
      * @example
@@ -699,6 +696,16 @@ export function decorator() {
     client: Client<transport, chain, account>,
   ): Decorator<chain, account> => {
     return {
+      fee: {
+        // @ts-expect-error
+        getUserToken: (parameters) =>
+          // @ts-expect-error
+          feeActions.getUserToken(client, parameters),
+        setUserToken: (parameters) =>
+          feeActions.setUserToken(client, parameters),
+        watchSetUserToken: (parameters) =>
+          feeActions.watchSetUserToken(client, parameters),
+      },
       token: {
         approve: (parameters) => tokenActions.approve(client, parameters),
         burnBlocked: (parameters) =>
@@ -713,10 +720,6 @@ export function decorator() {
         getBalance: (parameters) => tokenActions.getBalance(client, parameters),
         getMetadata: (parameters) =>
           tokenActions.getMetadata(client, parameters),
-        // @ts-expect-error
-        getUserToken: (parameters) =>
-          // @ts-expect-error
-          tokenActions.getUserToken(client, parameters),
         grantRoles: (parameters) => tokenActions.grantRoles(client, parameters),
         mint: (parameters) => tokenActions.mint(client, parameters),
         pause: (parameters) => tokenActions.pause(client, parameters),
@@ -729,8 +732,6 @@ export function decorator() {
           tokenActions.setSupplyCap(client, parameters),
         setRoleAdmin: (parameters) =>
           tokenActions.setRoleAdmin(client, parameters),
-        setUserToken: (parameters) =>
-          tokenActions.setUserToken(client, parameters),
         transfer: (parameters) => tokenActions.transfer(client, parameters),
         unpause: (parameters) => tokenActions.unpause(client, parameters),
         watchApprove: (parameters) =>
@@ -739,8 +740,6 @@ export function decorator() {
         watchCreate: (parameters) =>
           tokenActions.watchCreate(client, parameters),
         watchMint: (parameters) => tokenActions.watchMint(client, parameters),
-        watchSetUserToken: (parameters) =>
-          tokenActions.watchSetUserToken(client, parameters),
         watchAdminRole: (parameters) =>
           tokenActions.watchAdminRole(client, parameters),
         watchRole: (parameters) => tokenActions.watchRole(client, parameters),
