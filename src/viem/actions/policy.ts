@@ -18,6 +18,7 @@ import type {
   WriteContractParameters,
   WriteContractReturnType,
 } from 'viem'
+import { parseAccount } from 'viem/accounts'
 import {
   readContract,
   simulateContract,
@@ -27,7 +28,6 @@ import {
 import type { Compute } from '../../internal/types.js'
 import { tip403RegistryAbi } from '../abis.js'
 import { tip403RegistryAddress } from '../addresses.js'
-import { parseAccount } from 'viem/accounts'
 
 export type PolicyType = 'whitelist' | 'blacklist'
 
