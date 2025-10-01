@@ -315,7 +315,7 @@ describe.skipIf(!!process.env.CI)('watchRebalanceSwap', () => {
 })
 
 describe.skipIf(!!process.env.CI)('watchMint', () => {
-  test.only('default', async () => {
+  test('default', async () => {
     // Create a new token for testing
     const { hash: createHash, address: tokenAddress } =
       await actions.token.create(client, {
