@@ -1,10 +1,12 @@
 import type * as Authorization from 'ox/Authorization'
 import type * as Errors from 'ox/Errors'
+import type * as Calls from 'ox/erc7821/Calls'
 import type * as Hex from 'ox/Hex'
 import * as ox_TransactionRequest from 'ox/TransactionRequest'
-import type { Compute } from '../internal/types.js'
+import type { Compute, OneOf, UnionOmit } from '../internal/types.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
+import * as Execute from 'ox/erc7821/Execute'
 
 /** A Transaction Request that is generic to all transaction types, as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423). */
 export type TransactionRequest<
@@ -12,9 +14,22 @@ export type TransactionRequest<
   numberType = number,
   type extends string = string,
 > = Compute<
-  ox_TransactionRequest.TransactionRequest<bigintType, numberType, type> & {
-    feeToken?: TokenId.TokenIdOrAddress | undefined
-  }
+  OneOf<
+    | (ox_TransactionRequest.TransactionRequest<
+        bigintType,
+        numberType,
+        type
+      > & {
+        feeToken?: TokenId.TokenIdOrAddress | undefined
+      })
+    | (UnionOmit<
+        ox_TransactionRequest.TransactionRequest<bigintType, numberType, type>,
+        'data' | 'to' | 'value'
+      > & {
+        calls?: readonly Calls.Call[]
+        feeToken?: TokenId.TokenIdOrAddress | undefined
+      })
+  >
 >
 
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
@@ -68,6 +83,13 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (typeof request.feeToken !== 'undefined') {
     request_rpc.feeToken = TokenId.toAddress(request.feeToken)
     request_rpc.type = Transaction.toRpcType.feeToken
+  }
+  if (request.calls && request.from) {
+    delete request_rpc.to
+    delete request_rpc.value
+    delete request_rpc.data
+    request_rpc.to = request.from
+    request_rpc.data = Execute.encodeData(request.calls)
   }
   return request_rpc
 }

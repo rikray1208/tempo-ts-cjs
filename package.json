@@ -30,7 +30,7 @@
 		}
 	},
 	"peerDependencies": {
-		"ox": "^0",
+		"ox": ">=0.9.8",
 		"prool": "^0",
 		"viem": "^2"
 	},
@@ -39,6 +39,9 @@
 			"optional": true
 		},
 		"prool": {
+			"optional": true
+		},
+		"viem": {
 			"optional": true
 		}
 	},
@@ -54,7 +57,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.4",
 		"@types/bun": "latest",
-		"ox": "latest",
+		"ox": "^0.9.8",
 		"prool": "latest",
 		"simple-git-hooks": "^2.13.1",
 		"typescript": "^5.9.2",
