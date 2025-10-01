@@ -255,36 +255,7 @@ export declare const tempo: {
         };
         transactionRequest: {
             exclude: [] | undefined;
-            format: (args: {
-                accessList?: readonly {
-                    address: import("ox/Address").Address;
-                    storageKeys: readonly import("ox/Hex").Hex[];
-                }[] | undefined;
-                authorizationList?: readonly {
-                    address: import("ox/Address").Address;
-                    chainId: number;
-                    nonce: bigint;
-                    r: bigint;
-                    s: bigint;
-                    yParity: number;
-                }[] | undefined;
-                blobVersionedHashes?: readonly import("ox/Hex").Hex[];
-                blobs?: readonly `0x${string}`[] | undefined;
-                chainId?: number | undefined;
-                data?: `0x${string}` | undefined;
-                input?: `0x${string}` | undefined;
-                from?: `0x${string}` | undefined;
-                gas?: bigint | undefined;
-                gasPrice?: bigint | undefined;
-                maxFeePerBlobGas?: bigint | undefined;
-                maxFeePerGas?: bigint | undefined;
-                maxPriorityFeePerGas?: bigint | undefined;
-                nonce?: bigint | undefined;
-                to?: `0x${string}` | null | undefined;
-                type?: string | undefined;
-                value?: bigint | undefined;
-                feeToken?: import("./ox/TokenId.js").TokenIdOrAddress | undefined;
-            }) => {
+            format: (args: import("./ox/TransactionRequest.js").TransactionRequest<bigint, number, string>) => ({
                 accessList?: readonly {
                     address: import("ox/Address").Address;
                     storageKeys: readonly import("ox/Hex").Hex[];
@@ -313,7 +284,38 @@ export declare const tempo: {
                 type?: string | undefined;
                 value?: `0x${string}` | undefined;
                 feeToken?: import("./ox/TokenId.js").TokenIdOrAddress | undefined;
-            } & {};
+                calls?: undefined;
+            } | {
+                chainId?: `0x${string}` | undefined;
+                from?: `0x${string}` | undefined;
+                input?: `0x${string}` | undefined;
+                gas?: `0x${string}` | undefined;
+                nonce?: `0x${string}` | undefined;
+                type?: string | undefined;
+                gasPrice?: `0x${string}` | undefined;
+                accessList?: readonly {
+                    address: import("ox/Address").Address;
+                    storageKeys: readonly import("ox/Hex").Hex[];
+                }[] | undefined;
+                maxFeePerGas?: `0x${string}` | undefined;
+                maxPriorityFeePerGas?: `0x${string}` | undefined;
+                blobVersionedHashes?: readonly import("ox/Hex").Hex[];
+                maxFeePerBlobGas?: `0x${string}` | undefined;
+                authorizationList?: readonly {
+                    address: import("ox/Address").Address;
+                    chainId: `0x${string}`;
+                    nonce: `0x${string}`;
+                    r: `0x${string}`;
+                    s: `0x${string}`;
+                    yParity: `0x${string}`;
+                }[] | undefined;
+                blobs?: readonly `0x${string}`[] | undefined;
+                calls?: readonly import("ox/erc7821/Calls").Call[];
+                feeToken?: import("./ox/TokenId.js").TokenIdOrAddress | undefined;
+                data?: undefined;
+                to?: undefined;
+                value?: undefined;
+            }) & {};
             type: "transactionRequest";
         };
     };
@@ -578,36 +580,7 @@ export declare const tempoLocal: {
         };
         transactionRequest: {
             exclude: [] | undefined;
-            format: (args: {
-                accessList?: readonly {
-                    address: import("ox/Address").Address;
-                    storageKeys: readonly import("ox/Hex").Hex[];
-                }[] | undefined;
-                authorizationList?: readonly {
-                    address: import("ox/Address").Address;
-                    chainId: number;
-                    nonce: bigint;
-                    r: bigint;
-                    s: bigint;
-                    yParity: number;
-                }[] | undefined;
-                blobVersionedHashes?: readonly import("ox/Hex").Hex[];
-                blobs?: readonly `0x${string}`[] | undefined;
-                chainId?: number | undefined;
-                data?: `0x${string}` | undefined;
-                input?: `0x${string}` | undefined;
-                from?: `0x${string}` | undefined;
-                gas?: bigint | undefined;
-                gasPrice?: bigint | undefined;
-                maxFeePerBlobGas?: bigint | undefined;
-                maxFeePerGas?: bigint | undefined;
-                maxPriorityFeePerGas?: bigint | undefined;
-                nonce?: bigint | undefined;
-                to?: `0x${string}` | null | undefined;
-                type?: string | undefined;
-                value?: bigint | undefined;
-                feeToken?: import("./ox/TokenId.js").TokenIdOrAddress | undefined;
-            }) => {
+            format: (args: import("./ox/TransactionRequest.js").TransactionRequest<bigint, number, string>) => ({
                 accessList?: readonly {
                     address: import("ox/Address").Address;
                     storageKeys: readonly import("ox/Hex").Hex[];
@@ -636,7 +609,38 @@ export declare const tempoLocal: {
                 type?: string | undefined;
                 value?: `0x${string}` | undefined;
                 feeToken?: import("./ox/TokenId.js").TokenIdOrAddress | undefined;
-            } & {};
+                calls?: undefined;
+            } | {
+                chainId?: `0x${string}` | undefined;
+                from?: `0x${string}` | undefined;
+                input?: `0x${string}` | undefined;
+                gas?: `0x${string}` | undefined;
+                nonce?: `0x${string}` | undefined;
+                type?: string | undefined;
+                gasPrice?: `0x${string}` | undefined;
+                accessList?: readonly {
+                    address: import("ox/Address").Address;
+                    storageKeys: readonly import("ox/Hex").Hex[];
+                }[] | undefined;
+                maxFeePerGas?: `0x${string}` | undefined;
+                maxPriorityFeePerGas?: `0x${string}` | undefined;
+                blobVersionedHashes?: readonly import("ox/Hex").Hex[];
+                maxFeePerBlobGas?: `0x${string}` | undefined;
+                authorizationList?: readonly {
+                    address: import("ox/Address").Address;
+                    chainId: `0x${string}`;
+                    nonce: `0x${string}`;
+                    r: `0x${string}`;
+                    s: `0x${string}`;
+                    yParity: `0x${string}`;
+                }[] | undefined;
+                blobs?: readonly `0x${string}`[] | undefined;
+                calls?: readonly import("ox/erc7821/Calls").Call[];
+                feeToken?: import("./ox/TokenId.js").TokenIdOrAddress | undefined;
+                data?: undefined;
+                to?: undefined;
+                value?: undefined;
+            }) & {};
             type: "transactionRequest";
         };
     };
