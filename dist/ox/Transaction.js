@@ -1,4 +1,8 @@
+import * as Hex from 'ox/Hex';
+import * as Secp256k1 from 'ox/Secp256k1';
+import * as Signature from 'ox/Signature';
 import * as ox_Transaction from 'ox/Transaction';
+import * as TransactionEnvelopeFeeToken from "./TransactionEnvelopeFeeToken.js";
 /** Type to RPC Type mapping. */
 export const toRpcType = {
     ...ox_Transaction.toRpcType,
@@ -49,6 +53,15 @@ export function fromRpc(transaction, _options = {}) {
         return null;
     const transaction_ = ox_Transaction.fromRpc(transaction);
     transaction_.type = fromRpcType[transaction.type];
+    if (transaction.feePayerSignature) {
+        transaction_.feePayerSignature = Signature.fromRpc(transaction.feePayerSignature);
+        transaction_.feePayerSignature.v = Signature.yParityToV(transaction_.feePayerSignature.yParity);
+        // TODO: remove once `feePayer` returned on `eth_getTxBy*`.
+        transaction_.feePayer = Secp256k1.recoverAddress({
+            payload: TransactionEnvelopeFeeToken.getSignPayload(transaction_, { feePayer: true }),
+            signature: transaction_.feePayerSignature,
+        });
+    }
     if (transaction.feeToken)
         transaction_.feeToken = transaction.feeToken;
     return transaction_;
@@ -94,6 +107,11 @@ export function toRpc(transaction, _options) {
     rpc.type = toRpcType[transaction.type];
     if (transaction.feeToken)
         rpc.feeToken = transaction.feeToken;
+    if (transaction.feePayerSignature) {
+        rpc.feePayerSignature = Signature.toRpc(transaction.feePayerSignature);
+        rpc.feePayerSignature.v = Hex.fromNumber(Signature.yParityToV(transaction.feePayerSignature?.yParity));
+        rpc.feePayer = transaction.feePayer;
+    }
     return rpc;
 }
 //# sourceMappingURL=Transaction.js.map

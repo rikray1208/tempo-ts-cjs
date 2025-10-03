@@ -2,7 +2,7 @@ import type * as AccessList from 'ox/AccessList';
 import type * as Address from 'ox/Address';
 import type * as Authorization from 'ox/Authorization';
 import type * as Errors from 'ox/Errors';
-import type * as Hex from 'ox/Hex';
+import * as Hex from 'ox/Hex';
 import * as ox_Transaction from 'ox/Transaction';
 import type { Compute, OneOf, UnionCompute } from "../internal/types.js";
 /**
@@ -23,6 +23,19 @@ export type FeeToken<pending extends boolean = false, bigintType = bigint, numbe
     authorizationList: Authorization.ListSigned<bigintType, numberType>;
     /** Fee token preference. */
     feeToken: Address.Address;
+    /** Fee payer address. */
+    feePayer?: Address.Address | undefined;
+    /** Fee payer signature. */
+    feePayerSignature?: {
+        /** ECDSA signature r. */
+        r: bigintType;
+        /** ECDSA signature s. */
+        s: bigintType;
+        /** ECDSA signature yParity. */
+        yParity: numberType;
+        /** @deprecated ECDSA signature v (for backwards compatibility). */
+        v?: numberType | undefined;
+    } | undefined;
     /** Effective gas price paid by the sender in wei. */
     gasPrice?: bigintType | undefined;
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */

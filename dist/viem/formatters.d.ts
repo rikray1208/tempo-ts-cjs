@@ -1,5 +1,4 @@
-import * as Transaction from "../ox/Transaction.js";
-import * as TransactionRequest from "../ox/TransactionRequest.js";
-export declare const formatTransaction: typeof Transaction.fromRpc;
-export declare const formatTransactionRequest: typeof TransactionRequest.toRpc;
+import { type Transaction, type TransactionRequest, type TransactionRequestRpc, type TransactionRpc } from "./transaction.js";
+export declare const formatTransaction: (transaction: TransactionRpc) => Transaction<bigint, number, boolean>;
+export declare const formatTransactionRequest: (r: TransactionRequest, action?: string | undefined) => TransactionRequestRpc;
 //# sourceMappingURL=formatters.d.ts.map

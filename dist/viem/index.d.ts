@@ -3,5 +3,5 @@ export * from "./chain.js";
 export * from "./client.js";
 export { decorator as tempoActions } from "./decorator.js";
 export * from "./formatters.js";
-export * from "./serializers.js";
+export * from "./transaction.js";
 //# sourceMappingURL=index.d.ts.map

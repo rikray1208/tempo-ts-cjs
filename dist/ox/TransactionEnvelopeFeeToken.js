@@ -4,6 +4,7 @@ import * as Authorization from 'ox/Authorization';
 import * as Hash from 'ox/Hash';
 import * as Hex from 'ox/Hex';
 import * as Rlp from 'ox/Rlp';
+import * as Secp256k1 from 'ox/Secp256k1';
 import * as Signature from 'ox/Signature';
 import * as TransactionEnvelope from 'ox/TransactionEnvelope';
 import * as TransactionEnvelopeEip1559 from 'ox/TransactionEnvelopeEip1559';
@@ -68,8 +69,8 @@ export function assert(envelope) {
  */
 export function deserialize(serialized) {
     const transactionArray = Rlp.toHex(Hex.slice(serialized, 1));
-    const [chainId, nonce, feeToken, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, accessList, authorizationList, data, yParity, r, s,] = transactionArray;
-    if (!(transactionArray.length === 11 || transactionArray.length === 14))
+    const [chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList, feeToken, feePayerSignature, yParity, r, s,] = transactionArray;
+    if (!(transactionArray.length === 12 || transactionArray.length === 15))
         throw new TransactionEnvelope.InvalidSerializedError({
             attributes: {
                 chainId,
@@ -83,6 +84,7 @@ export function deserialize(serialized) {
                 data,
                 accessList,
                 authorizationList,
+                feePayerSignature,
                 ...(transactionArray.length > 9
                     ? {
                         yParity,
@@ -118,6 +120,12 @@ export function deserialize(serialized) {
         transaction.accessList = AccessList.fromTupleList(accessList);
     if (authorizationList !== '0x' && (authorizationList?.length ?? 0) > 0)
         transaction.authorizationList = Authorization.fromTupleList(authorizationList);
+    if (feePayerSignature !== '0x' && feePayerSignature !== undefined) {
+        if (feePayerSignature === '0x00')
+            transaction.feePayerSignature = null;
+        else
+            transaction.feePayerSignature = Signature.fromTuple(feePayerSignature);
+    }
     const signature = r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined;
     if (signature)
         transaction = {
@@ -210,12 +218,15 @@ export function deserialize(serialized) {
  * @returns An Fee Token Transaction Envelope.
  */
 export function from(envelope, options = {}) {
-    const { signature } = options;
+    const { feePayerSignature, signature } = options;
     const envelope_ = (typeof envelope === 'string' ? deserialize(envelope) : envelope);
     assert(envelope_);
     return {
         ...envelope_,
         ...(signature ? Signature.from(signature) : {}),
+        ...(feePayerSignature
+            ? { feePayerSignature: Signature.from(feePayerSignature) }
+            : {}),
         type: 'feeToken',
     };
 }
@@ -250,8 +261,9 @@ export function from(envelope, options = {}) {
  * @param envelope - The transaction envelope to get the sign payload for.
  * @returns The sign payload.
  */
-export function getSignPayload(envelope) {
-    return hash(envelope, { presign: true });
+export function getSignPayload(envelope, options = {}) {
+    const { feePayer } = options;
+    return hash(envelope, { presign: feePayer ? 'feePayer' : true });
 }
 /**
  * Hashes a {@link ox#TransactionEnvelopeFeeToken.TransactionEnvelopeFeeToken}. This is the "transaction hash".
@@ -287,17 +299,29 @@ export function getSignPayload(envelope) {
  * @returns The hash of the transaction envelope.
  */
 export function hash(envelope, options = {}) {
-    const { presign } = options;
-    return Hash.keccak256(serialize({
+    const signer = (() => {
+        if (typeof options.presign === 'string' && options.presign === 'feePayer')
+            return 'feePayer';
+        if (options.presign === true)
+            return 'sender';
+        return undefined;
+    })();
+    const serialized = serialize({
         ...envelope,
-        ...(presign
+        ...(signer === 'feePayer'
+            ? {
+                feePayerSignature: null,
+            }
+            : {}),
+        ...(signer === 'sender'
             ? {
                 r: undefined,
                 s: undefined,
                 yParity: undefined,
             }
             : {}),
-    }));
+    });
+    return Hash.keccak256(signer === 'feePayer' ? Hex.slice(serialized, 1) : serialized);
 }
 /**
  * Serializes a {@link ox#TransactionEnvelopeFeeToken.TransactionEnvelopeFeeToken}.
@@ -358,20 +382,46 @@ export function serialize(envelope, options = {}) {
     assert(envelope);
     const accessTupleList = AccessList.toTupleList(accessList);
     const authorizationTupleList = Authorization.toTupleList(authorizationList);
+    const feePayerSignature = options.feePayerSignature ?? envelope.feePayerSignature;
     const signature = Signature.extract(options.signature || envelope);
+    const feePayerSignatureOrSender = (() => {
+        if (feePayerSignature)
+            return Signature.toTuple(feePayerSignature);
+        // If `feePayerSignature` is null, likely we are serializing the transaction for
+        // purposes of the presence of a fee payer.
+        if (feePayerSignature === null) {
+            // If the sender has signed the transaction, this means it is now the fee payer's
+            // turn to sign. They will need to sign over the sender address in this RLP slot,
+            // so we will recover the sender address.
+            if (signature)
+                return Secp256k1.recoverAddress({
+                    payload: getSignPayload(envelope),
+                    signature,
+                });
+            // If the sender is signing, and this transaction will have a fee payer, then
+            // the sender will need to sign over a zero byte in this RLP slot.
+            return '0x00';
+        }
+        return '0x';
+    })();
     const serialized = [
         Hex.fromNumber(chainId),
         nonce ? Hex.fromNumber(nonce) : '0x',
-        typeof feeToken !== 'undefined' ? TokenId.toAddress(feeToken) : '0x',
         maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
         maxFeePerGas ? Hex.fromNumber(maxFeePerGas) : '0x',
         gas ? Hex.fromNumber(gas) : '0x',
         to ?? '0x',
         value ? Hex.fromNumber(value) : '0x',
+        data ?? input ?? '0x',
         accessTupleList,
         authorizationTupleList,
-        data ?? input ?? '0x',
-        ...(signature ? Signature.toTuple(signature) : []),
+        typeof feeToken === 'bigint' || typeof feeToken === 'string'
+            ? TokenId.toAddress(feeToken)
+            : '0x',
+        feePayerSignatureOrSender,
+        ...(signature && feePayerSignature !== null
+            ? Signature.toTuple(signature)
+            : []),
     ];
     return Hex.concat(serializedType, Rlp.fromHex(serialized));
 }

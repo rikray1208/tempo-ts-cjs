@@ -47,10 +47,8 @@ import * as Transaction from "./Transaction.js";
  */
 export function toRpc(request) {
     const request_rpc = ox_TransactionRequest.toRpc(request);
-    if (typeof request.feeToken !== 'undefined') {
+    if (typeof request.feeToken !== 'undefined')
         request_rpc.feeToken = TokenId.toAddress(request.feeToken);
-        request_rpc.type = Transaction.toRpcType.feeToken;
-    }
     if (request.calls && request.from) {
         delete request_rpc.to;
         delete request_rpc.value;
@@ -58,6 +56,10 @@ export function toRpc(request) {
         request_rpc.to = request.from;
         request_rpc.data = Execute.encodeData(request.calls);
     }
+    if (request.calls ||
+        typeof request.feeToken !== 'undefined' ||
+        request.type === 'feeToken')
+        request_rpc.type = Transaction.toRpcType.feeToken;
     return request_rpc;
 }
 //# sourceMappingURL=TransactionRequest.js.map

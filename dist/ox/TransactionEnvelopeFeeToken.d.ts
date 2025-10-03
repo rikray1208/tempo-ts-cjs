@@ -14,6 +14,8 @@ export type TransactionEnvelopeFeeToken<signed extends boolean = boolean, bigint
     accessList?: AccessList.AccessList | undefined;
     /** EIP-7702 Authorization List. */
     authorizationList?: Authorization.ListSigned<bigintType, numberType> | undefined;
+    /** Fee payer signature. */
+    feePayerSignature?: Signature.Signature<true, bigintType, numberType> | null | undefined;
     /** Fee token preference. Address or ID of the TIP-20 token. */
     feeToken?: TokenId.TokenIdOrAddress | undefined;
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
@@ -164,6 +166,7 @@ export declare namespace deserialize {
 export declare function from<const envelope extends UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Serialized, const signature extends Signature.Signature | undefined = undefined>(envelope: envelope | UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Serialized, options?: from.Options<signature>): from.ReturnType<envelope, signature>;
 export declare namespace from {
     type Options<signature extends Signature.Signature | undefined = undefined> = {
+        feePayerSignature?: Signature.Signature | undefined;
         signature?: signature | Signature.Signature | undefined;
     };
     type ReturnType<envelope extends UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Hex.Hex = TransactionEnvelopeFeeToken | Hex.Hex, signature extends Signature.Signature | undefined = undefined> = Compute<envelope extends Hex.Hex ? TransactionEnvelopeFeeToken : Assign<envelope, (signature extends Signature.Signature ? Readonly<signature> : {}) & {
@@ -202,8 +205,16 @@ export declare namespace from {
  * @param envelope - The transaction envelope to get the sign payload for.
  * @returns The sign payload.
  */
-export declare function getSignPayload(envelope: TransactionEnvelopeFeeToken): getSignPayload.ReturnType;
+export declare function getSignPayload(envelope: TransactionEnvelopeFeeToken, options?: getSignPayload.Options): getSignPayload.ReturnType;
 export declare namespace getSignPayload {
+    type Options = {
+        /**
+         * Whether to get the sign payload for the **fee payer** to sign.
+         *
+         * @default false
+         */
+        feePayer?: boolean | undefined;
+    };
     type ReturnType = Hex.Hex;
     type ErrorType = hash.ErrorType | Errors.GlobalErrorType;
 }
@@ -240,11 +251,20 @@ export declare namespace getSignPayload {
  * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
-export declare function hash<presign extends boolean = false>(envelope: TransactionEnvelopeFeeToken<presign extends true ? false : true>, options?: hash.Options<presign>): hash.ReturnType;
+export declare function hash<presign extends boolean | 'feePayer' = false>(envelope: TransactionEnvelopeFeeToken<presign extends true ? false : true>, options?: hash.Options<presign>): hash.ReturnType;
 export declare namespace hash {
-    type Options<presign extends boolean = false> = {
-        /** Whether to hash this transaction for signing. @default false */
-        presign?: presign | boolean | undefined;
+    type Options<presign extends boolean | 'feePayer' = false> = {
+        /**
+         * Whether to hash this transaction for signing, and optionally
+         * who to presign for.
+         *
+         * - If `true`, the transaction will be hashed for _sender_ to sign.
+         * - If `'feePayer'`, the transaction will be hashed for _fee payer_ to sign.
+         * - If `false`, the transaction will _not_ be hashed for signing.
+         *
+         * @default false
+         */
+        presign?: presign | boolean | 'feePayer' | undefined;
     };
     type ReturnType = Hex.Hex;
     type ErrorType = Hash.keccak256.ErrorType | serialize.ErrorType | Errors.GlobalErrorType;
@@ -306,7 +326,9 @@ export declare namespace hash {
 export declare function serialize(envelope: PartialBy<TransactionEnvelopeFeeToken, 'type'>, options?: serialize.Options): Serialized;
 export declare namespace serialize {
     type Options = {
-        /** Signature to append to the serialized Transaction Envelope. */
+        /** Fee payer signature to append to the serialized Transaction Envelope. */
+        feePayerSignature?: Signature.Signature | null | undefined;
+        /** Sender signature to append to the serialized Transaction Envelope. */
         signature?: Signature.Signature | undefined;
     };
     type ErrorType = assert.ErrorType | Hex.fromNumber.ErrorType | Signature.toTuple.ErrorType | Hex.concat.ErrorType | Rlp.fromHex.ErrorType | Errors.GlobalErrorType;
