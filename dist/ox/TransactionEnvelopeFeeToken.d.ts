@@ -327,7 +327,7 @@ export declare function serialize(envelope: PartialBy<TransactionEnvelopeFeeToke
 export declare namespace serialize {
     type Options = {
         /** Fee payer signature to append to the serialized Transaction Envelope. */
-        feePayerSignature?: Signature.Signature | null | undefined;
+        feePayerSignature?: Signature.Signature | '0x00' | null | undefined;
         /** Sender signature to append to the serialized Transaction Envelope. */
         signature?: Signature.Signature | undefined;
     };

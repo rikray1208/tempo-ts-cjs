@@ -69,7 +69,7 @@ export function assert(envelope) {
  */
 export function deserialize(serialized) {
     const transactionArray = Rlp.toHex(Hex.slice(serialized, 1));
-    const [chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList, feeToken, feePayerSignature, yParity, r, s,] = transactionArray;
+    const [chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList, feeToken, feePayerSignatureOrSender, yParity, r, s,] = transactionArray;
     if (!(transactionArray.length === 12 || transactionArray.length === 15))
         throw new TransactionEnvelope.InvalidSerializedError({
             attributes: {
@@ -84,7 +84,7 @@ export function deserialize(serialized) {
                 data,
                 accessList,
                 authorizationList,
-                feePayerSignature,
+                feePayerSignatureOrSender,
                 ...(transactionArray.length > 9
                     ? {
                         yParity,
@@ -120,11 +120,13 @@ export function deserialize(serialized) {
         transaction.accessList = AccessList.fromTupleList(accessList);
     if (authorizationList !== '0x' && (authorizationList?.length ?? 0) > 0)
         transaction.authorizationList = Authorization.fromTupleList(authorizationList);
-    if (feePayerSignature !== '0x' && feePayerSignature !== undefined) {
-        if (feePayerSignature === '0x00')
+    if (feePayerSignatureOrSender !== '0x' &&
+        feePayerSignatureOrSender !== undefined) {
+        if (feePayerSignatureOrSender === '0x00' ||
+            Address.validate(feePayerSignatureOrSender))
             transaction.feePayerSignature = null;
         else
-            transaction.feePayerSignature = Signature.fromTuple(feePayerSignature);
+            transaction.feePayerSignature = Signature.fromTuple(feePayerSignatureOrSender);
     }
     const signature = r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined;
     if (signature)
@@ -299,21 +301,24 @@ export function getSignPayload(envelope, options = {}) {
  * @returns The hash of the transaction envelope.
  */
 export function hash(envelope, options = {}) {
-    const signer = (() => {
-        if (typeof options.presign === 'string' && options.presign === 'feePayer')
-            return 'feePayer';
+    const excludes = (() => {
+        if (typeof options.presign === 'string' && options.presign === 'feePayer') {
+            if (envelope.r && envelope.s)
+                return ['feePayerSignature'];
+            return ['signature', 'feePayerSignature'];
+        }
         if (options.presign === true)
-            return 'sender';
+            return ['signature'];
         return undefined;
     })();
     const serialized = serialize({
         ...envelope,
-        ...(signer === 'feePayer'
+        ...(excludes?.includes('feePayerSignature')
             ? {
                 feePayerSignature: null,
             }
             : {}),
-        ...(signer === 'sender'
+        ...(excludes?.includes('signature')
             ? {
                 r: undefined,
                 s: undefined,
@@ -321,7 +326,9 @@ export function hash(envelope, options = {}) {
             }
             : {}),
     });
-    return Hash.keccak256(signer === 'feePayer' ? Hex.slice(serialized, 1) : serialized);
+    return Hash.keccak256(excludes?.length === 1 && excludes[0] === 'feePayerSignature'
+        ? Hex.slice(serialized, 1)
+        : serialized);
 }
 /**
  * Serializes a {@link ox#TransactionEnvelopeFeeToken.TransactionEnvelopeFeeToken}.
@@ -385,6 +392,8 @@ export function serialize(envelope, options = {}) {
     const feePayerSignature = options.feePayerSignature ?? envelope.feePayerSignature;
     const signature = Signature.extract(options.signature || envelope);
     const feePayerSignatureOrSender = (() => {
+        if (feePayerSignature === '0x00')
+            return '0x00';
         if (feePayerSignature)
             return Signature.toTuple(feePayerSignature);
         // If `feePayerSignature` is null, likely we are serializing the transaction for

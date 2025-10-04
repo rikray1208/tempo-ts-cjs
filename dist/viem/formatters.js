@@ -54,7 +54,7 @@ export const formatTransactionRequest = (r, action) => {
     return {
         ...rpc,
         type: '0x77',
-        ...(request.feePayer
+        ...(typeof request.feePayer === 'object'
             ? {
                 feePayer: parseAccount(request.feePayer),
             }

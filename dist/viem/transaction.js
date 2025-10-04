@@ -39,7 +39,8 @@ export async function serializeTransaction(transaction, signature) {
         transaction.type = 'feeToken';
     if (!isTempoTransaction(transaction))
         return viem_serializeTransaction(transaction, signature);
-    const { authorizationList, chainId, feePayerSignature, nonce, r, s, v, ...rest } = transaction;
+    const signature_ = transaction.r && transaction.s ? transaction : signature;
+    const { authorizationList, chainId, feePayer, feePayerSignature, nonce, r, s, v, ...rest } = transaction;
     const transaction_ox = {
         ...rest,
         authorizationList: authorizationList?.map((auth) => ({
@@ -51,23 +52,23 @@ export async function serializeTransaction(transaction, signature) {
         })),
         chainId: Number(chainId),
         ...(nonce ? { nonce: BigInt(nonce) } : {}),
-        ...(feePayerSignature
+        feePayerSignature: feePayerSignature
             ? {
-                feePayerSignature: {
-                    r: BigInt(feePayerSignature.r),
-                    s: BigInt(feePayerSignature.s),
-                    yParity: Number(feePayerSignature.yParity),
-                },
+                r: BigInt(feePayerSignature.r),
+                s: BigInt(feePayerSignature.s),
+                yParity: Number(feePayerSignature.yParity),
             }
-            : {}),
+            : feePayer
+                ? null
+                : undefined,
         ...(r ? { r: BigInt(r) } : {}),
         ...(s ? { s: BigInt(s) } : {}),
         ...(v ? { v: Number(v) } : {}),
         type: 'feeToken',
     };
-    if (signature && transaction.feePayer) {
+    if (signature_ && typeof transaction.feePayer === 'object') {
         const tx = TxFeeToken.from(transaction_ox, {
-            signature: signature,
+            signature: signature_,
         });
         const hash = TxFeeToken.getSignPayload(tx, {
             feePayer: true,
@@ -80,6 +81,8 @@ export async function serializeTransaction(transaction, signature) {
         });
     }
     return TxFeeToken.serialize(transaction_ox, {
+        // TODO: refactor to remove `"0x00"`
+        feePayerSignature: feePayer === true ? '0x00' : undefined,
         signature: signature,
     });
 }

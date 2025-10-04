@@ -353,7 +353,7 @@ export declare const tempo: {
                 accessList?: import("viem").AccessList | undefined;
                 authorizationList?: import("viem").AuthorizationList<`0x${string}`, boolean> | undefined;
                 calls?: readonly import("ox/erc7821/Calls").Call<bigint>[] | undefined;
-                feePayer?: import("viem").Account | undefined;
+                feePayer?: true | import("viem").Account | undefined;
                 feeToken?: bigint | `0x${string}` | undefined;
                 blobVersionedHashes?: undefined;
                 blobs?: undefined;
@@ -722,7 +722,7 @@ export declare const tempoLocal: {
                 accessList?: import("viem").AccessList | undefined;
                 authorizationList?: import("viem").AuthorizationList<`0x${string}`, boolean> | undefined;
                 calls?: readonly import("ox/erc7821/Calls").Call<bigint>[] | undefined;
-                feePayer?: import("viem").Account | undefined;
+                feePayer?: true | import("viem").Account | undefined;
                 feeToken?: bigint | `0x${string}` | undefined;
                 blobVersionedHashes?: undefined;
                 blobs?: undefined;
