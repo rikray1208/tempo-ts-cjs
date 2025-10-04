@@ -190,7 +190,6 @@ export async function serializeTransaction(
       yParity: Number(auth.yParity),
     })),
     chainId: Number(chainId),
-    ...(nonce ? { nonce: BigInt(nonce) } : {}),
     feePayerSignature: feePayerSignature
       ? {
           r: BigInt(feePayerSignature.r!),
@@ -200,6 +199,7 @@ export async function serializeTransaction(
       : feePayer
         ? null
         : undefined,
+    ...(nonce ? { nonce: BigInt(nonce) } : {}),
     ...(r ? { r: BigInt(r) } : {}),
     ...(s ? { s: BigInt(s) } : {}),
     ...(v ? { v: Number(v) } : {}),
@@ -220,6 +220,7 @@ export async function serializeTransaction(
       feePayerSignature: Signature.from(feePayerSignature),
     })
   }
+
   return TxFeeToken.serialize(transaction_ox, {
     // TODO: refactor to remove `"0x00"`
     feePayerSignature: feePayer === true ? '0x00' : undefined,

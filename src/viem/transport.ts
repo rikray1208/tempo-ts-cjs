@@ -1,38 +1,44 @@
 import { createTransport, type Transport } from 'viem'
+import { parseTransaction } from './transaction.js'
 
-export type Relay = Transport<typeof withRelay.type>
+export type Relay = Transport<typeof withFeePayer.type>
 
 /**
- * Creates a relay transport that routes requests between the default transport or the relay transport.
+ * Creates a fee payer transport that routes requests between
+ * the default transport or the fee payer transport.
  *
  * @param defaultTransport - The default transport to use.
- * @param relayTransport - The relay transport to use.
+ * @param feePayerTransport - The fee payer transport to use.
  * @returns A relay transport.
  */
-export function withRelay(
+export function withFeePayer(
   defaultTransport: Transport,
   relayTransport: Transport,
-): withRelay.ReturnType {
+): withFeePayer.ReturnType {
   return (config) => {
     const transport_default = defaultTransport(config)
     const transport_relay = relayTransport(config)
 
     return createTransport({
-      key: withRelay.type,
+      key: withFeePayer.type,
       name: 'Relay Proxy',
       async request({ method, params }, options) {
-        if (withRelay.methods.includes(method))
-          return transport_relay.request({ method, params }, options) as never
+        if (method === 'eth_sendRawTransaction') {
+          const serialized = (params as any)[0] as `0x77${string}`
+          const transaction = parseTransaction(serialized)
+          // If the transaction is intended to be sponsored, forward it to the relay.
+          if (transaction.feePayerSignature === null)
+            return transport_relay.request({ method, params }, options) as never
+        }
         return transport_default.request({ method, params }, options) as never
       },
-      type: withRelay.type,
+      type: withFeePayer.type,
     })
   }
 }
 
-export namespace withRelay {
-  export const methods = ['eth_sendRawTransaction']
-  export const type = 'relay'
+export namespace withFeePayer {
+  export const type = 'feePayer'
 
   export type ReturnType = Relay
 }

@@ -6,7 +6,7 @@ import { createClient, http, publicActions, walletActions } from 'viem'
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts'
 import { tempoActions } from './index.js'
 import { parseTransaction } from './transaction.js'
-import { withRelay } from './transport.js'
+import { withFeePayer } from './transport.js'
 
 const instance = Instance.tempo({ port: 8545 })
 
@@ -232,7 +232,7 @@ describe.skipIf(!!process.env.CI)('relay', () => {
             RpcResponse.from(
               {
                 error: new RpcResponse.MethodNotSupportedError({
-                  message: 'relay only supports `eth_sendRawTransaction`',
+                  message: 'service only supports `eth_sendRawTransaction`',
                 }),
               },
               { request },
@@ -245,7 +245,7 @@ describe.skipIf(!!process.env.CI)('relay', () => {
             RpcResponse.from(
               {
                 error: new RpcResponse.InvalidParamsError({
-                  message: 'relay only supports `0x77` transactions',
+                  message: 'service only supports `0x77` transactions',
                 }),
               },
               { request },
@@ -253,14 +253,10 @@ describe.skipIf(!!process.env.CI)('relay', () => {
           )
 
         const transaction = parseTransaction(serialized)
-
-        const serializedTransaction =
-          transaction.feePayerSignature === null
-            ? await client.signTransaction({
-                ...transaction,
-                feePayer: client.account,
-              })
-            : serialized
+        const serializedTransaction = await client.signTransaction({
+          ...transaction,
+          feePayer: client.account,
+        })
         const hash = await client.sendRawTransaction({
           serializedTransaction,
         })
@@ -275,7 +271,7 @@ describe.skipIf(!!process.env.CI)('relay', () => {
         '0xecc3fe55647412647e5c6b657c496803b08ef956f927b7a821da298cfbdd9666',
       ),
       chain: tempoLocal,
-      transport: withRelay(http(), http(url.toString())),
+      transport: withFeePayer(http(), http(url.toString())),
     })
       .extend(tempoActions())
       .extend(walletActions)
