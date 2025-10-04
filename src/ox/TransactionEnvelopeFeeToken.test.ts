@@ -569,51 +569,6 @@ describe('getSignPayload', () => {
         "yParity": 0,
       }
     `)
-
-    const feePayerSignature = Secp256k1.sign({
-      payload: TransactionEnvelopeFeeToken.getSignPayload(envelope_signed, {
-        feePayer: true,
-      }),
-      privateKey: privateKey2,
-    })
-
-    const feePayerEnvelope_signed = TransactionEnvelopeFeeToken.from(
-      envelope_signed,
-      {
-        feePayerSignature,
-      },
-    )
-
-    expect(feePayerEnvelope_signed).toMatchInlineSnapshot(`
-      {
-        "authorizationList": [
-          {
-            "address": "0x0000000000000000000000000000000000000000",
-            "chainId": 1,
-            "nonce": 785n,
-            "r": 45905576947909600150892513825393874260108741328435165924126757974077129494832n,
-            "s": 48243644890612770021063037464756173394424732895207796335842780877380370396087n,
-            "yParity": 0,
-          },
-        ],
-        "chainId": 1,
-        "feePayerSignature": {
-          "r": 79872537479360966270801552215489412667631145113719719852837413345745252996375n,
-          "s": 23932659457782832782050863098328782740190494129293437648706242640018950772385n,
-          "yParity": 0,
-        },
-        "gas": 21000n,
-        "maxFeePerGas": 13000000000n,
-        "maxPriorityFeePerGas": 1000000000n,
-        "nonce": 665n,
-        "r": 2197655434111937974218303607195887458649942608682485837450202937256281617344n,
-        "s": 45514547126785856401831290616133478750134795595263686266026091483746271601472n,
-        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-        "type": "feeToken",
-        "value": 1000000000000000000n,
-        "yParity": 0,
-      }
-    `)
   })
 })
 
@@ -665,42 +620,6 @@ describe('hash', () => {
     const hash = TransactionEnvelopeFeeToken.hash(envelope, { presign: true })
     expect(hash).toMatchInlineSnapshot(
       `"0x19c3cd0e89bbd10237160f3d6b28c5bc41494ea31dc54ceb7d6cad9a48fae7b4"`,
-    )
-  })
-
-  test('behavior: presign: feePayer', () => {
-    const envelope = TransactionEnvelopeFeeToken.from({
-      authorizationList: [],
-      chainId: 1,
-      gas: 21000n,
-      maxFeePerGas: 13000000000n,
-      maxPriorityFeePerGas: 1000000000n,
-      nonce: 665n,
-      value: 1000000000000000000n,
-      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      feePayerSignature: {
-        r: BigInt(
-          '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
-        ),
-        s: BigInt(
-          '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
-        ),
-        yParity: 0,
-      },
-      r: BigInt(
-        '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
-      ),
-      s: BigInt(
-        '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
-      ),
-      yParity: 0,
-    })
-
-    const hash = TransactionEnvelopeFeeToken.hash(envelope, {
-      presign: 'feePayer',
-    })
-    expect(hash).toMatchInlineSnapshot(
-      `"0x8666eefb41cc8c6b2e79254236ff6fdc8e7fb6eed47f49aab5fe285e60909811"`,
     )
   })
 })
@@ -938,10 +857,18 @@ describe('serialize', () => {
       signature,
     })
 
+    const sender = Secp256k1.recoverAddress({
+      payload: TransactionEnvelopeFeeToken.getSignPayload(transaction),
+      signature,
+    })
+
     const feePayerSignature = Secp256k1.sign({
-      payload: TransactionEnvelopeFeeToken.getSignPayload(transaction_signed, {
-        feePayer: true,
-      }),
+      payload: TransactionEnvelopeFeeToken.getFeePayerSignPayload(
+        transaction_signed,
+        {
+          sender,
+        },
+      ),
       privateKey: privateKey2,
     })
     const serialized_feePayer = TransactionEnvelopeFeeToken.serialize(
@@ -952,7 +879,7 @@ describe('serialize', () => {
     )
 
     expect(serialized_feePayer).toMatchInlineSnapshot(
-      `"0x77f8b90182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0c080f84380a0a2eb32fff67197ce69e9aff5b327784e531af545a1668c6195440779796163ffa04f8157665e4faabeb82661034038c3843cc18d71edd3d566e73fb193bc5b516701a069cf330f0a61a4d7712f2cbbb933eafc1ed6be732cf49b7269c782bb301c727ea0474916716fd0000d30e69a7b629697f04b542cc6abcb3c4e61dfdf3e9541dcc7"`,
+      `"0x77f8b90182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0c080f84301a0ab243bf211e2e385f0908cb249ece54343c765d56ba8945442452cecaaf8cc63a00cc809370128df77cd44cda1242a5d13f2036e09edc3413a9eb547dc1125304a01a069cf330f0a61a4d7712f2cbbb933eafc1ed6be732cf49b7269c782bb301c727ea0474916716fd0000d30e69a7b629697f04b542cc6abcb3c4e61dfdf3e9541dcc7"`,
     )
     expect(
       TransactionEnvelopeFeeToken.deserialize(serialized_feePayer),
@@ -1150,20 +1077,28 @@ describe.skipIf(!!process.env.CI)('e2e', () => {
     }
   })
 
-  test('behavior: feePayerSignature (user → feePayer)', async () => {
-    const address = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-    const privateKey =
-      '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+  test.only('behavior: feePayerSignature (user → feePayer)', async () => {
+    const feePayer = {
+      address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      privateKey:
+        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+    } as const
+    const sender = {
+      address: '0x0a275bEE91B39092Dfd57089Dee0EB0539020B90',
+      privateKey:
+        '0xfe24691eff5297c76e847dc78a8966b96cf65a44140b9a0d3f5100ce71d74a59',
+    } as const
 
     const transport = RpcTransport.fromHttp('http://localhost:8545')
 
     const nonce = await transport.request({
       method: 'eth_getTransactionCount',
-      params: [address, 'pending'],
+      params: [sender.address, 'pending'],
     })
 
     const transaction = TransactionEnvelopeFeeToken.from({
       chainId: 1337,
+      feePayerSignature: null,
       nonce: BigInt(nonce),
       gas: 21000n,
       to: '0x0000000000000000000000000000000000000000',
@@ -1173,12 +1108,9 @@ describe.skipIf(!!process.env.CI)('e2e', () => {
     })
 
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelopeFeeToken.getSignPayload(transaction, {
-        feePayer: true,
-      }),
-      privateKey:
-        // unfunded PK
-        '0xfe24691eff5297c76e847dc78a8966b96cf65a44140b9a0d3f5100ce71d74a59',
+      payload: TransactionEnvelopeFeeToken.getSignPayload(transaction),
+      // unfunded PK
+      privateKey: sender.privateKey,
     })
 
     const transaction_signed = TransactionEnvelopeFeeToken.from(transaction, {
@@ -1186,10 +1118,11 @@ describe.skipIf(!!process.env.CI)('e2e', () => {
     })
 
     const feePayerSignature = Secp256k1.sign({
-      payload: TransactionEnvelopeFeeToken.getSignPayload(transaction_signed, {
-        feePayer: true,
-      }),
-      privateKey,
+      payload: TransactionEnvelopeFeeToken.getFeePayerSignPayload(
+        transaction_signed,
+        { sender: sender.address },
+      ),
+      privateKey: feePayer.privateKey,
     })
 
     const serialized_signed = TransactionEnvelopeFeeToken.serialize(

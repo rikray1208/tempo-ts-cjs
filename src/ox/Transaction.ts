@@ -159,9 +159,9 @@ export function fromRpc<
 
     // TODO: remove once `feePayer` returned on `eth_getTxBy*`.
     transaction_.feePayer = Secp256k1.recoverAddress({
-      payload: TransactionEnvelopeFeeToken.getSignPayload(
+      payload: TransactionEnvelopeFeeToken.getFeePayerSignPayload(
         transaction_ as never,
-        { feePayer: true },
+        { sender: transaction.from },
       ),
       signature: transaction_.feePayerSignature,
     })

@@ -1,5 +1,6 @@
 import type * as Calls from 'ox/erc7821/Calls'
 import * as Hex from 'ox/Hex'
+import * as Secp256k1 from 'ox/Secp256k1'
 import * as Signature from 'ox/Signature'
 import {
   type AccessList,
@@ -207,8 +208,12 @@ export async function serializeTransaction(
     const tx = TxFeeToken.from(transaction_ox, {
       signature: signature_ as never,
     })
-    const hash = TxFeeToken.getSignPayload(tx, {
-      feePayer: true,
+    const sender = Secp256k1.recoverAddress({
+      payload: TxFeeToken.getSignPayload(tx),
+      signature: signature_ as never,
+    })
+    const hash = TxFeeToken.getFeePayerSignPayload(tx, {
+      sender,
     })
     const feePayerSignature = await transaction.feePayer.sign!({
       hash,
@@ -217,10 +222,8 @@ export async function serializeTransaction(
       feePayerSignature: Signature.from(feePayerSignature),
     })
   }
-
   return TxFeeToken.serialize(transaction_ox, {
-    // TODO: refactor to remove `"0x00"`
-    feePayerSignature: feePayer === true ? '0x00' : undefined,
+    feePayerSignature: feePayer === true ? null : undefined,
     signature: signature as never,
   })
 }

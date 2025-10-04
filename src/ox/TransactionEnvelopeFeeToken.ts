@@ -5,10 +5,10 @@ import type * as Errors from 'ox/Errors'
 import * as Hash from 'ox/Hash'
 import * as Hex from 'ox/Hex'
 import * as Rlp from 'ox/Rlp'
-import * as Secp256k1 from 'ox/Secp256k1'
 import * as Signature from 'ox/Signature'
 import * as TransactionEnvelope from 'ox/TransactionEnvelope'
 import * as TransactionEnvelopeEip1559 from 'ox/TransactionEnvelopeEip1559'
+import type { OneOf } from 'viem'
 import type {
   Assign,
   Compute,
@@ -347,7 +347,7 @@ export function from<
 export declare namespace from {
   type Options<signature extends Signature.Signature | undefined = undefined> =
     {
-      feePayerSignature?: Signature.Signature | undefined
+      feePayerSignature?: Signature.Signature | null | undefined
       signature?: signature | Signature.Signature | undefined
     }
 
@@ -371,6 +371,45 @@ export declare namespace from {
     | deserialize.ErrorType
     | assert.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Returns the fee payer payload to sign for a {@link ox#TransactionEnvelopeFeeToken.TransactionEnvelopeFeeToken}.
+ *
+ * @example
+ * TODO
+ *
+ * @param envelope - The transaction envelope to get the fee payer sign payload for.
+ * @returns The fee payer sign payload.
+ */
+export function getFeePayerSignPayload(
+  envelope: TransactionEnvelopeFeeToken,
+  options: getFeePayerSignPayload.Options,
+): getFeePayerSignPayload.ReturnType {
+  const { sender } = options
+  const serialized = serialize(
+    { ...envelope, r: undefined, s: undefined, yParity: undefined },
+    {
+      sender,
+      format: 'feePayer',
+    },
+  )
+  return Hash.keccak256(serialized)
+}
+
+export declare namespace getFeePayerSignPayload {
+  type Options = {
+    /**
+     * Whether to get the fee payer sign payload for the **sender** to sign.
+     *
+     * @default false
+     */
+    sender: Address.Address
+  }
+
+  type ReturnType = Hex.Hex
+
+  type ErrorType = hash.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -406,22 +445,11 @@ export declare namespace from {
  */
 export function getSignPayload(
   envelope: TransactionEnvelopeFeeToken,
-  options: getSignPayload.Options = {},
 ): getSignPayload.ReturnType {
-  const { feePayer } = options
-  return hash(envelope, { presign: feePayer ? 'feePayer' : true })
+  return hash(envelope, { presign: true })
 }
 
 export declare namespace getSignPayload {
-  type Options = {
-    /**
-     * Whether to get the sign payload for the **fee payer** to sign.
-     *
-     * @default false
-     */
-    feePayer?: boolean | undefined
-  }
-
   type ReturnType = Hex.Hex
 
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType
@@ -460,26 +488,13 @@ export declare namespace getSignPayload {
  * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
-export function hash<presign extends boolean | 'feePayer' = false>(
+export function hash<presign extends boolean = false>(
   envelope: TransactionEnvelopeFeeToken<presign extends true ? false : true>,
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
-  const excludes = (() => {
-    if (typeof options.presign === 'string' && options.presign === 'feePayer') {
-      if (envelope.r && envelope.s) return ['feePayerSignature']
-      return ['signature', 'feePayerSignature']
-    }
-    if (options.presign === true) return ['signature']
-    return undefined
-  })()
   const serialized = serialize({
     ...envelope,
-    ...(excludes?.includes('feePayerSignature')
-      ? {
-          feePayerSignature: null,
-        }
-      : {}),
-    ...(excludes?.includes('signature')
+    ...(options.presign
       ? {
           r: undefined,
           s: undefined,
@@ -487,26 +502,17 @@ export function hash<presign extends boolean | 'feePayer' = false>(
         }
       : {}),
   })
-  return Hash.keccak256(
-    excludes?.length === 1 && excludes[0] === 'feePayerSignature'
-      ? Hex.slice(serialized, 1)
-      : serialized,
-  )
+  return Hash.keccak256(serialized)
 }
 
 export declare namespace hash {
-  type Options<presign extends boolean | 'feePayer' = false> = {
+  type Options<presign extends boolean = false> = {
     /**
-     * Whether to hash this transaction for signing, and optionally
-     * who to presign for.
-     *
-     * - If `true`, the transaction will be hashed for _sender_ to sign.
-     * - If `'feePayer'`, the transaction will be hashed for _fee payer_ to sign.
-     * - If `false`, the transaction will _not_ be hashed for signing.
+     * Whether to hash this transaction for signing.
      *
      * @default false
      */
-    presign?: presign | boolean | 'feePayer' | undefined
+    presign?: presign | boolean | undefined
   }
 
   type ReturnType = Hex.Hex
@@ -594,33 +600,17 @@ export function serialize(
 
   const accessTupleList = AccessList.toTupleList(accessList)
   const authorizationTupleList = Authorization.toTupleList(authorizationList)
-
-  const feePayerSignature =
-    options.feePayerSignature ?? envelope.feePayerSignature
   const signature = Signature.extract(options.signature || envelope)
 
   const feePayerSignatureOrSender = (() => {
-    if (feePayerSignature === '0x00') return '0x00'
-
-    if (feePayerSignature) return Signature.toTuple(feePayerSignature)
-
-    // If `feePayerSignature` is null, likely we are serializing the transaction for
-    // purposes of the presence of a fee payer.
-    if (feePayerSignature === null) {
-      // If the sender has signed the transaction, this means it is now the fee payer's
-      // turn to sign. They will need to sign over the sender address in this RLP slot,
-      // so we will recover the sender address.
-      if (signature)
-        return Secp256k1.recoverAddress({
-          payload: getSignPayload(envelope as never),
-          signature,
-        })
-      // If the sender is signing, and this transaction will have a fee payer, then
-      // the sender will need to sign over a zero byte in this RLP slot.
-      return '0x00'
-    }
-
-    return '0x'
+    if (options.sender) return options.sender
+    const feePayerSignature =
+      typeof options.feePayerSignature !== 'undefined'
+        ? options.feePayerSignature
+        : envelope.feePayerSignature
+    if (feePayerSignature === null) return '0x00'
+    if (!feePayerSignature) return '0x'
+    return Signature.toTuple(feePayerSignature)
   })()
 
   const serialized = [
@@ -638,22 +628,46 @@ export function serialize(
       ? TokenId.toAddress(feeToken)
       : '0x',
     feePayerSignatureOrSender,
-    ...(signature && feePayerSignature !== null
-      ? Signature.toTuple(signature)
-      : []),
+    ...(signature ? Signature.toTuple(signature) : []),
   ] as const
 
-  return Hex.concat(serializedType, Rlp.fromHex(serialized)) as Serialized
+  return Hex.concat(
+    options.format !== 'feePayer' ? serializedType : '0x',
+    Rlp.fromHex(serialized),
+  ) as Serialized
 }
 
 export declare namespace serialize {
   type Options = {
-    // TODO: refactor to remove `"0x00"`
-    /** Fee payer signature to append to the serialized Transaction Envelope. */
-    feePayerSignature?: Signature.Signature | '0x00' | null | undefined
-    /** Sender signature to append to the serialized Transaction Envelope. */
+    /**
+     * Sender signature to append to the serialized envelope.
+     */
     signature?: Signature.Signature | undefined
-  }
+  } & OneOf<
+    | {
+        /**
+         * Sender address to cover the fee of.
+         */
+        sender: Address.Address
+        /**
+         * Whether to serialize the transaction in the fee payer format.
+         *
+         * - If `'feePayer'`, then the transaction will be serialized in the fee payer format.
+         * - If `undefined` (default), then the transaction will be serialized in the normal format.
+         */
+        format: 'feePayer'
+      }
+    | {
+        /**
+         * Fee payer signature or the sender to cover the fee of.
+         *
+         * - If `Signature.Signature`, then this is the fee payer signature.
+         * - If `null`, then this indicates the envelope is intended to be signed by a fee payer.
+         */
+        feePayerSignature?: Signature.Signature | null | undefined
+        format?: undefined
+      }
+  >
 
   type ErrorType =
     | assert.ErrorType
