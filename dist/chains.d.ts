@@ -1,4 +1,4 @@
-export declare const tempo: {
+export declare const tempoAdagietto: {
     blockExplorers?: {
         [key: string]: {
             name: string;
@@ -29,7 +29,7 @@ export declare const tempo: {
     experimental_preconfirmationTime?: number | undefined | undefined;
     rpcUrls: {
         readonly default: {
-            readonly http: readonly ["https://rpc-adagio.tempoxyz.dev"];
+            readonly http: readonly ["https://rpc-adagietto.tempoxyz.dev"];
         };
     };
     sourceId?: number | undefined | undefined;

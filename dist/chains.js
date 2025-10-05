@@ -1,6 +1,6 @@
 import { defineChain } from 'viem';
 import { chainConfig } from "./viem/chain.js";
-export const tempo = /*#__PURE__*/ defineChain({
+export const tempoAdagietto = /*#__PURE__*/ defineChain({
     ...chainConfig,
     id: 1337,
     name: 'Tempo',
@@ -10,7 +10,7 @@ export const tempo = /*#__PURE__*/ defineChain({
         decimals: 18,
     },
     rpcUrls: {
-        default: { http: ['https://rpc-adagio.tempoxyz.dev'] },
+        default: { http: ['https://rpc-adagietto.tempoxyz.dev'] },
     },
 });
 export const tempoLocal = /*#__PURE__*/ defineChain({
