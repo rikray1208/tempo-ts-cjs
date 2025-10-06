@@ -1,8 +1,8 @@
-import type { Account, Address, Chain, Client, ExtractAbiItem, GetEventArgs, ReadContractParameters, Transport, Log as viem_Log, WatchContractEventParameters, WriteContractParameters, WriteContractReturnType } from 'viem';
+import type { Account, Address, Chain, Client, ExtractAbiItem, GetEventArgs, Transport, Log as viem_Log, WatchContractEventParameters, WriteContractReturnType } from 'viem';
 import type { Compute, UnionOmit } from "../../internal/types.js";
 import * as TokenId from "../../ox/TokenId.js";
 import { feeManagerAbi } from "../abis.js";
-import type { GetAccountParameter } from "../types.js";
+import type { GetAccountParameter, ReadParameters, WriteParameters } from "../types.js";
 /**
  * Gets the user's default fee token.
  *
@@ -28,7 +28,7 @@ import type { GetAccountParameter } from "../types.js";
  */
 export declare function getUserToken<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, ...parameters: account extends Account ? [getUserToken.Parameters<account>] | [] : [getUserToken.Parameters<account>]): Promise<getUserToken.ReturnType>;
 export declare namespace getUserToken {
-    type Parameters<account extends Account | undefined = Account | undefined> = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & GetAccountParameter<account>;
+    type Parameters<account extends Account | undefined = Account | undefined> = ReadParameters & GetAccountParameter<account>;
     type Args = {
         /** Account address. */
         account: Address;
@@ -97,7 +97,7 @@ export declare namespace getUserToken {
  */
 export declare function setUserToken<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: setUserToken.Parameters<chain, account>): Promise<setUserToken.ReturnType>;
 export declare namespace setUserToken {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Address or ID of the TIP20 token. */
         token: TokenId.TokenIdOrAddress;

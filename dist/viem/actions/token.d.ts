@@ -1,11 +1,11 @@
 import * as Hex from 'ox/Hex';
 import * as Signature from 'ox/Signature';
-import { type Account, type Address, type Chain, type Client, type ExtractAbiItem, type GetEventArgs, type ReadContractParameters, type ReadContractReturnType, type SendTransactionParameters, type Transport, type ValueOf, type Log as viem_Log, type WatchContractEventParameters, type WriteContractParameters, type WriteContractReturnType } from 'viem';
+import { type Account, type Address, type Chain, type Client, type ExtractAbiItem, type GetEventArgs, type ReadContractReturnType, type SendTransactionParameters, type Transport, type ValueOf, type Log as viem_Log, type WatchContractEventParameters, type WriteContractReturnType } from 'viem';
 import type { Compute, UnionOmit } from "../../internal/types.js";
 import * as TokenId from "../../ox/TokenId.js";
 import * as TokenRole from "../../ox/TokenRole.js";
 import { tip20Abi, tip20FactoryAbi } from "../abis.js";
-import type { GetAccountParameter } from "../types.js";
+import type { GetAccountParameter, ReadParameters, WriteParameters } from "../types.js";
 declare const transferPolicy: {
     readonly 0: "always-reject";
     readonly 1: "always-allow";
@@ -39,7 +39,7 @@ type TransferPolicy = ValueOf<typeof transferPolicy>;
  */
 export declare function approve<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: approve.Parameters<chain, account>): Promise<approve.ReturnType>;
 export declare namespace approve {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Amount of tokens to approve. */
         amount: bigint;
@@ -142,7 +142,7 @@ export declare namespace approve {
  */
 export declare function burnBlocked<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: burnBlocked.Parameters<chain, account>): Promise<burnBlocked.ReturnType>;
 export declare namespace burnBlocked {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Amount of tokens to burn. */
         amount: bigint;
@@ -240,7 +240,7 @@ export declare namespace burnBlocked {
  */
 export declare function burn<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: burn.Parameters<chain, account>): Promise<burn.ReturnType>;
 export declare namespace burn {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Amount of tokens to burn. */
         amount: bigint;
@@ -347,7 +347,7 @@ export declare namespace burn {
  */
 export declare function changeTransferPolicy<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: changeTransferPolicy.Parameters<chain, account>): Promise<changeTransferPolicy.ReturnType>;
 export declare namespace changeTransferPolicy {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** New transfer policy ID. */
         policyId: bigint;
@@ -439,7 +439,7 @@ export declare namespace changeTransferPolicy {
  */
 export declare function create<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: create.Parameters<chain, account>): Promise<create.ReturnType>;
 export declare namespace create {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Omit<Args, 'admin'> & (account extends Account ? {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Omit<Args, 'admin'> & (account extends Account ? {
         admin?: Account | Address | undefined;
     } : {
         admin: Account | Address;
@@ -564,7 +564,7 @@ export declare namespace create {
  */
 export declare function getAllowance<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: getAllowance.Parameters<account>): Promise<getAllowance.ReturnType>;
 export declare namespace getAllowance {
-    type Parameters<account extends Account | undefined = Account | undefined> = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & GetAccountParameter<account> & Omit<Args, 'account'> & {};
+    type Parameters<account extends Account | undefined = Account | undefined> = ReadParameters & GetAccountParameter<account> & Omit<Args, 'account'> & {};
     type Args = {
         /** Account address. */
         account: Address;
@@ -638,7 +638,7 @@ export declare namespace getAllowance {
  */
 export declare function getBalance<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, ...parameters: account extends Account ? [getBalance.Parameters<account>] | [] : [getBalance.Parameters<account>]): Promise<getBalance.ReturnType>;
 export declare namespace getBalance {
-    type Parameters<account extends Account | undefined = Account | undefined> = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & GetAccountParameter<account> & Omit<Args, 'account'>;
+    type Parameters<account extends Account | undefined = Account | undefined> = ReadParameters & GetAccountParameter<account> & Omit<Args, 'account'>;
     type Args = {
         /** Account address. */
         account: Address;
@@ -758,7 +758,7 @@ export declare namespace getMetadata {
  */
 export declare function grantRoles<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: grantRoles.Parameters<chain, account>): Promise<grantRoles.ReturnType>;
 export declare namespace grantRoles {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Omit<Args, 'role'> & {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Omit<Args, 'role'> & {
         /** Role to grant. */
         roles: readonly TokenRole.TokenRole[];
     };
@@ -860,7 +860,7 @@ export declare namespace grantRoles {
  */
 export declare function mint<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: mint.Parameters<chain, account>): Promise<mint.ReturnType>;
 export declare namespace mint {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Amount of tokens to mint. */
         amount: bigint;
@@ -977,7 +977,7 @@ export declare namespace mint {
  */
 export declare function pause<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: pause.Parameters<chain, account>): Promise<pause.ReturnType>;
 export declare namespace pause {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Address or ID of the TIP20 token. */
         token: TokenId.TokenIdOrAddress;
@@ -1062,7 +1062,7 @@ export declare namespace pause {
  */
 export declare function permit<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: permit.Parameters<chain, account>): Promise<permit.ReturnType>;
 export declare namespace permit {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Deadline for the permit. */
         deadline: bigint;
@@ -1189,7 +1189,7 @@ export declare namespace permit {
  */
 export declare function renounceRoles<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: renounceRoles.Parameters<chain, account>): Promise<renounceRoles.ReturnType>;
 export declare namespace renounceRoles {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Omit<Args, 'role'> & {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Omit<Args, 'role'> & {
         /** Roles to renounce. */
         roles: readonly TokenRole.TokenRole[];
     };
@@ -1385,7 +1385,7 @@ export declare namespace revokeRoles {
  */
 export declare function setSupplyCap<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: setSupplyCap.Parameters<chain, account>): Promise<setSupplyCap.ReturnType>;
 export declare namespace setSupplyCap {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** New supply cap. */
         supplyCap: bigint;
@@ -1477,7 +1477,7 @@ export declare namespace setSupplyCap {
  */
 export declare function setRoleAdmin<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: setRoleAdmin.Parameters<chain, account>): Promise<setRoleAdmin.ReturnType>;
 export declare namespace setRoleAdmin {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** New admin role. */
         adminRole: TokenRole.TokenRole;
@@ -1575,7 +1575,7 @@ export declare namespace setRoleAdmin {
  */
 export declare function transfer<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: transfer.Parameters<chain, account>): Promise<transfer.ReturnType>;
 export declare namespace transfer {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Amount of tokens to transfer. */
         amount: bigint;
@@ -1746,7 +1746,7 @@ export declare namespace transfer {
  */
 export declare function unpause<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: unpause.Parameters<chain, account>): Promise<unpause.ReturnType>;
 export declare namespace unpause {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Address or ID of the TIP20 token. */
         token: TokenId.TokenIdOrAddress;

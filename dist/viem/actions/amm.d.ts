@@ -1,7 +1,8 @@
-import type { Account, Address, Chain, Client, ExtractAbiItem, GetEventArgs, Hex, ReadContractParameters, ReadContractReturnType, Transport, Log as viem_Log, WatchContractEventParameters, WriteContractParameters, WriteContractReturnType } from 'viem';
+import type { Account, Address, Chain, Client, ExtractAbiItem, GetEventArgs, Hex, ReadContractReturnType, Transport, Log as viem_Log, WatchContractEventParameters, WriteContractReturnType } from 'viem';
 import type { Compute, UnionOmit } from "../../internal/types.js";
 import * as TokenId from "../../ox/TokenId.js";
 import { feeAmmAbi } from "../abis.js";
+import type { ReadParameters, WriteParameters } from "../types.js";
 /**
  * Gets the pool ID for a token pair.
  *
@@ -28,7 +29,7 @@ import { feeAmmAbi } from "../abis.js";
  */
 export declare function getPoolId<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getPoolId.Parameters): Promise<getPoolId.ReturnType>;
 export declare namespace getPoolId {
-    type Parameters = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters = ReadParameters & Args;
     type Args = {
         /** Address or ID of the user token. */
         userToken: TokenId.TokenIdOrAddress;
@@ -99,7 +100,7 @@ export declare namespace getPoolId {
  */
 export declare function getPool<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getPool.Parameters): Promise<getPool.ReturnType>;
 export declare namespace getPool {
-    type Parameters = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters = ReadParameters & Args;
     type Args = {
         /** Address or ID of the user token. */
         userToken: TokenId.TokenIdOrAddress;
@@ -186,7 +187,7 @@ export declare namespace getPool {
  */
 export declare function getTotalSupply<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getTotalSupply.Parameters): Promise<getTotalSupply.ReturnType>;
 export declare namespace getTotalSupply {
-    type Parameters = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters = ReadParameters & Args;
     type Args = {
         /** Pool ID. */
         poolId: Hex;
@@ -256,7 +257,7 @@ export declare namespace getTotalSupply {
  */
 export declare function getLiquidityBalance<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getLiquidityBalance.Parameters): Promise<getLiquidityBalance.ReturnType>;
 export declare namespace getLiquidityBalance {
-    type Parameters = UnionOmit<ReadContractParameters<never, never, never>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters = ReadParameters & Args;
     type Args = {
         /** Address to check balance for. */
         address: Address;
@@ -331,7 +332,7 @@ export declare namespace getLiquidityBalance {
  */
 export declare function rebalanceSwap<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: rebalanceSwap.Parameters<chain, account>): Promise<rebalanceSwap.ReturnType>;
 export declare namespace rebalanceSwap {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Amount of user token to receive. */
         amountOut: bigint;
@@ -457,7 +458,7 @@ export declare namespace rebalanceSwap {
  */
 export declare function mint<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: mint.Parameters<chain, account>): Promise<mint.ReturnType>;
 export declare namespace mint {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Address to mint LP tokens to. */
         to: Address;
@@ -600,7 +601,7 @@ export declare namespace mint {
  */
 export declare function burn<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: burn.Parameters<chain, account>): Promise<burn.ReturnType>;
 export declare namespace burn {
-    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = UnionOmit<WriteContractParameters<never, never, never, chain, account>, 'abi' | 'address' | 'functionName' | 'args'> & Args;
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
         /** Amount of LP tokens to burn. */
         liquidity: bigint;
