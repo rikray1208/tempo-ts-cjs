@@ -1,5 +1,16 @@
-import type { Account, Address } from 'viem'
-import type { IsUndefined, MaybeRequired } from '../internal/types.js'
+import type {
+  Account,
+  Address,
+  Chain,
+  ReadContractParameters as viem_ReadContractParameters,
+  WriteContractParameters as viem_WriteContractParameters,
+} from 'viem'
+import type {
+  IsUndefined,
+  MaybeRequired,
+  UnionPick,
+} from '../internal/types.js'
+import type { TransactionRequestFeeToken } from './transaction.js'
 
 export type GetAccountParameter<
   account extends Account | undefined = Account | undefined,
@@ -22,4 +33,23 @@ export type GetAccountParameter<
     : false
 >
 
+export type ReadParameters = Pick<
+  viem_ReadContractParameters<never, never, never>,
+  'account' | 'blockNumber' | 'blockOverrides' | 'blockTag' | 'stateOverride'
+>
+
 export type TokenIdOrAddress = bigint | Address
+
+export type WriteParameters<
+  chain extends Chain | undefined = Chain | undefined,
+  account extends Account | undefined = Account | undefined,
+> = UnionPick<
+  viem_WriteContractParameters<never, never, never, chain, account>,
+  | 'account'
+  | 'chain'
+  | 'gas'
+  | 'maxFeePerGas'
+  | 'maxPriorityFeePerGas'
+  | 'nonce'
+> &
+  UnionPick<TransactionRequestFeeToken, 'feePayer' | 'feeToken'>

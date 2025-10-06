@@ -8,14 +8,12 @@ import {
   type ExtractAbiItem,
   encodeFunctionData,
   type GetEventArgs,
-  type ReadContractParameters,
   type ReadContractReturnType,
   type SendTransactionParameters,
   type Transport,
   type ValueOf,
   type Log as viem_Log,
   type WatchContractEventParameters,
-  type WriteContractParameters,
   type WriteContractReturnType,
 } from 'viem'
 import { parseAccount } from 'viem/accounts'
@@ -32,7 +30,11 @@ import * as TokenId from '../../ox/TokenId.js'
 import * as TokenRole from '../../ox/TokenRole.js'
 import { tip20Abi, tip20FactoryAbi } from '../abis.js'
 import { tip20FactoryAddress, usdAddress } from '../addresses.js'
-import type { GetAccountParameter } from '../types.js'
+import type {
+  GetAccountParameter,
+  ReadParameters,
+  WriteParameters,
+} from '../types.js'
 import { defineCall } from '../utils.js'
 
 const transferPolicy = {
@@ -86,11 +88,7 @@ export namespace approve {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Amount of tokens to approve. */
@@ -192,11 +190,7 @@ export namespace burnBlocked {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Amount of tokens to burn. */
@@ -297,11 +291,7 @@ export namespace burn {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Amount of tokens to burn. */
@@ -409,11 +399,7 @@ export namespace changeTransferPolicy {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** New transfer policy ID. */
@@ -532,10 +518,7 @@ export namespace create {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
+  > = WriteParameters<chain, account> &
     Omit<Args, 'admin'> &
     (account extends Account
       ? { admin?: Account | Address | undefined }
@@ -652,12 +635,7 @@ export async function getAllowance<
 export namespace getAllowance {
   export type Parameters<
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    GetAccountParameter<account> &
-    Omit<Args, 'account'> & {}
+  > = ReadParameters & GetAccountParameter<account> & Omit<Args, 'account'> & {}
 
   export type Args = {
     /** Account address. */
@@ -737,12 +715,7 @@ export async function getBalance<
 export namespace getBalance {
   export type Parameters<
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    GetAccountParameter<account> &
-    Omit<Args, 'account'>
+  > = ReadParameters & GetAccountParameter<account> & Omit<Args, 'account'>
 
   export type Args = {
     /** Account address. */
@@ -952,10 +925,7 @@ export namespace grantRoles {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
+  > = WriteParameters<chain, account> &
     Omit<Args, 'role'> & {
       /** Role to grant. */
       roles: readonly TokenRole.TokenRole[]
@@ -1064,11 +1034,7 @@ export namespace mint {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Amount of tokens to mint. */
@@ -1178,11 +1144,7 @@ export namespace pause {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Address or ID of the TIP20 token. */
@@ -1280,11 +1242,7 @@ export namespace permit {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Deadline for the permit. */
@@ -1416,10 +1374,7 @@ export namespace renounceRoles {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
+  > = WriteParameters<chain, account> &
     Omit<Args, 'role'> & {
       /** Roles to renounce. */
       roles: readonly TokenRole.TokenRole[]
@@ -1634,11 +1589,7 @@ export namespace setSupplyCap {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** New supply cap. */
@@ -1737,11 +1688,7 @@ export namespace setRoleAdmin {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** New admin role. */
@@ -1844,11 +1791,7 @@ export namespace transfer {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Amount of tokens to transfer. */
@@ -1972,11 +1915,7 @@ export namespace unpause {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Address or ID of the TIP20 token. */

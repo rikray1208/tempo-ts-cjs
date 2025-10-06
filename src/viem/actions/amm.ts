@@ -6,12 +6,10 @@ import type {
   ExtractAbiItem,
   GetEventArgs,
   Hex,
-  ReadContractParameters,
   ReadContractReturnType,
   Transport,
   Log as viem_Log,
   WatchContractEventParameters,
-  WriteContractParameters,
   WriteContractReturnType,
 } from 'viem'
 import { readContract, watchContractEvent, writeContract } from 'viem/actions'
@@ -19,6 +17,7 @@ import type { Compute, UnionOmit } from '../../internal/types.js'
 import * as TokenId from '../../ox/TokenId.js'
 import { feeAmmAbi } from '../abis.js'
 import { feeManagerAddress } from '../addresses.js'
+import type { ReadParameters, WriteParameters } from '../types.js'
 import { defineCall } from '../utils.js'
 
 /**
@@ -56,11 +55,7 @@ export async function getPoolId<chain extends Chain | undefined>(
 }
 
 export namespace getPoolId {
-  export type Parameters = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  export type Parameters = ReadParameters & Args
 
   export type Args = {
     /** Address or ID of the user token. */
@@ -127,11 +122,7 @@ export async function getPool<chain extends Chain | undefined>(
 }
 
 export namespace getPool {
-  export type Parameters = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  export type Parameters = ReadParameters & Args
 
   export type Args = {
     /** Address or ID of the user token. */
@@ -201,11 +192,7 @@ export async function getTotalSupply<chain extends Chain | undefined>(
 }
 
 export namespace getTotalSupply {
-  export type Parameters = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  export type Parameters = ReadParameters & Args
 
   export type Args = {
     /** Pool ID. */
@@ -275,11 +262,7 @@ export async function getLiquidityBalance<chain extends Chain | undefined>(
 }
 
 export namespace getLiquidityBalance {
-  export type Parameters = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  export type Parameters = ReadParameters & Args
 
   export type Args = {
     /** Address to check balance for. */
@@ -357,11 +340,7 @@ export namespace rebalanceSwap {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Amount of user token to receive. */
@@ -483,11 +462,7 @@ export namespace mint {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Address to mint LP tokens to. */
@@ -623,11 +598,7 @@ export namespace burn {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Amount of LP tokens to burn. */

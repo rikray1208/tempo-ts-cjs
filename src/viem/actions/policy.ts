@@ -5,12 +5,10 @@ import type {
   Client,
   ExtractAbiItem,
   GetEventArgs,
-  ReadContractParameters,
   ReadContractReturnType,
   Transport,
   Log as viem_Log,
   WatchContractEventParameters,
-  WriteContractParameters,
   WriteContractReturnType,
 } from 'viem'
 import { parseAccount } from 'viem/accounts'
@@ -23,6 +21,7 @@ import {
 import type { Compute, UnionOmit } from '../../internal/types.js'
 import { tip403RegistryAbi } from '../abis.js'
 import { tip403RegistryAddress } from '../addresses.js'
+import type { ReadParameters, WriteParameters } from '../types.js'
 import { defineCall } from '../utils.js'
 
 export type PolicyType = 'whitelist' | 'blacklist'
@@ -92,10 +91,7 @@ export namespace create {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args' | 'type'
-  > &
+  > = WriteParameters<chain, account> &
     Omit<Args, 'admin'> & {
       /** Address of the policy admin. */
       admin?: Address | undefined
@@ -210,11 +206,7 @@ export namespace setAdmin {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** New admin address. */
@@ -318,11 +310,7 @@ export namespace modifyWhitelist {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Target account address. */
@@ -430,11 +418,7 @@ export namespace modifyBlacklist {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Target account address. */
@@ -534,11 +518,7 @@ export async function getData<chain extends Chain | undefined>(
 }
 
 export namespace getData {
-  export type Parameters = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  export type Parameters = ReadParameters & Args
 
   export type Args = {
     /** Policy ID. */
@@ -604,11 +584,7 @@ export async function isAuthorized<chain extends Chain | undefined>(
 }
 
 export namespace isAuthorized {
-  export type Parameters = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  export type Parameters = ReadParameters & Args
 
   export type Args = {
     /** Policy ID. */

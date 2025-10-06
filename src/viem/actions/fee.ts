@@ -5,11 +5,9 @@ import type {
   Client,
   ExtractAbiItem,
   GetEventArgs,
-  ReadContractParameters,
   Transport,
   Log as viem_Log,
   WatchContractEventParameters,
-  WriteContractParameters,
   WriteContractReturnType,
 } from 'viem'
 import { parseAccount } from 'viem/accounts'
@@ -18,7 +16,11 @@ import type { Compute, UnionOmit } from '../../internal/types.js'
 import * as TokenId from '../../ox/TokenId.js'
 import { feeManagerAbi } from '../abis.js'
 import { feeManagerAddress } from '../addresses.js'
-import type { GetAccountParameter } from '../types.js'
+import type {
+  GetAccountParameter,
+  ReadParameters,
+  WriteParameters,
+} from '../types.js'
 import { defineCall } from '../utils.js'
 
 /**
@@ -69,11 +71,7 @@ export async function getUserToken<
 export namespace getUserToken {
   export type Parameters<
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    ReadContractParameters<never, never, never>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    GetAccountParameter<account>
+  > = ReadParameters & GetAccountParameter<account>
 
   export type Args = {
     /** Account address. */
@@ -145,11 +143,7 @@ export namespace setUserToken {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = UnionOmit<
-    WriteContractParameters<never, never, never, chain, account>,
-    'abi' | 'address' | 'functionName' | 'args'
-  > &
-    Args
+  > = WriteParameters<chain, account> & Args
 
   export type Args = {
     /** Address or ID of the TIP20 token. */
