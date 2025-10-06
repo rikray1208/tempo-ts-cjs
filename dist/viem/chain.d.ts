@@ -12,10 +12,10 @@ export declare const chainConfig: {
             exclude: [] | undefined;
             format: (args: import("./transaction.js").TransactionRpc, action?: string | undefined) => ({
                 input: import("viem").Hex;
-                from: import("viem").Address;
+                from: import("abitype").Address;
                 gas: bigint;
                 nonce: number;
-                to: import("viem").Address | null;
+                to: import("abitype").Address | null;
                 value: bigint;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
@@ -41,14 +41,14 @@ export declare const chainConfig: {
             } | {
                 blockHash: `0x${string}` | null;
                 blockNumber: bigint | null;
-                from: import("viem").Address;
+                from: import("abitype").Address;
                 gas: bigint;
                 hash: import("viem").Hash;
                 input: import("viem").Hex;
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
+                to: import("abitype").Address | null;
                 transactionIndex: number | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
@@ -69,14 +69,14 @@ export declare const chainConfig: {
             } | {
                 blockHash: `0x${string}` | null;
                 blockNumber: bigint | null;
-                from: import("viem").Address;
+                from: import("abitype").Address;
                 gas: bigint;
                 hash: import("viem").Hash;
                 input: import("viem").Hex;
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
+                to: import("abitype").Address | null;
                 transactionIndex: number | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
@@ -97,14 +97,14 @@ export declare const chainConfig: {
             } | {
                 blockHash: `0x${string}` | null;
                 blockNumber: bigint | null;
-                from: import("viem").Address;
+                from: import("abitype").Address;
                 gas: bigint;
                 hash: import("viem").Hash;
                 input: import("viem").Hex;
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
+                to: import("abitype").Address | null;
                 transactionIndex: number | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
@@ -125,14 +125,14 @@ export declare const chainConfig: {
             } | {
                 blockHash: `0x${string}` | null;
                 blockNumber: bigint | null;
-                from: import("viem").Address;
+                from: import("abitype").Address;
                 gas: bigint;
                 hash: import("viem").Hash;
                 input: import("viem").Hex;
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
+                to: import("abitype").Address | null;
                 transactionIndex: number | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
@@ -153,14 +153,14 @@ export declare const chainConfig: {
             } | {
                 blockHash: `0x${string}` | null;
                 blockNumber: bigint | null;
-                from: import("viem").Address;
+                from: import("abitype").Address;
                 gas: bigint;
                 hash: import("viem").Hash;
                 input: import("viem").Hex;
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
+                to: import("abitype").Address | null;
                 transactionIndex: number | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;

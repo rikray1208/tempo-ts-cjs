@@ -26,4 +26,5 @@ export const tempoLocal = /*#__PURE__*/ defineChain({
         default: { http: ['http://localhost:8545'] },
     },
 });
+export const tempo = tempoAdagietto;
 //# sourceMappingURL=chains.js.map
