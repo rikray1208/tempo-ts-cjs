@@ -54,7 +54,7 @@ export function createTempoClient<
     accountOrAddress,
     rpcSchema
   > = {},
-): createTempoClient.ReturnType<
+): createTempoClient.ReturnValue<
   transport,
   chain,
   accountOrAddress extends Address
@@ -83,7 +83,7 @@ export declare namespace createTempoClient {
     'transport'
   >
 
-  export type ReturnType<
+  export type ReturnValue<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
     accountOrAddress extends Account | undefined = undefined,

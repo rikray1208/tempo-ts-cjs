@@ -8,8 +8,11 @@ import {
   type ExtractAbiItem,
   encodeFunctionData,
   type GetEventArgs,
+  type Log,
+  parseEventLogs,
   type ReadContractReturnType,
-  type SendTransactionParameters,
+  type SendTransactionSyncParameters,
+  type TransactionReceipt,
   type Transport,
   type ValueOf,
   type Log as viem_Log,
@@ -21,9 +24,10 @@ import {
   multicall,
   readContract,
   sendTransaction,
-  simulateContract,
+  sendTransactionSync,
   watchContractEvent,
   writeContract,
+  writeContractSync,
 } from 'viem/actions'
 import type { Compute, UnionOmit } from '../../internal/types.js'
 import * as TokenId from '../../ox/TokenId.js'
@@ -59,7 +63,7 @@ type TransferPolicy = ValueOf<typeof transferPolicy>
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.approve(client, {
+ * const result = await actions.token.approve(client, {
  *   spender: '0x...',
  *   amount: 100n,
  * })
@@ -75,13 +79,9 @@ export async function approve<
 >(
   client: Client<Transport, chain, account>,
   parameters: approve.Parameters<chain, account>,
-): Promise<approve.ReturnType> {
+): Promise<approve.ReturnValue> {
   const { token = usdAddress, ...rest } = parameters
-  const call = approve.call({ ...rest, token })
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+  return approve.inner(writeContract, client, parameters, { ...rest, token })
 }
 
 export namespace approve {
@@ -99,7 +99,25 @@ export namespace approve {
     token?: TokenId.TokenIdOrAddress | undefined
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: approve.Parameters<chain, account>,
+    args: Args,
+  ): Promise<ReturnType<action>> {
+    const call = approve.call(args)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `approve` function.
@@ -143,6 +161,84 @@ export namespace approve {
       args: [spender, amount],
     })
   }
+
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'Approval',
+    })
+    if (!log) throw new Error('`Approval` event not found.')
+    return log
+  }
+}
+
+/**
+ * Approves a spender to transfer TIP20 tokens on behalf of the caller.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.approveSync(client, {
+ *   spender: '0x...',
+ *   amount: 100n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function approveSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: approveSync.Parameters<chain, account>,
+): Promise<approveSync.ReturnValue> {
+  const { token = usdAddress, ...rest } = parameters
+  const receipt = await approve.inner(writeContractSync, client, parameters, {
+    ...rest,
+    token,
+  })
+  const { args } = approve.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace approveSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = approve.Parameters<chain, account>
+
+  export type Args = approve.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip20Abi,
+      'Approval',
+      {
+        IndexedOnly: false
+        Required: true
+      }
+    > & {
+      /** Transaction receipt. */
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -161,7 +257,7 @@ export namespace approve {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.burnBlocked(client, {
+ * const result = await actions.token.burnBlocked(client, {
  *   from: '0x...',
  *   amount: 100n,
  *   token: '0x...',
@@ -178,12 +274,8 @@ export async function burnBlocked<
 >(
   client: Client<Transport, chain, account>,
   parameters: burnBlocked.Parameters<chain, account>,
-): Promise<burnBlocked.ReturnType> {
-  const call = burnBlocked.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<burnBlocked.ReturnValue> {
+  return burnBlocked.inner(writeContract, client, parameters)
 }
 
 export namespace burnBlocked {
@@ -201,7 +293,24 @@ export namespace burnBlocked {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: burnBlocked.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = burnBlocked.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `burnBlocked` function.
@@ -245,6 +354,87 @@ export namespace burnBlocked {
       args: [from, amount],
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'BurnBlocked',
+    })
+    if (!log) throw new Error('`BurnBlocked` event not found.')
+    return log
+  }
+}
+
+/**
+ * Burns TIP20 tokens from a blocked address.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.burnBlockedSync(client, {
+ *   from: '0x...',
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function burnBlockedSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: burnBlockedSync.Parameters<chain, account>,
+): Promise<burnBlockedSync.ReturnValue> {
+  const receipt = await burnBlocked.inner(writeContractSync, client, parameters)
+  const { args } = burnBlocked.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace burnBlockedSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = burnBlocked.Parameters<chain, account>
+
+  export type Args = burnBlocked.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip20Abi,
+      'BurnBlocked',
+      {
+        IndexedOnly: false
+        Required: true
+      }
+    > & {
+      /** Transaction receipt. */
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -263,7 +453,7 @@ export namespace burnBlocked {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.burn(client, {
+ * const result = await actions.token.burn(client, {
  *   amount: 100n,
  *   token: '0x...',
  * })
@@ -279,12 +469,8 @@ export async function burn<
 >(
   client: Client<Transport, chain, account>,
   parameters: burn.Parameters<chain, account>,
-): Promise<burn.ReturnType> {
-  const call = burn.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<burn.ReturnValue> {
+  return burn.inner(writeContract, client, parameters)
 }
 
 export namespace burn {
@@ -302,7 +488,24 @@ export namespace burn {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: burn.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = burn.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `burn` or `burnWithMemo` function.
@@ -353,6 +556,85 @@ export namespace burn {
       ...callArgs,
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'Burn',
+    })
+    if (!log) throw new Error('`Burn` event not found.')
+    return log
+  }
+}
+
+/**
+ * Burns TIP20 tokens from the caller's balance.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.burnSync(client, {
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function burnSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: burnSync.Parameters<chain, account>,
+): Promise<burnSync.ReturnValue> {
+  const receipt = await burn.inner(writeContractSync, client, parameters)
+  const { args } = burn.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace burnSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = burn.Parameters<chain, account>
+
+  export type Args = burn.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip20Abi,
+      'Burn',
+      {
+        IndexedOnly: false
+        Required: true
+      }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -371,7 +653,7 @@ export namespace burn {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.changeTransferPolicy(client, {
+ * const result = await actions.token.changeTransferPolicy(client, {
  *   token: '0x...',
  *   policyId: 1n,
  * })
@@ -387,12 +669,8 @@ export async function changeTransferPolicy<
 >(
   client: Client<Transport, chain, account>,
   parameters: changeTransferPolicy.Parameters<chain, account>,
-): Promise<changeTransferPolicy.ReturnType> {
-  const call = changeTransferPolicy.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<changeTransferPolicy.ReturnValue> {
+  return changeTransferPolicy.inner(writeContract, client, parameters)
 }
 
 export namespace changeTransferPolicy {
@@ -408,7 +686,24 @@ export namespace changeTransferPolicy {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: changeTransferPolicy.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = changeTransferPolicy.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `changeTransferPolicyId` function.
@@ -451,6 +746,89 @@ export namespace changeTransferPolicy {
       args: [policyId],
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'TransferPolicyUpdate',
+    })
+    if (!log) throw new Error('`TransferPolicyUpdate` event not found.')
+    return log
+  }
+}
+
+/**
+ * Changes the transfer policy ID for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.changeTransferPolicySync(client, {
+ *   token: '0x...',
+ *   policyId: 1n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function changeTransferPolicySync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: changeTransferPolicySync.Parameters<chain, account>,
+): Promise<changeTransferPolicySync.ReturnValue> {
+  const receipt = await changeTransferPolicy.inner(
+    writeContractSync,
+    client,
+    parameters,
+  )
+  const { args } = changeTransferPolicy.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace changeTransferPolicySync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = changeTransferPolicy.Parameters<chain, account>
+
+  export type Args = changeTransferPolicy.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip20Abi,
+      'TransferPolicyUpdate',
+      {
+        IndexedOnly: false
+        Required: true
+      }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -469,7 +847,7 @@ export namespace changeTransferPolicy {
  *   transport: http(),
  * })
  *
- * const { hash, id, address } = await actions.token.create(client, {
+ * const result = await actions.token.create(client, {
  *   name: 'My Token',
  *   symbol: 'MTK',
  *   currency: 'USD',
@@ -486,32 +864,8 @@ export async function create<
 >(
   client: Client<Transport, chain, account>,
   parameters: create.Parameters<chain, account>,
-): Promise<create.ReturnType> {
-  const {
-    account = client.account,
-    admin: admin_ = client.account,
-    chain = client.chain,
-    ...rest
-  } = parameters
-  const admin = admin_ ? parseAccount(admin_) : undefined
-  if (!admin) throw new Error('admin is required.')
-
-  const call = create.call({ ...rest, admin: admin.address })
-  const { request, result } = await simulateContract(client, {
-    ...rest,
-    account,
-    chain,
-    ...call,
-  } as never)
-  const hash = await writeContract(client as never, request as never)
-  const id = Hex.toBigInt(result as Hex.Hex)
-  const address = TokenId.toAddress(id)
-  return {
-    address,
-    admin: admin.address,
-    hash,
-    id,
-  }
+): Promise<create.ReturnValue> {
+  return create.inner(writeContract, client, parameters)
 }
 
 export namespace create {
@@ -535,16 +889,39 @@ export namespace create {
     symbol: string
   }
 
-  export type ReturnType = Compute<{
-    /** Address of the created TIP20 token. */
-    address: Address
-    /** Admin of the token. */
-    admin: Address
-    /** Transaction hash. */
-    hash: Hex.Hex
-    /** ID of the TIP20 token. */
-    id: bigint
-  }>
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: any,
+  ): Promise<ReturnType<action>> {
+    const {
+      account = client.account,
+      admin: admin_ = client.account,
+      chain = client.chain,
+      ...rest
+    } = parameters
+    const admin = admin_ ? parseAccount(admin_) : undefined
+    if (!admin) throw new Error('admin is required.')
+
+    const call = create.call({ ...rest, admin: admin.address })
+
+    return (await action(
+      client as never,
+      {
+        ...parameters,
+        account,
+        chain,
+        ...call,
+      } as never,
+    )) as never
+  }
 
   /**
    * Defines a call to the `createToken` function.
@@ -589,6 +966,87 @@ export namespace create {
       functionName: 'createToken',
     })
   }
+
+  /**
+   * Extracts the `TokenCreated` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `TokenCreated` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20FactoryAbi,
+      logs,
+      eventName: 'TokenCreated',
+      strict: true,
+    })
+    if (!log) throw new Error('`TokenCreated` event not found.')
+    return log
+  }
+}
+
+/**
+ * Creates a new TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.createSync(client, {
+ *   name: 'My Token',
+ *   symbol: 'MTK',
+ *   currency: 'USD',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function createSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: createSync.Parameters<chain, account>,
+): Promise<createSync.ReturnValue> {
+  const receipt = await create.inner(writeContractSync, client, parameters)
+
+  const { args } = create.extractEvent(receipt.logs)
+
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace createSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = create.Parameters<chain, account>
+
+  export type Args = create.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip20FactoryAbi,
+      'TokenCreated',
+      { IndexedOnly: false; Required: true }
+    > & {
+      /** Transaction receipt. */
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -622,7 +1080,7 @@ export async function getAllowance<
 >(
   client: Client<Transport, chain, account>,
   parameters: getAllowance.Parameters<account>,
-): Promise<getAllowance.ReturnType> {
+): Promise<getAllowance.ReturnValue> {
   const { account = client.account, ...rest } = parameters
   const address = account ? parseAccount(account).address : undefined
   if (!address) throw new Error('account is required.')
@@ -646,7 +1104,7 @@ export namespace getAllowance {
     token?: TokenId.TokenIdOrAddress | undefined
   }
 
-  export type ReturnType = ReadContractReturnType<
+  export type ReturnValue = ReadContractReturnType<
     typeof tip20Abi,
     'allowance',
     never
@@ -702,7 +1160,7 @@ export async function getBalance<
   ...parameters: account extends Account
     ? [getBalance.Parameters<account>] | []
     : [getBalance.Parameters<account>]
-): Promise<getBalance.ReturnType> {
+): Promise<getBalance.ReturnValue> {
   const { account = client.account, ...rest } = parameters[0] ?? {}
   const address = account ? parseAccount(account).address : undefined
   if (!address) throw new Error('account is required.')
@@ -724,7 +1182,7 @@ export namespace getBalance {
     token?: TokenId.TokenIdOrAddress | undefined
   }
 
-  export type ReturnType = ReadContractReturnType<
+  export type ReturnValue = ReadContractReturnType<
     typeof tip20Abi,
     'balanceOf',
     never
@@ -775,7 +1233,7 @@ export namespace getBalance {
 export async function getMetadata<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
   parameters: getMetadata.Parameters = {},
-): Promise<getMetadata.ReturnType> {
+): Promise<getMetadata.ReturnValue> {
   const { token = usdAddress, ...rest } = parameters
   const address = TokenId.toAddress(token)
   const abi = tip20Abi
@@ -855,7 +1313,7 @@ export declare namespace getMetadata {
     token?: TokenId.TokenIdOrAddress | undefined
   }
 
-  export type ReturnType = Compute<{
+  export type ReturnValue = Compute<{
     /** Currency (e.g. "USD"). */
     currency: string
     /** Decimals. */
@@ -891,7 +1349,7 @@ export declare namespace getMetadata {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.grantRoles(client, {
+ * const result = await actions.token.grantRoles(client, {
  *   token: '0x...',
  *   to: '0x...',
  *   roles: ['minter'],
@@ -908,17 +1366,8 @@ export async function grantRoles<
 >(
   client: Client<Transport, chain, account>,
   parameters: grantRoles.Parameters<chain, account>,
-): Promise<grantRoles.ReturnType> {
-  return sendTransaction(client, {
-    ...parameters,
-    calls: parameters.roles.map((role) => {
-      const call = grantRoles.call({ ...parameters, role })
-      return {
-        ...call,
-        data: encodeFunctionData(call),
-      }
-    }),
-  } as never)
+): Promise<grantRoles.ReturnValue> {
+  return grantRoles.inner(sendTransaction, client, parameters)
 }
 
 export namespace grantRoles {
@@ -940,7 +1389,29 @@ export namespace grantRoles {
     to: Address
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof sendTransaction | typeof sendTransactionSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: grantRoles.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    return (await action(client, {
+      ...parameters,
+      calls: parameters.roles.map((role) => {
+        const call = grantRoles.call({ ...parameters, role })
+        return {
+          ...call,
+          data: encodeFunctionData(call),
+        }
+      }),
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `grantRole` function.
@@ -985,6 +1456,88 @@ export namespace grantRoles {
       args: [roleHash, to],
     })
   }
+
+  /**
+   * Extracts the events from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The events.
+   */
+  export function extractEvents(logs: Log[]) {
+    const events = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'RoleMembershipUpdated',
+    })
+    if (events.length === 0)
+      throw new Error('`RoleMembershipUpdated` events not found.')
+    return events
+  }
+}
+
+/**
+ * Grants a role for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.grantRolesSync(client, {
+ *   token: '0x...',
+ *   to: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function grantRolesSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: grantRolesSync.Parameters<chain, account>,
+): Promise<grantRolesSync.ReturnValue> {
+  const receipt = await grantRoles.inner(
+    sendTransactionSync,
+    client,
+    parameters,
+  )
+  const events = grantRoles.extractEvents(receipt.logs)
+  const value = events.map((event) => event.args)
+  return {
+    receipt,
+    value,
+  }
+}
+
+export namespace grantRolesSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = grantRoles.Parameters<chain, account>
+
+  export type Args = grantRoles.Args
+
+  export type ReturnValue = {
+    receipt: TransactionReceipt
+    value: readonly GetEventArgs<
+      typeof tip20Abi,
+      'RoleMembershipUpdated',
+      { IndexedOnly: false; Required: true }
+    >[]
+  }
 }
 
 /**
@@ -1003,7 +1556,7 @@ export namespace grantRoles {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.mint(client, {
+ * const result = await actions.token.mint(client, {
  *   to: '0x...',
  *   amount: 100n,
  *   token: '0x...',
@@ -1020,14 +1573,8 @@ export async function mint<
 >(
   client: Client<Transport, chain, account>,
   parameters: mint.Parameters<chain, account>,
-): Promise<mint.ReturnType> {
-  const call = mint.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    // TODO: fix
-    gas: 30_000n,
-    ...call,
-  } as never)
+): Promise<mint.ReturnValue> {
+  return mint.inner(writeContract, client, parameters)
 }
 
 export namespace mint {
@@ -1047,7 +1594,25 @@ export namespace mint {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: any,
+  ): Promise<ReturnType<action>> {
+    const call = mint.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      gas: 30_000n,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `mint` or `mintWithMemo` function.
@@ -1099,6 +1664,86 @@ export namespace mint {
       ...callArgs,
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'Mint',
+    })
+    if (!log) throw new Error('`Mint` event not found.')
+    return log
+  }
+}
+
+/**
+ * Mints TIP20 tokens to an address.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.mintSync(client, {
+ *   to: '0x...',
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function mintSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: mintSync.Parameters<chain, account>,
+): Promise<mintSync.ReturnValue> {
+  const receipt = await mint.inner(writeContractSync, client, parameters)
+  const { args } = mint.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace mintSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = mint.Parameters<chain, account>
+
+  export type Args = mint.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip20Abi,
+      'Mint',
+      {
+        IndexedOnly: false
+        Required: true
+      }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -1117,7 +1762,7 @@ export namespace mint {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.pause(client, {
+ * const result = await actions.token.pause(client, {
  *   token: '0x...',
  * })
  * ```
@@ -1132,12 +1777,8 @@ export async function pause<
 >(
   client: Client<Transport, chain, account>,
   parameters: pause.Parameters<chain, account>,
-): Promise<pause.ReturnType> {
-  const call = pause.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<pause.ReturnValue> {
+  return pause.inner(writeContract, client, parameters)
 }
 
 export namespace pause {
@@ -1151,7 +1792,24 @@ export namespace pause {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: pause.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = pause.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `pause` function.
@@ -1193,6 +1851,79 @@ export namespace pause {
       args: [],
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'PauseStateUpdate',
+    })
+    if (!log) throw new Error('`PauseStateUpdate` event not found.')
+    return log
+  }
+}
+
+/**
+ * Pauses a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.pauseSync(client, {
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function pauseSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: pauseSync.Parameters<chain, account>,
+): Promise<pauseSync.ReturnValue> {
+  const receipt = await pause.inner(writeContractSync, client, parameters)
+  const { args } = pause.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  }
+}
+
+export namespace pauseSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = pause.Parameters<chain, account>
+
+  export type Args = pause.Args
+
+  export type ReturnValue = GetEventArgs<
+    typeof tip20Abi,
+    'PauseStateUpdate',
+    { IndexedOnly: false; Required: true }
+  > & {
+    receipt: TransactionReceipt
+  }
 }
 
 /**
@@ -1211,7 +1942,7 @@ export namespace pause {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.permit(client, {
+ * const result = await actions.token.permit(client, {
  *   owner: '0x...',
  *   spender: '0x...',
  *   value: 100n,
@@ -1230,12 +1961,8 @@ export async function permit<
 >(
   client: Client<Transport, chain, account>,
   parameters: permit.Parameters<chain, account>,
-): Promise<permit.ReturnType> {
-  const call = permit.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<permit.ReturnValue> {
+  return permit.inner(writeContract, client, parameters)
 }
 
 export namespace permit {
@@ -1259,7 +1986,24 @@ export namespace permit {
     value: bigint
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: permit.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = permit.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `permit` function.
@@ -1323,6 +2067,83 @@ export namespace permit {
       ],
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'Approval',
+    })
+    if (!log) throw new Error('`Approval` event not found.')
+    return log
+  }
+}
+
+/**
+ * Approves a spender using a signed permit.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.permitSync(client, {
+ *   owner: '0x...',
+ *   spender: '0x...',
+ *   value: 100n,
+ *   deadline: 1234567890n,
+ *   signature: { r: 0n, s: 0n, yParity: 0 },
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function permitSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: permitSync.Parameters<chain, account>,
+): Promise<permitSync.ReturnValue> {
+  const receipt = await permit.inner(writeContractSync, client, parameters)
+  const { args } = permit.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace permitSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = permit.Parameters<chain, account>
+
+  export type Args = permit.Args
+
+  export type ReturnValue = GetEventArgs<
+    typeof tip20Abi,
+    'Approval',
+    { IndexedOnly: false; Required: true }
+  > & {
+    receipt: TransactionReceipt
+  }
 }
 
 /**
@@ -1341,7 +2162,7 @@ export namespace permit {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.renounceRoles(client, {
+ * const result = await actions.token.renounceRoles(client, {
  *   token: '0x...',
  *   roles: ['minter'],
  * })
@@ -1357,17 +2178,8 @@ export async function renounceRoles<
 >(
   client: Client<Transport, chain, account>,
   parameters: renounceRoles.Parameters<chain, account>,
-): Promise<renounceRoles.ReturnType> {
-  return sendTransaction(client, {
-    ...parameters,
-    calls: parameters.roles.map((role) => {
-      const call = renounceRoles.call({ ...parameters, role })
-      return {
-        ...call,
-        data: encodeFunctionData(call),
-      }
-    }),
-  } as never)
+): Promise<renounceRoles.ReturnValue> {
+  return renounceRoles.inner(sendTransaction, client, parameters)
 }
 
 export namespace renounceRoles {
@@ -1387,7 +2199,29 @@ export namespace renounceRoles {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof sendTransaction | typeof sendTransactionSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: renounceRoles.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    return (await action(client, {
+      ...parameters,
+      calls: parameters.roles.map((role) => {
+        const call = renounceRoles.call({ ...parameters, role })
+        return {
+          ...call,
+          data: encodeFunctionData(call),
+        }
+      }),
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `renounceRole` function.
@@ -1431,6 +2265,87 @@ export namespace renounceRoles {
       args: [roleHash],
     })
   }
+
+  /**
+   * Extracts the events from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The events.
+   */
+  export function extractEvents(logs: Log[]) {
+    const events = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'RoleMembershipUpdated',
+    })
+    if (events.length === 0)
+      throw new Error('`RoleMembershipUpdated` events not found.')
+    return events
+  }
+}
+
+/**
+ * Renounces a role for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.renounceRolesSync(client, {
+ *   token: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function renounceRolesSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: renounceRolesSync.Parameters<chain, account>,
+): Promise<renounceRolesSync.ReturnValue> {
+  const receipt = await renounceRoles.inner(
+    sendTransactionSync,
+    client,
+    parameters,
+  )
+  const events = renounceRoles.extractEvents(receipt.logs)
+  const value = events.map((event) => event.args)
+  return {
+    receipt,
+    value,
+  }
+}
+
+export namespace renounceRolesSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = renounceRoles.Parameters<chain, account>
+
+  export type Args = renounceRoles.Args
+
+  export type ReturnValue = {
+    receipt: TransactionReceipt
+    value: readonly GetEventArgs<
+      typeof tip20Abi,
+      'RoleMembershipUpdated',
+      { IndexedOnly: false; Required: true }
+    >[]
+  }
 }
 
 /**
@@ -1449,7 +2364,7 @@ export namespace renounceRoles {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.revokeRoles(client, {
+ * const result = await actions.token.revokeRoles(client, {
  *   token: '0x...',
  *   from: '0x...',
  *   roles: ['minter'],
@@ -1466,24 +2381,15 @@ export async function revokeRoles<
 >(
   client: Client<Transport, chain, account>,
   parameters: revokeRoles.Parameters<chain, account>,
-): Promise<revokeRoles.ReturnType> {
-  return sendTransaction(client, {
-    ...parameters,
-    calls: parameters.roles.map((role) => {
-      const call = revokeRoles.call({ ...parameters, role })
-      return {
-        ...call,
-        data: encodeFunctionData(call),
-      }
-    }),
-  } as never)
+): Promise<revokeRoles.ReturnValue> {
+  return revokeRoles.inner(sendTransaction, client, parameters)
 }
 
 export namespace revokeRoles {
   export type Parameters<
     chain extends Chain | undefined = Chain | undefined,
     account extends Account | undefined = Account | undefined,
-  > = SendTransactionParameters<chain, account> &
+  > = SendTransactionSyncParameters<chain, account> &
     Omit<Args, 'role'> & {
       /** Role to revoke. */
       roles: readonly TokenRole.TokenRole[]
@@ -1498,7 +2404,29 @@ export namespace revokeRoles {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof sendTransaction | typeof sendTransactionSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: revokeRoles.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    return (await action(client, {
+      ...parameters,
+      calls: parameters.roles.map((role) => {
+        const call = revokeRoles.call({ ...parameters, role })
+        return {
+          ...call,
+          data: encodeFunctionData(call),
+        }
+      }),
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `revokeRole` function.
@@ -1543,6 +2471,88 @@ export namespace revokeRoles {
       args: [roleHash, from],
     })
   }
+
+  /**
+   * Extracts the events from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The events.
+   */
+  export function extractEvents(logs: Log[]) {
+    const events = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'RoleMembershipUpdated',
+    })
+    if (events.length === 0)
+      throw new Error('`RoleMembershipUpdated` events not found.')
+    return events
+  }
+}
+
+/**
+ * Revokes a role for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.revokeRolesSync(client, {
+ *   token: '0x...',
+ *   from: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function revokeRolesSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: revokeRolesSync.Parameters<chain, account>,
+): Promise<revokeRolesSync.ReturnValue> {
+  const receipt = await revokeRoles.inner(
+    sendTransactionSync,
+    client,
+    parameters,
+  )
+  const events = revokeRoles.extractEvents(receipt.logs)
+  const value = events.map((event) => event.args)
+  return {
+    receipt,
+    value,
+  }
+}
+
+export namespace revokeRolesSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = revokeRoles.Parameters<chain, account>
+
+  export type Args = revokeRoles.Args
+
+  export type ReturnValue = {
+    receipt: TransactionReceipt
+    value: readonly GetEventArgs<
+      typeof tip20Abi,
+      'RoleMembershipUpdated',
+      { IndexedOnly: false; Required: true }
+    >[]
+  }
 }
 
 /**
@@ -1561,7 +2571,7 @@ export namespace revokeRoles {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.setSupplyCap(client, {
+ * const result = await actions.token.setSupplyCap(client, {
  *   token: '0x...',
  *   supplyCap: 1000000n,
  * })
@@ -1577,12 +2587,8 @@ export async function setSupplyCap<
 >(
   client: Client<Transport, chain, account>,
   parameters: setSupplyCap.Parameters<chain, account>,
-): Promise<setSupplyCap.ReturnType> {
-  const call = setSupplyCap.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<setSupplyCap.ReturnValue> {
+  return setSupplyCap.inner(writeContract, client, parameters)
 }
 
 export namespace setSupplyCap {
@@ -1598,7 +2604,24 @@ export namespace setSupplyCap {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: setSupplyCap.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = setSupplyCap.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `setSupplyCap` function.
@@ -1641,6 +2664,84 @@ export namespace setSupplyCap {
       args: [supplyCap],
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'SupplyCapUpdate',
+    })
+    if (!log) throw new Error('`SupplyCapUpdate` event not found.')
+    return log
+  }
+}
+
+/**
+ * Sets the supply cap for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.setSupplyCapSync(client, {
+ *   token: '0x...',
+ *   supplyCap: 1000000n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setSupplyCapSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: setSupplyCapSync.Parameters<chain, account>,
+): Promise<setSupplyCapSync.ReturnValue> {
+  const receipt = await setSupplyCap.inner(
+    writeContractSync,
+    client,
+    parameters,
+  )
+  const { args } = setSupplyCap.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace setSupplyCapSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = setSupplyCap.Parameters<chain, account>
+
+  export type Args = setSupplyCap.Args
+
+  export type ReturnValue = GetEventArgs<
+    typeof tip20Abi,
+    'SupplyCapUpdate',
+    { IndexedOnly: false; Required: true }
+  > & {
+    receipt: TransactionReceipt
+  }
 }
 
 /**
@@ -1659,7 +2760,7 @@ export namespace setSupplyCap {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.setRoleAdmin(client, {
+ * const result = await actions.token.setRoleAdmin(client, {
  *   token: '0x...',
  *   role: 'minter',
  *   adminRole: 'admin',
@@ -1676,12 +2777,8 @@ export async function setRoleAdmin<
 >(
   client: Client<Transport, chain, account>,
   parameters: setRoleAdmin.Parameters<chain, account>,
-): Promise<setRoleAdmin.ReturnType> {
-  const call = setRoleAdmin.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<setRoleAdmin.ReturnValue> {
+  return setRoleAdmin.inner(writeContract, client, parameters)
 }
 
 export namespace setRoleAdmin {
@@ -1699,7 +2796,24 @@ export namespace setRoleAdmin {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: setRoleAdmin.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = setRoleAdmin.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `setRoleAdmin` function.
@@ -1745,6 +2859,85 @@ export namespace setRoleAdmin {
       args: [roleHash, adminRoleHash],
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'RoleAdminUpdated',
+    })
+    if (!log) throw new Error('`RoleAdminUpdated` event not found.')
+    return log
+  }
+}
+
+/**
+ * Sets the admin role for a specific role in a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.setRoleAdminSync(client, {
+ *   token: '0x...',
+ *   role: 'minter',
+ *   adminRole: 'admin',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setRoleAdminSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: setRoleAdminSync.Parameters<chain, account>,
+): Promise<setRoleAdminSync.ReturnValue> {
+  const receipt = await setRoleAdmin.inner(
+    writeContractSync,
+    client,
+    parameters,
+  )
+  const { args } = setRoleAdmin.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace setRoleAdminSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = setRoleAdmin.Parameters<chain, account>
+
+  export type Args = setRoleAdmin.Args
+
+  export type ReturnValue = GetEventArgs<
+    typeof tip20Abi,
+    'RoleAdminUpdated',
+    { IndexedOnly: false; Required: true }
+  > & {
+    receipt: TransactionReceipt
+  }
 }
 
 /**
@@ -1763,7 +2956,7 @@ export namespace setRoleAdmin {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.transfer(client, {
+ * const result = await actions.token.transfer(client, {
  *   to: '0x...',
  *   amount: 100n,
  * })
@@ -1779,12 +2972,8 @@ export async function transfer<
 >(
   client: Client<Transport, chain, account>,
   parameters: transfer.Parameters<chain, account>,
-): Promise<transfer.ReturnType> {
-  const call = transfer.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<transfer.ReturnValue> {
+  return transfer.inner(writeContract, client, parameters)
 }
 
 export namespace transfer {
@@ -1806,7 +2995,24 @@ export namespace transfer {
     to: Address
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: transfer.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = transfer.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `transfer`, `transferFrom`, `transferWithMemo`, or `transferFromWithMemo` function.
@@ -1870,6 +3076,80 @@ export namespace transfer {
       ...callArgs,
     })
   }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'Transfer',
+    })
+    if (!log) throw new Error('`Transfer` event not found.')
+    return log
+  }
+}
+
+/**
+ * Transfers TIP20 tokens to another address.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.transferSync(client, {
+ *   to: '0x...',
+ *   amount: 100n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function transferSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: transferSync.Parameters<chain, account>,
+): Promise<transferSync.ReturnValue> {
+  const receipt = await transfer.inner(writeContractSync, client, parameters)
+  const { args } = transfer.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace transferSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = transfer.Parameters<chain, account>
+
+  export type Args = transfer.Args
+
+  export type ReturnValue = GetEventArgs<
+    typeof tip20Abi,
+    'Transfer',
+    { IndexedOnly: false; Required: true }
+  > & {
+    receipt: TransactionReceipt
+  }
 }
 
 /**
@@ -1888,7 +3168,7 @@ export namespace transfer {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.unpause(client, {
+ * const result = await actions.token.unpause(client, {
  *   token: '0x...',
  * })
  * ```
@@ -1903,12 +3183,8 @@ export async function unpause<
 >(
   client: Client<Transport, chain, account>,
   parameters: unpause.Parameters<chain, account>,
-): Promise<unpause.ReturnType> {
-  const call = unpause.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<unpause.ReturnValue> {
+  return unpause.inner(writeContract, client, parameters)
 }
 
 export namespace unpause {
@@ -1922,7 +3198,24 @@ export namespace unpause {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: unpause.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = unpause.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `unpause` function.
@@ -1963,6 +3256,79 @@ export namespace unpause {
       functionName: 'unpause',
       args: [],
     })
+  }
+
+  /**
+   * Extracts the event from the logs.
+   *
+   * @param logs - Logs.
+   * @returns The event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip20Abi,
+      logs,
+      eventName: 'PauseStateUpdate',
+    })
+    if (!log) throw new Error('`PauseStateUpdate` event not found.')
+    return log
+  }
+}
+
+/**
+ * Unpauses a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.unpauseSync(client, {
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function unpauseSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: unpauseSync.Parameters<chain, account>,
+): Promise<unpauseSync.ReturnValue> {
+  const receipt = await unpause.inner(writeContractSync, client, parameters)
+  const { args } = unpause.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace unpauseSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = unpause.Parameters<chain, account>
+
+  export type Args = unpause.Args
+
+  export type ReturnValue = GetEventArgs<
+    typeof tip20Abi,
+    'PauseStateUpdate',
+    { IndexedOnly: false; Required: true }
+  > & {
+    receipt: TransactionReceipt
   }
 }
 

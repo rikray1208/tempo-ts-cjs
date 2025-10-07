@@ -1,22 +1,25 @@
-import type {
-  Account,
-  Address,
-  Chain,
-  Client,
-  ExtractAbiItem,
-  GetEventArgs,
-  ReadContractReturnType,
-  Transport,
-  Log as viem_Log,
-  WatchContractEventParameters,
-  WriteContractReturnType,
+import {
+  type Account,
+  type Address,
+  type Chain,
+  type Client,
+  type ExtractAbiItem,
+  type GetEventArgs,
+  type Log,
+  parseEventLogs,
+  type ReadContractReturnType,
+  type TransactionReceipt,
+  type Transport,
+  type Log as viem_Log,
+  type WatchContractEventParameters,
+  type WriteContractReturnType,
 } from 'viem'
 import { parseAccount } from 'viem/accounts'
 import {
   readContract,
-  simulateContract,
   watchContractEvent,
   writeContract,
+  writeContractSync,
 } from 'viem/actions'
 import type { Compute, UnionOmit } from '../../internal/types.js'
 import { tip403RegistryAbi } from '../abis.js'
@@ -63,28 +66,8 @@ export async function create<
 >(
   client: Client<Transport, chain, account>,
   parameters: create.Parameters<chain, account>,
-): Promise<create.ReturnType> {
-  const {
-    account = client.account,
-    addresses,
-    chain = client.chain,
-    type,
-    ...rest
-  } = parameters
-
-  if (!account) throw new Error('`account` is required')
-
-  const admin = parseAccount(account).address!
-
-  const call = create.call({ admin, type, addresses })
-  const { request, result } = await simulateContract(client, {
-    ...rest,
-    account,
-    chain,
-    ...call,
-  } as never)
-  const hash = await writeContract(client, request as never)
-  return { hash, policyId: result }
+): Promise<create.ReturnValue> {
+  return create.inner(writeContract, client, parameters)
 }
 
 export namespace create {
@@ -106,10 +89,38 @@ export namespace create {
     type: PolicyType
   }
 
-  export type ReturnType = Compute<{
-    hash: WriteContractReturnType
-    policyId: bigint
-  }>
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const {
+      account = client.account,
+      addresses,
+      chain = client.chain,
+      type,
+      ...rest
+    } = parameters
+
+    if (!account) throw new Error('`account` is required')
+
+    const admin = parseAccount(account).address!
+
+    const call = create.call({ admin, type, addresses })
+    return action(client, {
+      ...rest,
+      account,
+      chain,
+      ...call,
+    } as never) as never
+  }
 
   /**
    * Defines a call to the `createPolicy` function.
@@ -160,6 +171,83 @@ export namespace create {
       args: callArgs,
     })
   }
+
+  /**
+   * Extracts the `PolicyCreated` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `PolicyCreated` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip403RegistryAbi,
+      logs,
+      eventName: 'PolicyCreated',
+      strict: true,
+    })
+    if (!log) throw new Error('`PolicyCreated` event not found.')
+    return log
+  }
+}
+
+/**
+ * Creates a new policy.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.createSync(client, {
+ *   admin: '0x...',
+ *   type: 'whitelist',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function createSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: createSync.Parameters<chain, account>,
+): Promise<createSync.ReturnValue> {
+  const receipt = await create.inner(writeContractSync, client, parameters)
+  const { args } = create.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace createSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = create.Parameters<chain, account>
+
+  export type Args = create.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip403RegistryAbi,
+      'PolicyCreated',
+      { IndexedOnly: false; Required: true }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -194,12 +282,8 @@ export async function setAdmin<
 >(
   client: Client<Transport, chain, account>,
   parameters: setAdmin.Parameters<chain, account>,
-): Promise<setAdmin.ReturnType> {
-  const call = setAdmin.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<setAdmin.ReturnValue> {
+  return setAdmin.inner(writeContract, client, parameters)
 }
 
 export namespace setAdmin {
@@ -215,7 +299,24 @@ export namespace setAdmin {
     policyId: bigint
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: setAdmin.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = setAdmin.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `setPolicyAdmin` function.
@@ -262,6 +363,83 @@ export namespace setAdmin {
       args: [policyId, admin],
     })
   }
+
+  /**
+   * Extracts the `PolicyAdminUpdated` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `PolicyAdminUpdated` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip403RegistryAbi,
+      logs,
+      eventName: 'PolicyAdminUpdated',
+      strict: true,
+    })
+    if (!log) throw new Error('`PolicyAdminUpdated` event not found.')
+    return log
+  }
+}
+
+/**
+ * Sets the admin for a policy.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.setAdminSync(client, {
+ *   policyId: 2n,
+ *   admin: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setAdminSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: setAdminSync.Parameters<chain, account>,
+): Promise<setAdminSync.ReturnValue> {
+  const receipt = await setAdmin.inner(writeContractSync, client, parameters)
+  const { args } = setAdmin.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace setAdminSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = setAdmin.Parameters<chain, account>
+
+  export type Args = setAdmin.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip403RegistryAbi,
+      'PolicyAdminUpdated',
+      { IndexedOnly: false; Required: true }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -297,13 +475,8 @@ export async function modifyWhitelist<
 >(
   client: Client<Transport, chain, account>,
   parameters: modifyWhitelist.Parameters<chain, account>,
-): Promise<modifyWhitelist.ReturnType> {
-  const { address: targetAccount, ...rest } = parameters
-  const call = modifyWhitelist.call({ ...rest, address: targetAccount })
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<modifyWhitelist.ReturnValue> {
+  return modifyWhitelist.inner(writeContract, client, parameters)
 }
 
 export namespace modifyWhitelist {
@@ -321,7 +494,25 @@ export namespace modifyWhitelist {
     policyId: bigint
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: modifyWhitelist.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const { address: targetAccount, ...rest } = parameters
+    const call = modifyWhitelist.call({ ...rest, address: targetAccount })
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `modifyPolicyWhitelist` function.
@@ -370,6 +561,88 @@ export namespace modifyWhitelist {
       args: [policyId, address, allowed],
     })
   }
+
+  /**
+   * Extracts the `WhitelistUpdated` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `WhitelistUpdated` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip403RegistryAbi,
+      logs,
+      eventName: 'WhitelistUpdated',
+      strict: true,
+    })
+    if (!log) throw new Error('`WhitelistUpdated` event not found.')
+    return log
+  }
+}
+
+/**
+ * Modifies a policy whitelist.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.modifyWhitelistSync(client, {
+ *   policyId: 2n,
+ *   account: '0x...',
+ *   allowed: true,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function modifyWhitelistSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: modifyWhitelistSync.Parameters<chain, account>,
+): Promise<modifyWhitelistSync.ReturnValue> {
+  const receipt = await modifyWhitelist.inner(
+    writeContractSync,
+    client,
+    parameters,
+  )
+  const { args } = modifyWhitelist.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace modifyWhitelistSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = modifyWhitelist.Parameters<chain, account>
+
+  export type Args = modifyWhitelist.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip403RegistryAbi,
+      'WhitelistUpdated',
+      { IndexedOnly: false; Required: true }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -405,13 +678,8 @@ export async function modifyBlacklist<
 >(
   client: Client<Transport, chain, account>,
   parameters: modifyBlacklist.Parameters<chain, account>,
-): Promise<modifyBlacklist.ReturnType> {
-  const { address: targetAccount, ...rest } = parameters
-  const call = modifyBlacklist.call({ ...rest, address: targetAccount })
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<modifyBlacklist.ReturnValue> {
+  return modifyBlacklist.inner(writeContract, client, parameters)
 }
 
 export namespace modifyBlacklist {
@@ -429,7 +697,25 @@ export namespace modifyBlacklist {
     restricted: boolean
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: modifyBlacklist.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const { address: targetAccount, ...rest } = parameters
+    const call = modifyBlacklist.call({ ...rest, address: targetAccount })
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `modifyPolicyBlacklist` function.
@@ -478,6 +764,88 @@ export namespace modifyBlacklist {
       args: [policyId, address, restricted],
     })
   }
+
+  /**
+   * Extracts the `BlacklistUpdated` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `BlacklistUpdated` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: tip403RegistryAbi,
+      logs,
+      eventName: 'BlacklistUpdated',
+      strict: true,
+    })
+    if (!log) throw new Error('`BlacklistUpdated` event not found.')
+    return log
+  }
+}
+
+/**
+ * Modifies a policy blacklist.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.modifyBlacklistSync(client, {
+ *   policyId: 2n,
+ *   account: '0x...',
+ *   restricted: true,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function modifyBlacklistSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: modifyBlacklistSync.Parameters<chain, account>,
+): Promise<modifyBlacklistSync.ReturnValue> {
+  const receipt = await modifyBlacklist.inner(
+    writeContractSync,
+    client,
+    parameters,
+  )
+  const { args } = modifyBlacklist.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace modifyBlacklistSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = modifyBlacklist.Parameters<chain, account>
+
+  export type Args = modifyBlacklist.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof tip403RegistryAbi,
+      'BlacklistUpdated',
+      { IndexedOnly: false; Required: true }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -506,7 +874,7 @@ export namespace modifyBlacklist {
 export async function getData<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
   parameters: getData.Parameters,
-): Promise<getData.ReturnType> {
+): Promise<getData.ReturnValue> {
   const result = await readContract(client, {
     ...parameters,
     ...getData.call(parameters),
@@ -525,7 +893,7 @@ export namespace getData {
     policyId: bigint
   }
 
-  export type ReturnType = Compute<{
+  export type ReturnValue = Compute<{
     /** Admin address. */
     admin: Address
     /** Policy type. */
@@ -576,7 +944,7 @@ export namespace getData {
 export async function isAuthorized<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
   parameters: isAuthorized.Parameters,
-): Promise<isAuthorized.ReturnType> {
+): Promise<isAuthorized.ReturnValue> {
   return readContract(client, {
     ...parameters,
     ...isAuthorized.call(parameters),
@@ -593,7 +961,7 @@ export namespace isAuthorized {
     user: Address
   }
 
-  export type ReturnType = ReadContractReturnType<
+  export type ReturnValue = ReadContractReturnType<
     typeof tip403RegistryAbi,
     'isAuthorized',
     never

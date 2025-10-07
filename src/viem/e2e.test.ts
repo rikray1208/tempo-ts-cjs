@@ -288,19 +288,23 @@ describe.skipIf(!!process.env.CI)('relay', () => {
 
         const request = RpcRequest.from(await req.json())
 
-        if (request.method !== 'eth_sendRawTransaction')
+        if (
+          request.method !== 'eth_sendRawTransaction' &&
+          request.method !== 'eth_sendRawTransactionSync'
+        )
           return Response.json(
             RpcResponse.from(
               {
-                error: new RpcResponse.MethodNotSupportedError({
-                  message: 'service only supports `eth_sendRawTransaction`',
+                error: new RpcResponse.InvalidParamsError({
+                  message:
+                    'service only supports `eth_sendRawTransaction` and `eth_sendRawTransactionSync`',
                 }),
               },
               { request },
             ),
           )
 
-        const serialized = request.params[0] as `0x77${string}`
+        const serialized = request.params?.[0] as `0x77${string}`
         if (!serialized.startsWith('0x77'))
           return Response.json(
             RpcResponse.from(
@@ -318,11 +322,12 @@ describe.skipIf(!!process.env.CI)('relay', () => {
           ...transaction,
           feePayer: client.account,
         })
-        const hash = await client.sendRawTransaction({
-          serializedTransaction,
+        const result = await client.request({
+          method: request.method,
+          params: [serializedTransaction],
         })
 
-        return Response.json(RpcResponse.from({ result: hash }, { request }))
+        return Response.json(RpcResponse.from({ result }, { request }))
       },
     })
 
@@ -338,11 +343,10 @@ describe.skipIf(!!process.env.CI)('relay', () => {
       .extend(walletActions)
       .extend(publicActions)
 
-    const hash = await client.fee.setUserToken({
+    const { receipt } = await client.fee.setUserTokenSync({
       feePayer: true,
       token: 1n,
     })
-    await client.waitForTransactionReceipt({ hash })
 
     const userToken = await client.fee.getUserToken()
     expect(userToken).toMatchInlineSnapshot(`
@@ -356,7 +360,7 @@ describe.skipIf(!!process.env.CI)('relay', () => {
       blockHash: _,
       blockNumber: __,
       ...transaction
-    } = await client.getTransaction({ hash })
+    } = await client.getTransaction({ hash: receipt.transactionHash })
 
     expect(transaction).toMatchInlineSnapshot(`
       {

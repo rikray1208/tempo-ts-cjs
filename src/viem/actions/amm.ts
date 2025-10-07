@@ -1,18 +1,26 @@
-import type {
-  Account,
-  Address,
-  Chain,
-  Client,
-  ExtractAbiItem,
-  GetEventArgs,
-  Hex,
-  ReadContractReturnType,
-  Transport,
-  Log as viem_Log,
-  WatchContractEventParameters,
-  WriteContractReturnType,
+import {
+  type Account,
+  type Address,
+  type Chain,
+  type Client,
+  type ExtractAbiItem,
+  type GetEventArgs,
+  type Hex,
+  type Log,
+  parseEventLogs,
+  type ReadContractReturnType,
+  type TransactionReceipt,
+  type Transport,
+  type Log as viem_Log,
+  type WatchContractEventParameters,
+  type WriteContractReturnType,
 } from 'viem'
-import { readContract, watchContractEvent, writeContract } from 'viem/actions'
+import {
+  readContract,
+  watchContractEvent,
+  writeContract,
+  writeContractSync,
+} from 'viem/actions'
 import type { Compute, UnionOmit } from '../../internal/types.js'
 import * as TokenId from '../../ox/TokenId.js'
 import { feeAmmAbi } from '../abis.js'
@@ -47,7 +55,7 @@ import { defineCall } from '../utils.js'
 export async function getPoolId<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
   parameters: getPoolId.Parameters,
-): Promise<getPoolId.ReturnType> {
+): Promise<getPoolId.ReturnValue> {
   return readContract(client, {
     ...parameters,
     ...getPoolId.call(parameters),
@@ -64,7 +72,7 @@ export namespace getPoolId {
     validatorToken: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = ReadContractReturnType<
+  export type ReturnValue = ReadContractReturnType<
     typeof feeAmmAbi,
     'getPoolId',
     never
@@ -114,7 +122,7 @@ export namespace getPoolId {
 export async function getPool<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
   parameters: getPool.Parameters,
-): Promise<getPool.ReturnType> {
+): Promise<getPool.ReturnValue> {
   return readContract(client, {
     ...parameters,
     ...getPool.call(parameters),
@@ -131,7 +139,7 @@ export namespace getPool {
     validatorToken: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = Compute<{
+  export type ReturnValue = Compute<{
     /** Reserve of user token. */
     reserveUserToken: bigint
     /** Reserve of validator token. */
@@ -184,7 +192,7 @@ export namespace getPool {
 export async function getTotalSupply<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
   parameters: getTotalSupply.Parameters,
-): Promise<getTotalSupply.ReturnType> {
+): Promise<getTotalSupply.ReturnValue> {
   return readContract(client, {
     ...parameters,
     ...getTotalSupply.call(parameters),
@@ -199,7 +207,7 @@ export namespace getTotalSupply {
     poolId: Hex
   }
 
-  export type ReturnType = ReadContractReturnType<
+  export type ReturnValue = ReadContractReturnType<
     typeof feeAmmAbi,
     'totalSupply',
     never
@@ -254,7 +262,7 @@ export namespace getTotalSupply {
 export async function getLiquidityBalance<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
   parameters: getLiquidityBalance.Parameters,
-): Promise<getLiquidityBalance.ReturnType> {
+): Promise<getLiquidityBalance.ReturnValue> {
   return readContract(client, {
     ...parameters,
     ...getLiquidityBalance.call(parameters),
@@ -271,7 +279,7 @@ export namespace getLiquidityBalance {
     poolId: Hex
   }
 
-  export type ReturnType = ReadContractReturnType<
+  export type ReturnValue = ReadContractReturnType<
     typeof feeAmmAbi,
     'liquidityBalances',
     never
@@ -328,12 +336,8 @@ export async function rebalanceSwap<
 >(
   client: Client<Transport, chain, account>,
   parameters: rebalanceSwap.Parameters<chain, account>,
-): Promise<rebalanceSwap.ReturnType> {
-  const call = rebalanceSwap.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<rebalanceSwap.ReturnValue> {
+  return rebalanceSwap.inner(writeContract, client, parameters)
 }
 
 export namespace rebalanceSwap {
@@ -353,7 +357,24 @@ export namespace rebalanceSwap {
     validatorToken: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: rebalanceSwap.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = rebalanceSwap.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `rebalanceSwap` function.
@@ -409,6 +430,90 @@ export namespace rebalanceSwap {
       ],
     })
   }
+
+  /**
+   * Extracts the `RebalanceSwap` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `RebalanceSwap` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: feeAmmAbi,
+      logs,
+      eventName: 'RebalanceSwap',
+      strict: true,
+    })
+    if (!log) throw new Error('`RebalanceSwap` event not found.')
+    return log
+  }
+}
+
+/**
+ * Performs a rebalance swap from validator token to user token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.amm.rebalanceSwapSync(client, {
+ *   userToken: '0x...',
+ *   validatorToken: '0x...',
+ *   amountOut: 100n,
+ *   to: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function rebalanceSwapSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: rebalanceSwapSync.Parameters<chain, account>,
+): Promise<rebalanceSwapSync.ReturnValue> {
+  const receipt = await rebalanceSwap.inner(
+    writeContractSync,
+    client,
+    parameters,
+  )
+  const { args } = rebalanceSwap.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace rebalanceSwapSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = rebalanceSwap.Parameters<chain, account>
+
+  export type Args = rebalanceSwap.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof feeAmmAbi,
+      'RebalanceSwap',
+      { IndexedOnly: false; Required: true }
+    > & {
+      /** Transaction receipt. */
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -450,12 +555,8 @@ export async function mint<
 >(
   client: Client<Transport, chain, account>,
   parameters: mint.Parameters<chain, account>,
-): Promise<mint.ReturnType> {
-  const call = mint.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<mint.ReturnValue> {
+  return mint.inner(writeContract, client, parameters)
 }
 
 export namespace mint {
@@ -483,7 +584,24 @@ export namespace mint {
     }
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: mint.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = mint.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `mint` function.
@@ -550,6 +668,91 @@ export namespace mint {
       ],
     })
   }
+
+  /**
+   * Extracts the `Mint` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `Mint` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: feeAmmAbi,
+      logs,
+      eventName: 'Mint',
+      strict: true,
+    })
+    if (!log) throw new Error('`Mint` event not found.')
+    return log
+  }
+}
+
+/**
+ * Adds liquidity to a pool.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const hash = await actions.amm.mint(client, {
+ *   userToken: {
+ *     address: '0x20c0...beef',
+ *     amount: 100n,
+ *   },
+ *   validatorToken: {
+ *     address: '0x20c0...babe',
+ *     amount: 100n,
+ *   },
+ *   to: '0xfeed...fede',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function mintSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: mintSync.Parameters<chain, account>,
+): Promise<mintSync.ReturnValue> {
+  const receipt = await mint.inner(writeContractSync, client, parameters)
+  const { args } = mint.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace mintSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = mint.Parameters<chain, account>
+
+  export type Args = mint.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof feeAmmAbi,
+      'Mint',
+      { IndexedOnly: false; Required: true }
+    > & {
+      /** Transaction receipt. */
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
@@ -586,12 +789,8 @@ export async function burn<
 >(
   client: Client<Transport, chain, account>,
   parameters: burn.Parameters<chain, account>,
-): Promise<burn.ReturnType> {
-  const call = burn.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<burn.ReturnValue> {
+  return burn.inner(writeContract, client, parameters)
 }
 
 export namespace burn {
@@ -611,7 +810,24 @@ export namespace burn {
     validatorToken: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: burn.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = burn.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `burn` function.
@@ -667,6 +883,86 @@ export namespace burn {
       ],
     })
   }
+
+  /**
+   * Extracts the `Burn` event from logs.
+   *
+   * @param logs - The logs.
+   * @returns The `Burn` event.
+   */
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: feeAmmAbi,
+      logs,
+      eventName: 'Burn',
+      strict: true,
+    })
+    if (!log) throw new Error('`Burn` event not found.')
+    return log
+  }
+}
+
+/**
+ * Removes liquidity from a pool.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.amm.burnSync(client, {
+ *   userToken: '0x20c0...beef',
+ *   validatorToken: '0x20c0...babe',
+ *   liquidity: 50n,
+ *   to: '0xfeed...fede',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function burnSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: burnSync.Parameters<chain, account>,
+): Promise<burnSync.ReturnValue> {
+  const receipt = await burn.inner(writeContractSync, client, parameters)
+  const { args } = burn.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace burnSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = burn.Parameters<chain, account>
+
+  export type Args = burn.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof feeAmmAbi,
+      'Burn',
+      { IndexedOnly: false; Required: true }
+    > & {
+      /** Transaction receipt. */
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**

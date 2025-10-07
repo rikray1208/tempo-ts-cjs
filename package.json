@@ -21,7 +21,8 @@
 			"./viem/addresses": "./src/viem/addresses.ts",
 			"./viem/chain": "./src/viem/chain.ts",
 			"./viem/formatters": "./src/viem/formatters.ts",
-			"./viem/serializers": "./src/viem/serializers.ts"
+			"./viem/transaction": "./src/viem/transaction.ts",
+			"./viem/transport": "./src/viem/transport.ts"
 		},
 		"cjs": false,
 		"conditions": {
@@ -29,11 +30,11 @@
 		}
 	},
 	"dependencies": {
-		"ox": "~0.9.8"
+		"ox": "~0.9.9"
 	},
 	"peerDependencies": {
 		"prool": "^0",
-		"viem": ">=2.37.12"
+		"viem": ">=2.38"
 	},
 	"peerDependenciesMeta": {
 		"prool": {
@@ -58,7 +59,7 @@
 		"prool": "latest",
 		"simple-git-hooks": "^2.13.1",
 		"typescript": "^5.9.2",
-		"viem": "2.37.12",
+		"viem": "^2.38.0",
 		"zshy": "^0.4.2"
 	},
 	"files": [
@@ -117,10 +118,15 @@
 			"types": "./dist/viem/formatters.d.ts",
 			"import": "./dist/viem/formatters.js"
 		},
-		"./viem/serializers": {
-			"src": "./src/viem/serializers.ts",
-			"types": "./dist/viem/serializers.d.ts",
-			"import": "./dist/viem/serializers.js"
+		"./viem/transaction": {
+			"src": "./src/viem/transaction.ts",
+			"types": "./dist/viem/transaction.d.ts",
+			"import": "./dist/viem/transaction.js"
+		},
+		"./viem/transport": {
+			"src": "./src/viem/transport.ts",
+			"types": "./dist/viem/transport.d.ts",
+			"import": "./dist/viem/transport.js"
 		}
 	},
 	"simple-git-hooks": {

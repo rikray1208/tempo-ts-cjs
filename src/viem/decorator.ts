@@ -29,7 +29,7 @@ export type Decorator<
      */
     getPoolId: (
       parameters: ammActions.getPoolId.Parameters,
-    ) => Promise<ammActions.getPoolId.ReturnType>
+    ) => Promise<ammActions.getPoolId.ReturnValue>
     /**
      * Gets the reserves for a liquidity pool.
      *
@@ -50,7 +50,7 @@ export type Decorator<
      */
     getPool: (
       parameters: ammActions.getPool.Parameters,
-    ) => Promise<ammActions.getPool.ReturnType>
+    ) => Promise<ammActions.getPool.ReturnValue>
     /**
      * Gets the total supply of LP tokens for a pool.
      *
@@ -73,7 +73,7 @@ export type Decorator<
      */
     getTotalSupply: (
       parameters: ammActions.getTotalSupply.Parameters,
-    ) => Promise<ammActions.getTotalSupply.ReturnType>
+    ) => Promise<ammActions.getTotalSupply.ReturnValue>
     /**
      * Gets the LP token balance for an account in a specific pool.
      *
@@ -99,7 +99,7 @@ export type Decorator<
      */
     getLiquidityBalance: (
       parameters: ammActions.getLiquidityBalance.Parameters,
-    ) => Promise<ammActions.getLiquidityBalance.ReturnType>
+    ) => Promise<ammActions.getLiquidityBalance.ReturnValue>
     /**
      * Performs a rebalance swap from validator token to user token.
      *
@@ -125,7 +125,33 @@ export type Decorator<
      */
     rebalanceSwap: (
       parameters: ammActions.rebalanceSwap.Parameters<chain, account>,
-    ) => Promise<ammActions.rebalanceSwap.ReturnType>
+    ) => Promise<ammActions.rebalanceSwap.ReturnValue>
+    /**
+     * Performs a rebalance swap from validator token to user token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.amm.rebalanceSwapSync({
+     *   userToken: '0x...',
+     *   validatorToken: '0x...',
+     *   amountOut: 100n,
+     *   to: '0x...',
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    rebalanceSwapSync: (
+      parameters: ammActions.rebalanceSwapSync.Parameters<chain, account>,
+    ) => Promise<ammActions.rebalanceSwapSync.ReturnValue>
     /**
      * Adds liquidity to a pool.
      *
@@ -156,7 +182,38 @@ export type Decorator<
      */
     mint: (
       parameters: ammActions.mint.Parameters<chain, account>,
-    ) => Promise<ammActions.mint.ReturnType>
+    ) => Promise<ammActions.mint.ReturnValue>
+    /**
+     * Adds liquidity to a pool.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.amm.mintSync({
+     *   userToken: {
+     *     address: '0x...',
+     *     amount: 100n,
+     *   },
+     *   validatorToken: {
+     *     address: '0x...',
+     *     amount: 100n,
+     *   },
+     *   to: '0x...',
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    mintSync: (
+      parameters: ammActions.mintSync.Parameters<chain, account>,
+    ) => Promise<ammActions.mintSync.ReturnValue>
     /**
      * Removes liquidity from a pool.
      *
@@ -182,7 +239,33 @@ export type Decorator<
      */
     burn: (
       parameters: ammActions.burn.Parameters<chain, account>,
-    ) => Promise<ammActions.burn.ReturnType>
+    ) => Promise<ammActions.burn.ReturnValue>
+    /**
+     * Removes liquidity from a pool.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.amm.burnSync({
+     *   userToken: '0x...',
+     *   validatorToken: '0x...',
+     *   liquidity: 50n,
+     *   to: '0x...',
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    burnSync: (
+      parameters: ammActions.burnSync.Parameters<chain, account>,
+    ) => Promise<ammActions.burnSync.ReturnValue>
     /**
      * Watches for rebalance swap events.
      *
@@ -290,7 +373,7 @@ export type Decorator<
       ...parameters: account extends Account
         ? [feeActions.getUserToken.Parameters<account>] | []
         : [feeActions.getUserToken.Parameters<account>]
-    ) => Promise<feeActions.getUserToken.ReturnType>
+    ) => Promise<feeActions.getUserToken.ReturnValue>
     /**
      * Sets the user's default fee token.
      *
@@ -314,7 +397,30 @@ export type Decorator<
      */
     setUserToken: (
       parameters: feeActions.setUserToken.Parameters<chain, account>,
-    ) => Promise<feeActions.setUserToken.ReturnType>
+    ) => Promise<feeActions.setUserToken.ReturnValue>
+    /**
+     * Sets the user's default fee token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.fee.setUserTokenSync({
+     *   token: '0x...',
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    setUserTokenSync: (
+      parameters: feeActions.setUserTokenSync.Parameters<chain, account>,
+    ) => Promise<feeActions.setUserTokenSync.ReturnValue>
     /**
      * Watches for user token set events.
      *
@@ -363,7 +469,31 @@ export type Decorator<
      */
     create: (
       parameters: policyActions.create.Parameters<chain, account>,
-    ) => Promise<policyActions.create.ReturnType>
+    ) => Promise<policyActions.create.ReturnValue>
+    /**
+     * Creates a new policy.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.policy.createSync({
+     *   admin: '0x...',
+     *   type: 'whitelist',
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    createSync: (
+      parameters: policyActions.createSync.Parameters<chain, account>,
+    ) => Promise<policyActions.createSync.ReturnValue>
     /**
      * Sets the admin for a policy.
      *
@@ -387,7 +517,31 @@ export type Decorator<
      */
     setAdmin: (
       parameters: policyActions.setAdmin.Parameters<chain, account>,
-    ) => Promise<policyActions.setAdmin.ReturnType>
+    ) => Promise<policyActions.setAdmin.ReturnValue>
+    /**
+     * Sets the admin for a policy.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.policy.setAdminSync({
+     *   policyId: 2n,
+     *   admin: '0x...',
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    setAdminSync: (
+      parameters: policyActions.setAdminSync.Parameters<chain, account>,
+    ) => Promise<policyActions.setAdminSync.ReturnValue>
     /**
      * Modifies a policy whitelist.
      *
@@ -412,7 +566,32 @@ export type Decorator<
      */
     modifyWhitelist: (
       parameters: policyActions.modifyWhitelist.Parameters<chain, account>,
-    ) => Promise<policyActions.modifyWhitelist.ReturnType>
+    ) => Promise<policyActions.modifyWhitelist.ReturnValue>
+    /**
+     * Modifies a policy whitelist.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.policy.modifyWhitelistSync({
+     *   policyId: 2n,
+     *   address: '0x...',
+     *   allowed: true,
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    modifyWhitelistSync: (
+      parameters: policyActions.modifyWhitelistSync.Parameters<chain, account>,
+    ) => Promise<policyActions.modifyWhitelistSync.ReturnValue>
     /**
      * Modifies a policy blacklist.
      *
@@ -437,7 +616,32 @@ export type Decorator<
      */
     modifyBlacklist: (
       parameters: policyActions.modifyBlacklist.Parameters<chain, account>,
-    ) => Promise<policyActions.modifyBlacklist.ReturnType>
+    ) => Promise<policyActions.modifyBlacklist.ReturnValue>
+    /**
+     * Modifies a policy blacklist.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.policy.modifyBlacklistSync({
+     *   policyId: 2n,
+     *   address: '0x...',
+     *   restricted: true,
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    modifyBlacklistSync: (
+      parameters: policyActions.modifyBlacklistSync.Parameters<chain, account>,
+    ) => Promise<policyActions.modifyBlacklistSync.ReturnValue>
     /**
      * Gets policy data.
      *
@@ -457,7 +661,7 @@ export type Decorator<
      */
     getData: (
       parameters: policyActions.getData.Parameters,
-    ) => Promise<policyActions.getData.ReturnType>
+    ) => Promise<policyActions.getData.ReturnValue>
     /**
      * Checks if a user is authorized by a policy.
      *
@@ -478,7 +682,7 @@ export type Decorator<
      */
     isAuthorized: (
       parameters: policyActions.isAuthorized.Parameters,
-    ) => Promise<policyActions.isAuthorized.ReturnType>
+    ) => Promise<policyActions.isAuthorized.ReturnValue>
     /**
      * Watches for policy creation events.
      *
@@ -593,7 +797,32 @@ export type Decorator<
      */
     approve: (
       parameters: tokenActions.approve.Parameters<chain, account>,
-    ) => Promise<tokenActions.approve.ReturnType>
+    ) => Promise<tokenActions.approve.ReturnValue>
+    /**
+     * Approves a spender to transfer TIP20 tokens on behalf of the caller.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.approveSync({
+     *   spender: '0x...',
+     *   amount: 100n,
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    approveSync: (
+      parameters: tokenActions.approveSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.approveSync.ReturnValue>
     /**
      * Burns TIP20 tokens from a blocked address.
      *
@@ -619,7 +848,33 @@ export type Decorator<
      */
     burnBlocked: (
       parameters: tokenActions.burnBlocked.Parameters<chain, account>,
-    ) => Promise<tokenActions.burnBlocked.ReturnType>
+    ) => Promise<tokenActions.burnBlocked.ReturnValue>
+    /**
+     * Burns TIP20 tokens from a blocked address.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.burnBlockedSync({
+     *   from: '0x...',
+     *   amount: 100n,
+     *   token: '0x...',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    burnBlockedSync: (
+      parameters: tokenActions.burnBlockedSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.burnBlockedSync.ReturnValue>
     /**
      * Burns TIP20 tokens from the caller's balance.
      *
@@ -644,7 +899,32 @@ export type Decorator<
      */
     burn: (
       parameters: tokenActions.burn.Parameters<chain, account>,
-    ) => Promise<tokenActions.burn.ReturnType>
+    ) => Promise<tokenActions.burn.ReturnValue>
+    /**
+     * Burns TIP20 tokens from the caller's balance.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.burnSync({
+     *   amount: 100n,
+     *   token: '0x...',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    burnSync: (
+      parameters: tokenActions.burnSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.burnSync.ReturnValue>
     /**
      * Changes the transfer policy ID for a TIP20 token.
      *
@@ -669,7 +949,35 @@ export type Decorator<
      */
     changeTransferPolicy: (
       parameters: tokenActions.changeTransferPolicy.Parameters<chain, account>,
-    ) => Promise<tokenActions.changeTransferPolicy.ReturnType>
+    ) => Promise<tokenActions.changeTransferPolicy.ReturnValue>
+    /**
+     * Changes the transfer policy ID for a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.changeTransferPolicySync({
+     *   token: '0x...',
+     *   policyId: 1n,
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    changeTransferPolicySync: (
+      parameters: tokenActions.changeTransferPolicySync.Parameters<
+        chain,
+        account
+      >,
+    ) => Promise<tokenActions.changeTransferPolicySync.ReturnValue>
     /**
      * Creates a new TIP20 token.
      *
@@ -695,7 +1003,33 @@ export type Decorator<
      */
     create: (
       parameters: tokenActions.create.Parameters<chain, account>,
-    ) => Promise<tokenActions.create.ReturnType>
+    ) => Promise<tokenActions.create.ReturnValue>
+    /**
+     * Creates a new TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.createSync({
+     *   name: 'My Token',
+     *   symbol: 'MTK',
+     *   currency: 'USD',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    createSync: (
+      parameters: tokenActions.createSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.createSync.ReturnValue>
     /**
      * Gets TIP20 token allowance.
      *
@@ -719,7 +1053,7 @@ export type Decorator<
      */
     getAllowance: (
       parameters: tokenActions.getAllowance.Parameters,
-    ) => Promise<tokenActions.getAllowance.ReturnType>
+    ) => Promise<tokenActions.getAllowance.ReturnValue>
     /**
      * Gets TIP20 token balance for an address.
      *
@@ -743,7 +1077,7 @@ export type Decorator<
       ...parameters: account extends Account
         ? [tokenActions.getBalance.Parameters<account>] | []
         : [tokenActions.getBalance.Parameters<account>]
-    ) => Promise<tokenActions.getBalance.ReturnType>
+    ) => Promise<tokenActions.getBalance.ReturnValue>
     /**
      * Gets TIP20 token metadata including name, symbol, currency, decimals, and total supply.
      *
@@ -764,7 +1098,7 @@ export type Decorator<
      */
     getMetadata: (
       parameters: tokenActions.getMetadata.Parameters,
-    ) => Promise<tokenActions.getMetadata.ReturnType>
+    ) => Promise<tokenActions.getMetadata.ReturnValue>
     /**
      * Grants a role for a TIP20 token.
      *
@@ -790,7 +1124,36 @@ export type Decorator<
      */
     grantRoles: (
       parameters: tokenActions.grantRoles.Parameters<chain, account>,
-    ) => Promise<tokenActions.grantRoles.ReturnType>
+    ) => Promise<tokenActions.grantRoles.ReturnValue>
+    /**
+     * Grants a role for a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { tempo } from 'tempo/chains'
+     * import { http } from 'viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...'),
+     *   chain: tempo,
+     *   transport: http(),
+     * })
+     *
+     * const result = await client.token.grantRolesSync({
+     *   token: '0x...',
+     *   to: '0x...',
+     *   roles: ['minter'],
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    grantRolesSync: (
+      parameters: tokenActions.grantRolesSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.grantRolesSync.ReturnValue>
     /**
      * Mints TIP20 tokens to an address.
      *
@@ -816,7 +1179,33 @@ export type Decorator<
      */
     mint: (
       parameters: tokenActions.mint.Parameters<chain, account>,
-    ) => Promise<tokenActions.mint.ReturnType>
+    ) => Promise<tokenActions.mint.ReturnValue>
+    /**
+     * Mints TIP20 tokens to an address.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.mintSync({
+     *   to: '0x...',
+     *   amount: 100n,
+     *   token: '0x...',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    mintSync: (
+      parameters: tokenActions.mintSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.mintSync.ReturnValue>
     /**
      * Pauses a TIP20 token.
      *
@@ -840,7 +1229,31 @@ export type Decorator<
      */
     pause: (
       parameters: tokenActions.pause.Parameters<chain, account>,
-    ) => Promise<tokenActions.pause.ReturnType>
+    ) => Promise<tokenActions.pause.ReturnValue>
+    /**
+     * Pauses a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.pauseSync({
+     *   token: '0x...',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    pauseSync: (
+      parameters: tokenActions.pauseSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.pauseSync.ReturnValue>
     /**
      * Approves a spender using a signed permit.
      *
@@ -868,7 +1281,35 @@ export type Decorator<
      */
     permit: (
       parameters: tokenActions.permit.Parameters<chain, account>,
-    ) => Promise<tokenActions.permit.ReturnType>
+    ) => Promise<tokenActions.permit.ReturnValue>
+    /**
+     * Approves a spender using a signed permit.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.permitSync({
+     *   owner: '0x...',
+     *   spender: '0x...',
+     *   value: 100n,
+     *   deadline: 1234567890n,
+     *   signature: { r: 0n, s: 0n, yParity: 0 },
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    permitSync: (
+      parameters: tokenActions.permitSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.permitSync.ReturnValue>
     /**
      * Renounces a role for a TIP20 token.
      *
@@ -893,7 +1334,35 @@ export type Decorator<
      */
     renounceRoles: (
       parameters: tokenActions.renounceRoles.Parameters<chain, account>,
-    ) => Promise<tokenActions.renounceRoles.ReturnType>
+    ) => Promise<tokenActions.renounceRoles.ReturnValue>
+    /**
+     * Renounces a role for a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { tempo } from 'tempo/chains'
+     * import { http } from 'viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...'),
+     *   chain: tempo,
+     *   transport: http(),
+     * })
+     *
+     * const result = await client.token.renounceRolesSync({
+     *   token: '0x...',
+     *   roles: ['minter'],
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    renounceRolesSync: (
+      parameters: tokenActions.renounceRolesSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.renounceRolesSync.ReturnValue>
     /**
      * Revokes a role for a TIP20 token.
      *
@@ -919,7 +1388,36 @@ export type Decorator<
      */
     revokeRoles: (
       parameters: tokenActions.revokeRoles.Parameters<chain, account>,
-    ) => Promise<tokenActions.revokeRoles.ReturnType>
+    ) => Promise<tokenActions.revokeRoles.ReturnValue>
+    /**
+     * Revokes a role for a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { tempo } from 'tempo/chains'
+     * import { http } from 'viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...'),
+     *   chain: tempo,
+     *   transport: http(),
+     * })
+     *
+     * const result = await client.token.revokeRolesSync({
+     *   token: '0x...',
+     *   from: '0x...',
+     *   roles: ['minter'],
+     * })
+     * ```
+     *
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    revokeRolesSync: (
+      parameters: tokenActions.revokeRolesSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.revokeRolesSync.ReturnValue>
     /**
      * Sets the supply cap for a TIP20 token.
      *
@@ -944,7 +1442,32 @@ export type Decorator<
      */
     setSupplyCap: (
       parameters: tokenActions.setSupplyCap.Parameters<chain, account>,
-    ) => Promise<tokenActions.setSupplyCap.ReturnType>
+    ) => Promise<tokenActions.setSupplyCap.ReturnValue>
+    /**
+     * Sets the supply cap for a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.setSupplyCapSync({
+     *   token: '0x...',
+     *   supplyCap: 1000000n,
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    setSupplyCapSync: (
+      parameters: tokenActions.setSupplyCapSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.setSupplyCapSync.ReturnValue>
     /**
      * Sets the admin role for a specific role in a TIP20 token.
      *
@@ -970,7 +1493,33 @@ export type Decorator<
      */
     setRoleAdmin: (
       parameters: tokenActions.setRoleAdmin.Parameters<chain, account>,
-    ) => Promise<tokenActions.setRoleAdmin.ReturnType>
+    ) => Promise<tokenActions.setRoleAdmin.ReturnValue>
+    /**
+     * Sets the admin role for a specific role in a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.setRoleAdminSync({
+     *   token: '0x...',
+     *   role: 'minter',
+     *   adminRole: 'admin',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    setRoleAdminSync: (
+      parameters: tokenActions.setRoleAdminSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.setRoleAdminSync.ReturnValue>
     /**
      * Transfers TIP20 tokens to another address.
      *
@@ -995,7 +1544,32 @@ export type Decorator<
      */
     transfer: (
       parameters: tokenActions.transfer.Parameters<chain, account>,
-    ) => Promise<tokenActions.transfer.ReturnType>
+    ) => Promise<tokenActions.transfer.ReturnValue>
+    /**
+     * Transfers TIP20 tokens to another address.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.transferSync({
+     *   to: '0x...',
+     *   amount: 100n,
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    transferSync: (
+      parameters: tokenActions.transferSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.transferSync.ReturnValue>
     /**
      * Unpauses a TIP20 token.
      *
@@ -1019,7 +1593,31 @@ export type Decorator<
      */
     unpause: (
       parameters: tokenActions.unpause.Parameters<chain, account>,
-    ) => Promise<tokenActions.unpause.ReturnType>
+    ) => Promise<tokenActions.unpause.ReturnValue>
+    /**
+     * Unpauses a TIP20 token.
+     *
+     * @example
+     * ```ts
+     * import { createTempoClient } from 'tempo/viem'
+     * import { privateKeyToAccount } from 'viem/accounts'
+     *
+     * const client = createTempoClient({
+     *   account: privateKeyToAccount('0x...')
+     * })
+     *
+     * const result = await client.token.unpauseSync({
+     *   token: '0x...',
+     * })
+     * ```
+     *
+     * @param client - Client.
+     * @param parameters - Parameters.
+     * @returns The transaction receipt and event data.
+     */
+    unpauseSync: (
+      parameters: tokenActions.unpauseSync.Parameters<chain, account>,
+    ) => Promise<tokenActions.unpauseSync.ReturnValue>
     /**
      * Watches for TIP20 token approval events.
      *
@@ -1194,8 +1792,12 @@ export function decorator() {
           ammActions.getLiquidityBalance(client, parameters),
         rebalanceSwap: (parameters) =>
           ammActions.rebalanceSwap(client, parameters),
+        rebalanceSwapSync: (parameters) =>
+          ammActions.rebalanceSwapSync(client, parameters),
         mint: (parameters) => ammActions.mint(client, parameters),
+        mintSync: (parameters) => ammActions.mintSync(client, parameters),
         burn: (parameters) => ammActions.burn(client, parameters),
+        burnSync: (parameters) => ammActions.burnSync(client, parameters),
         watchRebalanceSwap: (parameters) =>
           ammActions.watchRebalanceSwap(client, parameters),
         watchFeeSwap: (parameters) =>
@@ -1210,16 +1812,26 @@ export function decorator() {
           feeActions.getUserToken(client, parameters),
         setUserToken: (parameters) =>
           feeActions.setUserToken(client, parameters),
+        setUserTokenSync: (parameters) =>
+          feeActions.setUserTokenSync(client, parameters),
         watchSetUserToken: (parameters) =>
           feeActions.watchSetUserToken(client, parameters),
       },
       policy: {
         create: (parameters) => policyActions.create(client, parameters),
+        createSync: (parameters) =>
+          policyActions.createSync(client, parameters),
         setAdmin: (parameters) => policyActions.setAdmin(client, parameters),
+        setAdminSync: (parameters) =>
+          policyActions.setAdminSync(client, parameters),
         modifyWhitelist: (parameters) =>
           policyActions.modifyWhitelist(client, parameters),
+        modifyWhitelistSync: (parameters) =>
+          policyActions.modifyWhitelistSync(client, parameters),
         modifyBlacklist: (parameters) =>
           policyActions.modifyBlacklist(client, parameters),
+        modifyBlacklistSync: (parameters) =>
+          policyActions.modifyBlacklistSync(client, parameters),
         getData: (parameters) => policyActions.getData(client, parameters),
         isAuthorized: (parameters) =>
           policyActions.isAuthorized(client, parameters),
@@ -1234,12 +1846,20 @@ export function decorator() {
       },
       token: {
         approve: (parameters) => tokenActions.approve(client, parameters),
+        approveSync: (parameters) =>
+          tokenActions.approveSync(client, parameters),
         burnBlocked: (parameters) =>
           tokenActions.burnBlocked(client, parameters),
+        burnBlockedSync: (parameters) =>
+          tokenActions.burnBlockedSync(client, parameters),
         burn: (parameters) => tokenActions.burn(client, parameters),
+        burnSync: (parameters) => tokenActions.burnSync(client, parameters),
         changeTransferPolicy: (parameters) =>
           tokenActions.changeTransferPolicy(client, parameters),
+        changeTransferPolicySync: (parameters) =>
+          tokenActions.changeTransferPolicySync(client, parameters),
         create: (parameters) => tokenActions.create(client, parameters),
+        createSync: (parameters) => tokenActions.createSync(client, parameters),
         getAllowance: (parameters) =>
           tokenActions.getAllowance(client, parameters),
         // @ts-expect-error
@@ -1247,19 +1867,36 @@ export function decorator() {
         getMetadata: (parameters) =>
           tokenActions.getMetadata(client, parameters),
         grantRoles: (parameters) => tokenActions.grantRoles(client, parameters),
+        grantRolesSync: (parameters) =>
+          tokenActions.grantRolesSync(client, parameters),
         mint: (parameters) => tokenActions.mint(client, parameters),
+        mintSync: (parameters) => tokenActions.mintSync(client, parameters),
         pause: (parameters) => tokenActions.pause(client, parameters),
+        pauseSync: (parameters) => tokenActions.pauseSync(client, parameters),
         permit: (parameters) => tokenActions.permit(client, parameters),
+        permitSync: (parameters) => tokenActions.permitSync(client, parameters),
         renounceRoles: (parameters) =>
           tokenActions.renounceRoles(client, parameters),
+        renounceRolesSync: (parameters) =>
+          tokenActions.renounceRolesSync(client, parameters),
         revokeRoles: (parameters) =>
           tokenActions.revokeRoles(client, parameters),
+        revokeRolesSync: (parameters) =>
+          tokenActions.revokeRolesSync(client, parameters),
         setSupplyCap: (parameters) =>
           tokenActions.setSupplyCap(client, parameters),
+        setSupplyCapSync: (parameters) =>
+          tokenActions.setSupplyCapSync(client, parameters),
         setRoleAdmin: (parameters) =>
           tokenActions.setRoleAdmin(client, parameters),
+        setRoleAdminSync: (parameters) =>
+          tokenActions.setRoleAdminSync(client, parameters),
         transfer: (parameters) => tokenActions.transfer(client, parameters),
+        transferSync: (parameters) =>
+          tokenActions.transferSync(client, parameters),
         unpause: (parameters) => tokenActions.unpause(client, parameters),
+        unpauseSync: (parameters) =>
+          tokenActions.unpauseSync(client, parameters),
         watchApprove: (parameters) =>
           tokenActions.watchApprove(client, parameters),
         watchBurn: (parameters) => tokenActions.watchBurn(client, parameters),

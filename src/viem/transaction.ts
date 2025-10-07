@@ -125,7 +125,7 @@ export function isTempoTransaction(transaction: Record<string, unknown>) {
 
 export function parseTransaction<
   const serialized extends TransactionSerializedGeneric,
->(serializedTransaction: serialized): parseTransaction.ReturnType<serialized> {
+>(serializedTransaction: serialized): parseTransaction.ReturnValue<serialized> {
   const type = Hex.slice(serializedTransaction, 0, 1)
   if (type === '0x77') {
     const { authorizationList, nonce, r, s, v, ...tx } = TxFeeToken.deserialize(
@@ -149,7 +149,7 @@ export function parseTransaction<
 }
 
 export declare namespace parseTransaction {
-  export type ReturnType<
+  export type ReturnValue<
     serialized extends
       TransactionSerializedGeneric = TransactionSerializedGeneric,
   > = serialized extends TransactionSerializedFeeToken

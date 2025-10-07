@@ -166,13 +166,13 @@ export declare namespace deserialize {
  * @param options - Options.
  * @returns An Fee Token Transaction Envelope.
  */
-export declare function from<const envelope extends UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Serialized, const signature extends Signature.Signature | undefined = undefined>(envelope: envelope | UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Serialized, options?: from.Options<signature>): from.ReturnType<envelope, signature>;
+export declare function from<const envelope extends UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Serialized, const signature extends Signature.Signature | undefined = undefined>(envelope: envelope | UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Serialized, options?: from.Options<signature>): from.ReturnValue<envelope, signature>;
 export declare namespace from {
     type Options<signature extends Signature.Signature | undefined = undefined> = {
         feePayerSignature?: Signature.Signature | null | undefined;
         signature?: signature | Signature.Signature | undefined;
     };
-    type ReturnType<envelope extends UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Hex.Hex = TransactionEnvelopeFeeToken | Hex.Hex, signature extends Signature.Signature | undefined = undefined> = Compute<envelope extends Hex.Hex ? TransactionEnvelopeFeeToken : Assign<envelope, (signature extends Signature.Signature ? Readonly<signature> : {}) & {
+    type ReturnValue<envelope extends UnionPartialBy<TransactionEnvelopeFeeToken, 'type'> | Hex.Hex = TransactionEnvelopeFeeToken | Hex.Hex, signature extends Signature.Signature | undefined = undefined> = Compute<envelope extends Hex.Hex ? TransactionEnvelopeFeeToken : Assign<envelope, (signature extends Signature.Signature ? Readonly<signature> : {}) & {
         readonly type: 'feeToken';
     }>>;
     type ErrorType = deserialize.ErrorType | assert.ErrorType | Errors.GlobalErrorType;
@@ -186,7 +186,7 @@ export declare namespace from {
  * @param envelope - The transaction envelope to get the fee payer sign payload for.
  * @returns The fee payer sign payload.
  */
-export declare function getFeePayerSignPayload(envelope: TransactionEnvelopeFeeToken, options: getFeePayerSignPayload.Options): getFeePayerSignPayload.ReturnType;
+export declare function getFeePayerSignPayload(envelope: TransactionEnvelopeFeeToken, options: getFeePayerSignPayload.Options): getFeePayerSignPayload.ReturnValue;
 export declare namespace getFeePayerSignPayload {
     type Options = {
         /**
@@ -196,7 +196,7 @@ export declare namespace getFeePayerSignPayload {
          */
         sender: Address.Address;
     };
-    type ReturnType = Hex.Hex;
+    type ReturnValue = Hex.Hex;
     type ErrorType = hash.ErrorType | Errors.GlobalErrorType;
 }
 /**
@@ -230,9 +230,9 @@ export declare namespace getFeePayerSignPayload {
  * @param envelope - The transaction envelope to get the sign payload for.
  * @returns The sign payload.
  */
-export declare function getSignPayload(envelope: TransactionEnvelopeFeeToken): getSignPayload.ReturnType;
+export declare function getSignPayload(envelope: TransactionEnvelopeFeeToken): getSignPayload.ReturnValue;
 export declare namespace getSignPayload {
-    type ReturnType = Hex.Hex;
+    type ReturnValue = Hex.Hex;
     type ErrorType = hash.ErrorType | Errors.GlobalErrorType;
 }
 /**
@@ -268,7 +268,7 @@ export declare namespace getSignPayload {
  * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
-export declare function hash<presign extends boolean = false>(envelope: TransactionEnvelopeFeeToken<presign extends true ? false : true>, options?: hash.Options<presign>): hash.ReturnType;
+export declare function hash<presign extends boolean = false>(envelope: TransactionEnvelopeFeeToken<presign extends true ? false : true>, options?: hash.Options<presign>): hash.ReturnValue;
 export declare namespace hash {
     type Options<presign extends boolean = false> = {
         /**
@@ -278,7 +278,7 @@ export declare namespace hash {
          */
         presign?: presign | boolean | undefined;
     };
-    type ReturnType = Hex.Hex;
+    type ReturnValue = Hex.Hex;
     type ErrorType = Hash.keccak256.ErrorType | serialize.ErrorType | Errors.GlobalErrorType;
 }
 /**

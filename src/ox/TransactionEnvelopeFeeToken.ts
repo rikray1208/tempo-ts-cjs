@@ -328,7 +328,7 @@ export function from<
     | UnionPartialBy<TransactionEnvelopeFeeToken, 'type'>
     | Serialized,
   options: from.Options<signature> = {},
-): from.ReturnType<envelope, signature> {
+): from.ReturnValue<envelope, signature> {
   const { feePayerSignature, signature } = options
 
   const envelope_ = (
@@ -354,7 +354,7 @@ export declare namespace from {
       signature?: signature | Signature.Signature | undefined
     }
 
-  type ReturnType<
+  type ReturnValue<
     envelope extends
       | UnionPartialBy<TransactionEnvelopeFeeToken, 'type'>
       | Hex.Hex = TransactionEnvelopeFeeToken | Hex.Hex,
@@ -388,7 +388,7 @@ export declare namespace from {
 export function getFeePayerSignPayload(
   envelope: TransactionEnvelopeFeeToken,
   options: getFeePayerSignPayload.Options,
-): getFeePayerSignPayload.ReturnType {
+): getFeePayerSignPayload.ReturnValue {
   const { sender } = options
   const serialized = serialize(
     { ...envelope, r: undefined, s: undefined, yParity: undefined },
@@ -410,7 +410,7 @@ export declare namespace getFeePayerSignPayload {
     sender: Address.Address
   }
 
-  type ReturnType = Hex.Hex
+  type ReturnValue = Hex.Hex
 
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType
 }
@@ -448,12 +448,12 @@ export declare namespace getFeePayerSignPayload {
  */
 export function getSignPayload(
   envelope: TransactionEnvelopeFeeToken,
-): getSignPayload.ReturnType {
+): getSignPayload.ReturnValue {
   return hash(envelope, { presign: true })
 }
 
 export declare namespace getSignPayload {
-  type ReturnType = Hex.Hex
+  type ReturnValue = Hex.Hex
 
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType
 }
@@ -494,7 +494,7 @@ export declare namespace getSignPayload {
 export function hash<presign extends boolean = false>(
   envelope: TransactionEnvelopeFeeToken<presign extends true ? false : true>,
   options: hash.Options<presign> = {},
-): hash.ReturnType {
+): hash.ReturnValue {
   const serialized = serialize({
     ...envelope,
     ...(options.presign
@@ -518,7 +518,7 @@ export declare namespace hash {
     presign?: presign | boolean | undefined
   }
 
-  type ReturnType = Hex.Hex
+  type ReturnValue = Hex.Hex
 
   type ErrorType =
     | Hash.keccak256.ErrorType

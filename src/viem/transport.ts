@@ -14,7 +14,7 @@ export type Relay = Transport<typeof withFeePayer.type>
 export function withFeePayer(
   defaultTransport: Transport,
   relayTransport: Transport,
-): withFeePayer.ReturnType {
+): withFeePayer.ReturnValue {
   return (config) => {
     const transport_default = defaultTransport(config)
     const transport_relay = relayTransport(config)
@@ -23,7 +23,10 @@ export function withFeePayer(
       key: withFeePayer.type,
       name: 'Relay Proxy',
       async request({ method, params }, options) {
-        if (method === 'eth_sendRawTransaction') {
+        if (
+          method === 'eth_sendRawTransactionSync' ||
+          method === 'eth_sendRawTransaction'
+        ) {
           const serialized = (params as any)[0] as `0x77${string}`
           const transaction = parseTransaction(serialized)
           // If the transaction is intended to be sponsored, forward it to the relay.
@@ -40,5 +43,5 @@ export function withFeePayer(
 export declare namespace withFeePayer {
   export const type = 'feePayer'
 
-  export type ReturnType = Relay
+  export type ReturnValue = Relay
 }

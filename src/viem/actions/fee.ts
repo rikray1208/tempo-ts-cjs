@@ -1,17 +1,25 @@
-import type {
-  Account,
-  Address,
-  Chain,
-  Client,
-  ExtractAbiItem,
-  GetEventArgs,
-  Transport,
-  Log as viem_Log,
-  WatchContractEventParameters,
-  WriteContractReturnType,
+import {
+  type Account,
+  type Address,
+  type Chain,
+  type Client,
+  type ExtractAbiItem,
+  type GetEventArgs,
+  type Log,
+  parseEventLogs,
+  type TransactionReceipt,
+  type Transport,
+  type Log as viem_Log,
+  type WatchContractEventParameters,
+  type WriteContractReturnType,
 } from 'viem'
 import { parseAccount } from 'viem/accounts'
-import { readContract, watchContractEvent, writeContract } from 'viem/actions'
+import {
+  readContract,
+  watchContractEvent,
+  writeContract,
+  writeContractSync,
+} from 'viem/actions'
 import type { Compute, UnionOmit } from '../../internal/types.js'
 import * as TokenId from '../../ox/TokenId.js'
 import { feeManagerAbi } from '../abis.js'
@@ -54,7 +62,7 @@ export async function getUserToken<
   ...parameters: account extends Account
     ? [getUserToken.Parameters<account>] | []
     : [getUserToken.Parameters<account>]
-): Promise<getUserToken.ReturnType> {
+): Promise<getUserToken.ReturnValue> {
   const { account: account_ = client.account, ...rest } = parameters[0] ?? {}
   if (!account_) throw new Error('account is required.')
   const account = parseAccount(account_)
@@ -78,7 +86,7 @@ export namespace getUserToken {
     account: Address
   }
 
-  export type ReturnType = Compute<{
+  export type ReturnValue = Compute<{
     address: Address
     id: bigint
   }>
@@ -131,12 +139,8 @@ export async function setUserToken<
 >(
   client: Client<Transport, chain, account>,
   parameters: setUserToken.Parameters<chain, account>,
-): Promise<setUserToken.ReturnType> {
-  const call = setUserToken.call(parameters)
-  return writeContract(client, {
-    ...parameters,
-    ...call,
-  } as never)
+): Promise<setUserToken.ReturnValue> {
+  return setUserToken.inner(writeContract, client, parameters)
 }
 
 export namespace setUserToken {
@@ -150,7 +154,24 @@ export namespace setUserToken {
     token: TokenId.TokenIdOrAddress
   }
 
-  export type ReturnType = WriteContractReturnType
+  export type ReturnValue = WriteContractReturnType
+
+  /** @internal */
+  export async function inner<
+    action extends typeof writeContract | typeof writeContractSync,
+    chain extends Chain | undefined,
+    account extends Account | undefined,
+  >(
+    action: action,
+    client: Client<Transport, chain, account>,
+    parameters: setUserToken.Parameters<chain, account>,
+  ): Promise<ReturnType<action>> {
+    const call = setUserToken.call(parameters)
+    return (await action(client, {
+      ...parameters,
+      ...call,
+    } as never)) as never
+  }
 
   /**
    * Defines a call to the `setUserToken` function.
@@ -195,6 +216,80 @@ export namespace setUserToken {
       args: [TokenId.toAddress(token)],
     })
   }
+
+  export function extractEvent(logs: Log[]) {
+    const [log] = parseEventLogs({
+      abi: feeManagerAbi,
+      logs,
+      eventName: 'UserTokenSet',
+      strict: true,
+    })
+    if (!log) throw new Error('`UserTokenSet` event not found.')
+    return log
+  }
+}
+
+/**
+ * Sets the user's default fee token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.fee.setUserTokenSync(client, {
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setUserTokenSync<
+  chain extends Chain | undefined,
+  account extends Account | undefined,
+>(
+  client: Client<Transport, chain, account>,
+  parameters: setUserTokenSync.Parameters<chain, account>,
+): Promise<setUserTokenSync.ReturnValue> {
+  const receipt = await setUserToken.inner(
+    writeContractSync,
+    client,
+    parameters,
+  )
+  const { args } = setUserToken.extractEvent(receipt.logs)
+  return {
+    ...args,
+    receipt,
+  } as never
+}
+
+export namespace setUserTokenSync {
+  export type Parameters<
+    chain extends Chain | undefined = Chain | undefined,
+    account extends Account | undefined = Account | undefined,
+  > = setUserToken.Parameters<chain, account>
+
+  export type Args = setUserToken.Args
+
+  export type ReturnValue = Compute<
+    GetEventArgs<
+      typeof feeManagerAbi,
+      'UserTokenSet',
+      { IndexedOnly: false; Required: true }
+    > & {
+      receipt: TransactionReceipt
+    }
+  >
 }
 
 /**
