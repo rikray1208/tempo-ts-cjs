@@ -1,6 +1,6 @@
-import { expect, test } from 'bun:test'
 import { Hash, Hex } from 'ox'
 import { TokenRole } from 'tempo/ox'
+import { expect, test } from 'vitest'
 
 test('serialize', () => {
   TokenRole.roles.forEach((role) => {

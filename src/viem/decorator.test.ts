@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'bun:test'
 import { tempoLocal } from 'tempo/chains'
 import { tempoActions } from 'tempo/viem'
 import { createClient, http } from 'viem'
+import { describe, expect, test } from 'vitest'
 
-describe.skipIf(!!process.env.CI)('decorator', () => {
+describe('decorator', () => {
   const client2 = createClient({
     chain: tempoLocal,
     transport: http(),

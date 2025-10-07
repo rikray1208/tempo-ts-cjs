@@ -1,16 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { setTimeout } from 'node:timers/promises'
-import { tempoLocal } from 'tempo/chains'
-import { Instance } from 'tempo/prool'
 import * as actions from 'tempo/viem/actions'
 import { publicActions } from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
+import { describe, expect, test } from 'vitest'
+import { tempoTest } from '../../../test/config.js'
 import { createTempoClient } from '../client.js'
-
-const instance = Instance.tempo({ port: 8545 })
-
-beforeEach(() => instance.start())
-afterEach(() => instance.stop())
 
 const account = mnemonicToAccount(
   'test test test test test test test test test test test junk',
@@ -26,11 +20,11 @@ const account3 = mnemonicToAccount(
 
 const client = createTempoClient({
   account,
-  chain: tempoLocal,
+  chain: tempoTest,
   pollingInterval: 100,
 }).extend(publicActions)
 
-describe.skipIf(!!process.env.CI)('create', () => {
+describe('create', () => {
   test('default', async () => {
     // create whitelist policy
     const { receipt, ...result } = await actions.policy.createSync(client, {
@@ -109,7 +103,7 @@ describe.skipIf(!!process.env.CI)('create', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('setAdmin', () => {
+describe('setAdmin', () => {
   test('default', async () => {
     // create policy
     const { policyId } = await actions.policy.createSync(client, {
@@ -141,7 +135,7 @@ describe.skipIf(!!process.env.CI)('setAdmin', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('modifyWhitelist', () => {
+describe('modifyWhitelist', () => {
   test('default', async () => {
     // create whitelist policy
     const { policyId } = await actions.policy.createSync(client, {
@@ -211,7 +205,7 @@ describe.skipIf(!!process.env.CI)('modifyWhitelist', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('modifyBlacklist', () => {
+describe('modifyBlacklist', () => {
   test('default', async () => {
     // create blacklist policy
     const { policyId } = await actions.policy.createSync(client, {
@@ -281,7 +275,7 @@ describe.skipIf(!!process.env.CI)('modifyBlacklist', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('getData', () => {
+describe('getData', () => {
   test('default', async () => {
     // create policy
     const { policyId } = await actions.policy.createSync(client, {
@@ -315,7 +309,7 @@ describe.skipIf(!!process.env.CI)('getData', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('isAuthorized', () => {
+describe('isAuthorized', () => {
   test('special policy: always-reject (policyId 0)', async () => {
     const isAuthorized = await actions.policy.isAuthorized(client, {
       policyId: 0n,
@@ -385,7 +379,7 @@ describe.skipIf(!!process.env.CI)('isAuthorized', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchCreate', () => {
+describe('watchCreate', () => {
   test('default', async () => {
     const logs: any[] = []
     const unwatch = actions.policy.watchCreate(client, {
@@ -409,7 +403,7 @@ describe.skipIf(!!process.env.CI)('watchCreate', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchAdminUpdated', () => {
+describe('watchAdminUpdated', () => {
   test('default', async () => {
     // create policy
     const { policyId } = await actions.policy.createSync(client, {
@@ -439,7 +433,7 @@ describe.skipIf(!!process.env.CI)('watchAdminUpdated', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchWhitelistUpdated', () => {
+describe('watchWhitelistUpdated', () => {
   test('default', async () => {
     // create whitelist policy
     const { policyId } = await actions.policy.createSync(client, {
@@ -479,7 +473,7 @@ describe.skipIf(!!process.env.CI)('watchWhitelistUpdated', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchBlacklistUpdated', () => {
+describe('watchBlacklistUpdated', () => {
   test('default', async () => {
     // create blacklist policy
     const { policyId } = await actions.policy.createSync(client, {

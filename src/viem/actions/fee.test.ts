@@ -1,19 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { setTimeout } from 'node:timers/promises'
-import { tempoLocal } from 'tempo/chains'
-import { Instance } from 'tempo/prool'
 import * as actions from 'tempo/viem/actions'
 import { parseEther, publicActions } from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
 import { writeContractSync } from 'viem/actions'
+import { describe, expect, test } from 'vitest'
+import { tempoTest } from '../../../test/config.js'
 import { tip20Abi } from '../abis.js'
 import { usdAddress } from '../addresses.js'
 import { createTempoClient } from '../client.js'
-
-const instance = Instance.tempo({ port: 8545 })
-
-beforeEach(() => instance.start())
-afterEach(() => instance.stop())
 
 const account = mnemonicToAccount(
   'test test test test test test test test test test test junk',
@@ -29,11 +23,11 @@ const account3 = mnemonicToAccount(
 
 const client = createTempoClient({
   account,
-  chain: tempoLocal,
+  chain: tempoTest,
   pollingInterval: 100,
 }).extend(publicActions)
 
-describe.skipIf(!!process.env.CI)('getUserToken', () => {
+describe('getUserToken', () => {
   test('default', async () => {
     // Fund accounts
     await writeContractSync(client, {
@@ -89,7 +83,7 @@ describe.skipIf(!!process.env.CI)('getUserToken', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('setUserToken', () => {
+describe('setUserToken', () => {
   test('default', async () => {
     expect(await actions.fee.getUserToken(client)).toMatchInlineSnapshot(
       `
@@ -145,7 +139,7 @@ describe.skipIf(!!process.env.CI)('setUserToken', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchSetUserToken', () => {
+describe('watchSetUserToken', () => {
   test('default', async () => {
     const receivedSets: Array<{
       args: actions.fee.watchSetUserToken.Args

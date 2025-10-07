@@ -1,19 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { setTimeout } from 'node:timers/promises'
-import { tempoLocal } from 'tempo/chains'
-import { Instance } from 'tempo/prool'
 import * as actions from 'tempo/viem/actions'
 import { parseEther, publicActions } from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
 import { writeContractSync } from 'viem/actions'
+import { describe, expect, test } from 'vitest'
+import { tempoTest } from '../../../test/config.js'
 import { tip20Abi } from '../abis.js'
 import { usdAddress } from '../addresses.js'
 import { createTempoClient } from '../client.js'
-
-const instance = Instance.tempo({ port: 8545 })
-
-beforeEach(() => instance.start())
-afterEach(() => instance.stop())
 
 const account = mnemonicToAccount(
   'test test test test test test test test test test test junk',
@@ -25,7 +19,7 @@ const account2 = mnemonicToAccount(
 
 const client = createTempoClient({
   account,
-  chain: tempoLocal,
+  chain: tempoTest,
   pollingInterval: 100,
 }).extend(publicActions)
 
@@ -67,7 +61,7 @@ async function setupPoolWithLiquidity() {
   return { tokenAddress: token }
 }
 
-describe.skipIf(!!process.env.CI)('getPoolId', () => {
+describe('getPoolId', () => {
   test('default', async () => {
     const poolId = await actions.amm.getPoolId(client, {
       userToken: usdAddress,
@@ -87,7 +81,7 @@ describe.skipIf(!!process.env.CI)('getPoolId', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('getPool', () => {
+describe('getPool', () => {
   test('default', async () => {
     const pool = await actions.amm.getPool(client, {
       userToken: usdAddress,
@@ -100,7 +94,7 @@ describe.skipIf(!!process.env.CI)('getPool', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('getTotalSupply', () => {
+describe('getTotalSupply', () => {
   test('default', async () => {
     const poolId = await actions.amm.getPoolId(client, {
       userToken: usdAddress,
@@ -111,7 +105,7 @@ describe.skipIf(!!process.env.CI)('getTotalSupply', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('getLiquidityBalance', () => {
+describe('getLiquidityBalance', () => {
   test('default', async () => {
     const poolId = await actions.amm.getPoolId(client, {
       userToken: usdAddress,
@@ -125,7 +119,7 @@ describe.skipIf(!!process.env.CI)('getLiquidityBalance', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('mint', () => {
+describe('mint', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token } = await actions.token.createSync(client, {
@@ -196,7 +190,7 @@ describe.skipIf(!!process.env.CI)('mint', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('burn', () => {
+describe('burn', () => {
   test('default', async () => {
     const { tokenAddress } = await setupPoolWithLiquidity()
 
@@ -251,7 +245,7 @@ describe.skipIf(!!process.env.CI)('burn', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('rebalanceSwap', () => {
+describe('rebalanceSwap', () => {
   test('default', async () => {
     const { tokenAddress } = await setupPoolWithLiquidity()
 
@@ -290,7 +284,7 @@ describe.skipIf(!!process.env.CI)('rebalanceSwap', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchRebalanceSwap', () => {
+describe('watchRebalanceSwap', () => {
   test('default', async () => {
     const { tokenAddress } = await setupPoolWithLiquidity()
 
@@ -323,7 +317,7 @@ describe.skipIf(!!process.env.CI)('watchRebalanceSwap', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchMint', () => {
+describe('watchMint', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token } = await actions.token.createSync(client, {
@@ -388,7 +382,7 @@ describe.skipIf(!!process.env.CI)('watchMint', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchBurn', () => {
+describe('watchBurn', () => {
   test('default', async () => {
     const { tokenAddress } = await setupPoolWithLiquidity()
 

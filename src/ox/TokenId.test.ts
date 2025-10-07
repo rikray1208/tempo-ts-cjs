@@ -1,5 +1,5 @@
-import { expect, test } from 'bun:test'
 import { TokenId } from 'tempo/ox'
+import { expect, test } from 'vitest'
 
 test('fromAddress', () => {
   expect(

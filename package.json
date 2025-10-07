@@ -7,7 +7,7 @@
 		"check": "biome check . --write --unsafe",
 		"check:types": "tsc -b",
 		"gen:abis": "forge build --config-path ./contracts/specs/foundry.toml && bun scripts/gen:abis.ts && bun run check",
-		"test": "bun test --conditions=src",
+		"test": "vitest",
 		"test:install": "cd test/tempo && cargo install --path bin/tempo"
 	},
 	"zshy": {
@@ -56,11 +56,14 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.4",
+		"@elysiajs/node": "^1.4.1",
 		"@types/bun": "latest",
+		"elysia": "latest",
 		"prool": "latest",
 		"simple-git-hooks": "^2.13.1",
 		"typescript": "^5.9.2",
 		"viem": "^2.38.0",
+		"vitest": "^3.2.4",
 		"zshy": "^0.4.2"
 	},
 	"files": [

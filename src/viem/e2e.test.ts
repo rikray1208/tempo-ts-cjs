@@ -1,26 +1,22 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { node } from '@elysiajs/node'
+import { Elysia } from 'elysia'
 import { RpcRequest, RpcResponse } from 'ox'
-import { tempoLocal } from 'tempo/chains'
-import { Instance } from 'tempo/prool'
 import * as actions from 'tempo/viem/actions'
 import { createClient, http, publicActions, walletActions } from 'viem'
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts'
+import { describe, expect, test } from 'vitest'
+import { tempoTest } from '../../test/config.js'
 import { tempoActions } from './index.js'
 import { parseTransaction } from './transaction.js'
 import { withFeePayer } from './transport.js'
 
-const instance = Instance.tempo({ port: 8545 })
-
-beforeEach(() => instance.start())
-afterEach(() => instance.stop())
-
-describe.skipIf(!!process.env.CI)('sendTransaction', () => {
+describe('sendTransaction', () => {
   test('default', async () => {
     const client = createClient({
       account: mnemonicToAccount(
         'test test test test test test test test test test test junk',
       ),
-      chain: tempoLocal,
+      chain: tempoTest,
       transport: http(),
     })
       .extend(publicActions)
@@ -73,7 +69,7 @@ describe.skipIf(!!process.env.CI)('sendTransaction', () => {
       account: mnemonicToAccount(
         'test test test test test test test test test test test junk',
       ),
-      chain: tempoLocal,
+      chain: tempoTest,
       transport: http(),
     })
       .extend(publicActions)
@@ -139,7 +135,7 @@ describe.skipIf(!!process.env.CI)('sendTransaction', () => {
 
     const client = createClient({
       account,
-      chain: tempoLocal,
+      chain: tempoTest,
       transport: http(),
     })
       .extend(publicActions)
@@ -194,7 +190,7 @@ describe.skipIf(!!process.env.CI)('sendTransaction', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('signTransaction', () => {
+describe('signTransaction', () => {
   test('default', async () => {
     const account = privateKeyToAccount(
       // unfunded PK
@@ -206,7 +202,7 @@ describe.skipIf(!!process.env.CI)('signTransaction', () => {
 
     const client = createClient({
       account,
-      chain: tempoLocal,
+      chain: tempoTest,
       transport: http(),
     })
       .extend(walletActions)
@@ -273,20 +269,19 @@ describe.skipIf(!!process.env.CI)('signTransaction', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('relay', () => {
+describe('relay', () => {
   test('default', async () => {
-    const { url } = Bun.serve({
-      port: 3000,
-      async fetch(req) {
+    new Elysia({ adapter: node() })
+      .post('/', async ({ body }) => {
         const client = createClient({
           account: mnemonicToAccount(
             'test test test test test test test test test test test junk',
           ),
-          chain: tempoLocal,
+          chain: tempoTest,
           transport: http(),
         }).extend(walletActions)
 
-        const request = RpcRequest.from(await req.json())
+        const request = RpcRequest.from(body as any)
 
         if (
           request.method !== 'eth_sendRawTransaction' &&
@@ -328,16 +323,16 @@ describe.skipIf(!!process.env.CI)('relay', () => {
         })
 
         return Response.json(RpcResponse.from({ result }, { request }))
-      },
-    })
+      })
+      .listen(3000)
 
     const client = createClient({
       account: privateKeyToAccount(
         // unfunded PK
         '0xecc3fe55647412647e5c6b657c496803b08ef956f927b7a821da298cfbdd9666',
       ),
-      chain: tempoLocal,
-      transport: withFeePayer(http(), http(url.toString())),
+      chain: tempoTest,
+      transport: withFeePayer(http(), http('http://localhost:3000')),
     })
       .extend(tempoActions())
       .extend(walletActions)

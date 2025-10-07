@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test'
+import { expect, test } from 'vitest'
 import { createTempoClient } from './client.js'
 
 test('createTempoClient', () => {
@@ -61,7 +61,7 @@ test('createTempoClient', () => {
           },
         },
         "serializers": {
-          "transaction": [Function: AsyncFunction],
+          "transaction": [Function],
         },
       },
       "extend": [Function],
@@ -90,7 +90,7 @@ test('createTempoClient', () => {
         "watchWhitelistUpdated": [Function],
       },
       "pollingInterval": 500,
-      "request": [Function: AsyncFunction],
+      "request": [Function],
       "token": {
         "approve": [Function],
         "approveSync": [Function],
@@ -138,7 +138,7 @@ test('createTempoClient', () => {
         "key": "http",
         "methods": undefined,
         "name": "HTTP JSON-RPC",
-        "request": [Function: AsyncFunction],
+        "request": [Function],
         "retryCount": 3,
         "retryDelay": 150,
         "timeout": 10000,

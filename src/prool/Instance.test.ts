@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import type { Instance as prool_Instance } from 'prool/instances'
 import { Instance } from 'tempo/prool'
+import { afterEach, describe, expect, test } from 'vitest'
 
 const instances: prool_Instance[] = []
 
 const tempo = (parameters: Instance.tempo.Parameters = {}) => {
-  const instance = Instance.tempo(parameters)
+  const instance = Instance.tempo({ ...parameters, port: 8888 })
   instances.push(instance)
   return instance
 }
@@ -14,7 +14,7 @@ afterEach(async () => {
   for (const instance of instances) await instance.stop().catch(() => {})
 })
 
-describe.skipIf(!!process.env.CI)('tempo', () => {
+describe('tempo', () => {
   test('default', async () => {
     const messages: string[] = []
     const stdouts: string[] = []

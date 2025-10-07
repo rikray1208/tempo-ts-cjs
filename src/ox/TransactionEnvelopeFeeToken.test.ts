@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { setTimeout } from 'node:timers/promises'
 import { Authorization, Hex, Rlp, RpcTransport, Secp256k1, Value } from 'ox'
 import { TransactionEnvelopeFeeToken } from 'tempo/ox'
 import { Instance } from 'tempo/prool'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 const privateKey =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
@@ -25,7 +25,9 @@ describe('assert', () => {
         ],
         chainId: 1,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(`"Chain ID "-1" is invalid."`)
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidChainIdError: Chain ID "-1" is invalid.]`,
+    )
   })
 
   test('invalid address', () => {
@@ -45,10 +47,10 @@ describe('assert', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-    "Address "0x000000000000000000000000000000000000000z" is invalid.
+      [Address.InvalidAddressError: Address "0x000000000000000000000000000000000000000z" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value."
-  `,
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `,
     )
   })
 
@@ -69,7 +71,7 @@ describe('assert', () => {
         chainId: 1,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `"The fee cap (\`maxFeePerGas\`/\`maxPriorityFeePerGas\` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1)."`,
+      `[TransactionEnvelope.FeeCapTooHighError: The fee cap (\`maxFeePerGas\`/\`maxPriorityFeePerGas\` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).]`,
     )
   })
 })
@@ -316,10 +318,10 @@ describe('deserialize', () => {
           ]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        "Invalid serialized transaction of type "feeToken" was provided.
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "feeToken" was provided.
 
         Serialized Transaction: "0x77f84201000101019400000000000000000000000000000000000000000080e4e380e1a0000000000000000000000000000000000000000000000000000000000000000180"
-        Missing Attributes: feeToken, feePayerSignatureOrSender, yParity, r, s"
+        Missing Attributes: feeToken, feePayerSignatureOrSender, yParity, r, s]
       `)
 
       expect(() =>
@@ -338,10 +340,10 @@ describe('deserialize', () => {
           ]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        "Invalid serialized transaction of type "feeToken" was provided.
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "feeToken" was provided.
 
         Serialized Transaction: "0x77e501000101019400000000000000000000000000000000000000000080c7c683123456c10080"
-        Missing Attributes: feeToken, feePayerSignatureOrSender, yParity, r, s"
+        Missing Attributes: feeToken, feePayerSignatureOrSender, yParity, r, s]
       `)
     })
 
@@ -351,10 +353,10 @@ describe('deserialize', () => {
           `0x77${Rlp.fromHex([]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        "Invalid serialized transaction of type "feeToken" was provided.
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "feeToken" was provided.
 
         Serialized Transaction: "0x77c0"
-        Missing Attributes: chainId, nonce, feeToken, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList, feePayerSignatureOrSender"
+        Missing Attributes: chainId, nonce, feeToken, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList, feePayerSignatureOrSender]
       `)
     })
 
@@ -364,10 +366,10 @@ describe('deserialize', () => {
           `0x77${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        "Invalid serialized transaction of type "feeToken" was provided.
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "feeToken" was provided.
 
         Serialized Transaction: "0x77c20001"
-        Missing Attributes: feeToken, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList, feePayerSignatureOrSender"
+        Missing Attributes: feeToken, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList, feePayerSignatureOrSender]
       `)
     })
 
@@ -391,10 +393,10 @@ describe('deserialize', () => {
           ]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        "Invalid serialized transaction of type "feeToken" was provided.
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "feeToken" was provided.
 
         Serialized Transaction: "0x77cd80808080808080808080808080"
-        Missing Attributes: r, s"
+        Missing Attributes: r, s]
       `)
     })
   })
@@ -912,23 +914,23 @@ describe('validate', () => {
 test('exports', () => {
   expect(Object.keys(TransactionEnvelopeFeeToken)).toMatchInlineSnapshot(`
     [
+      "feePayerMagic",
+      "serializedType",
+      "type",
       "assert",
       "deserialize",
-      "feePayerMagic",
       "from",
       "getFeePayerSignPayload",
       "getSignPayload",
       "hash",
       "serialize",
-      "serializedType",
-      "type",
       "validate",
     ]
   `)
 })
 
-describe.skipIf(!!process.env.CI)('e2e', () => {
-  const node = Instance.tempo({ port: 8545 })
+describe('e2e', () => {
+  const node = Instance.tempo({ port: 3000 })
   beforeEach(() => node.start())
   afterEach(() => node.stop())
 
@@ -937,7 +939,7 @@ describe.skipIf(!!process.env.CI)('e2e', () => {
     const privateKey =
       '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
-    const transport = RpcTransport.fromHttp('http://localhost:8545')
+    const transport = RpcTransport.fromHttp('http://localhost:3000')
 
     const nonce = await transport.request({
       method: 'eth_getTransactionCount',
@@ -1091,7 +1093,7 @@ describe.skipIf(!!process.env.CI)('e2e', () => {
         '0xfe24691eff5297c76e847dc78a8966b96cf65a44140b9a0d3f5100ce71d74a59',
     } as const
 
-    const transport = RpcTransport.fromHttp('http://localhost:8545')
+    const transport = RpcTransport.fromHttp('http://localhost:3000')
 
     const nonce = await transport.request({
       method: 'eth_getTransactionCount',

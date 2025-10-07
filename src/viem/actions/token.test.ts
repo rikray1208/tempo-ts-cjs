@@ -1,20 +1,14 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { setTimeout } from 'node:timers/promises'
 import { Hex } from 'ox'
-import { tempoLocal } from 'tempo/chains'
-import { Instance } from 'tempo/prool'
 import * as actions from 'tempo/viem/actions'
 import { parseEther, publicActions } from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
 import { getCode, writeContractSync } from 'viem/actions'
+import { describe, expect, test } from 'vitest'
+import { tempoTest } from '../../../test/config.js'
 import { tip20Abi } from '../abis.js'
 import { usdAddress, usdId } from '../addresses.js'
 import { createTempoClient } from '../client.js'
-
-const instance = Instance.tempo({ port: 8545 })
-
-beforeEach(() => instance.start())
-afterEach(() => instance.stop())
 
 const account = mnemonicToAccount(
   'test test test test test test test test test test test junk',
@@ -30,11 +24,11 @@ const account3 = mnemonicToAccount(
 
 const client = createTempoClient({
   account,
-  chain: tempoLocal,
+  chain: tempoTest,
   pollingInterval: 100,
 }).extend(publicActions)
 
-describe.skipIf(!!process.env.CI)('approve', () => {
+describe('approve', () => {
   test('default', async () => {
     {
       // approve
@@ -214,7 +208,7 @@ describe.skipIf(!!process.env.CI)('approve', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('create', () => {
+describe('create', () => {
   test('default', async () => {
     const { receipt, ...result } = await actions.token.createSync(client, {
       currency: 'USD',
@@ -241,7 +235,7 @@ describe.skipIf(!!process.env.CI)('create', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('getAllowance', () => {
+describe('getAllowance', () => {
   test('default', async () => {
     // First, approve some allowance
     await writeContractSync(client, {
@@ -281,7 +275,7 @@ describe.skipIf(!!process.env.CI)('getAllowance', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('getBalance', () => {
+describe('getBalance', () => {
   test('default', async () => {
     {
       // Test with default token
@@ -310,7 +304,7 @@ describe.skipIf(!!process.env.CI)('getBalance', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('getMetadata', () => {
+describe('getMetadata', () => {
   test('default', async () => {
     const metadata = await actions.token.getMetadata(client)
 
@@ -379,7 +373,7 @@ describe.skipIf(!!process.env.CI)('getMetadata', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('mint', () => {
+describe('mint', () => {
   test('default', async () => {
     // Create a new token where we're the admin
     const { token } = await actions.token.createSync(client, {
@@ -475,7 +469,7 @@ describe.skipIf(!!process.env.CI)('mint', () => {
 
 describe.todo('permitToken')
 
-describe.skipIf(!!process.env.CI)('transfer', () => {
+describe('transfer', () => {
   test('default', async () => {
     // Get initial balances
     const senderBalanceBefore = await actions.token.getBalance(client, {
@@ -612,7 +606,7 @@ describe.skipIf(!!process.env.CI)('transfer', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('burn', () => {
+describe('burn', () => {
   test('default', async () => {
     // Create a new token where we have issuer role
     const { token } = await actions.token.createSync(client, {
@@ -704,7 +698,7 @@ describe.skipIf(!!process.env.CI)('burn', () => {
     })
 
     // Try to burn without issuer role - should fail
-    expect(
+    await expect(
       actions.token.burnSync(client, {
         token,
         amount: parseEther('10'),
@@ -717,7 +711,7 @@ describe.todo('burnBlockedToken')
 
 describe.todo('changeTokenTransferPolicy')
 
-describe.skipIf(!!process.env.CI)('pause', () => {
+describe('pause', () => {
   test('default', async () => {
     // Create a new token
     const { token } = await actions.token.createSync(client, {
@@ -787,7 +781,7 @@ describe.skipIf(!!process.env.CI)('pause', () => {
     expect(metadata.paused).toBe(true)
 
     // Transfers should now fail
-    expect(
+    await expect(
       actions.token.transferSync(client, {
         account: account2,
         token,
@@ -806,7 +800,7 @@ describe.skipIf(!!process.env.CI)('pause', () => {
     })
 
     // Try to pause without pause role - should fail
-    expect(
+    await expect(
       actions.token.pauseSync(client, {
         token,
       }),
@@ -874,7 +868,7 @@ describe.skipIf(!!process.env.CI)('pause', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('unpause', () => {
+describe('unpause', () => {
   test('default', async () => {
     // Create a new token
     const { token: address } = await actions.token.createSync(client, {
@@ -929,7 +923,7 @@ describe.skipIf(!!process.env.CI)('unpause', () => {
     })
 
     // Verify transfers fail when paused
-    expect(
+    await expect(
       actions.token.transferSync(client, {
         account: account2,
         token: address,
@@ -992,7 +986,7 @@ describe.skipIf(!!process.env.CI)('unpause', () => {
     })
 
     // Try to unpause without unpause role - should fail
-    expect(
+    await expect(
       actions.token.unpauseSync(client, {
         token: address,
       }),
@@ -1070,7 +1064,7 @@ describe.skipIf(!!process.env.CI)('unpause', () => {
     })
 
     // Account2 cannot unpause
-    expect(
+    await expect(
       actions.token.unpauseSync(client, {
         account: account2,
         token: address,
@@ -1093,7 +1087,7 @@ describe.skipIf(!!process.env.CI)('unpause', () => {
 
 describe.todo('setTokenSupplyCap')
 
-describe.skipIf(!!process.env.CI)('grantRoles', () => {
+describe('grantRoles', () => {
   test('default', async () => {
     // Create a new token where we're the admin
     const { token: address } = await actions.token.createSync(client, {
@@ -1125,7 +1119,7 @@ describe.skipIf(!!process.env.CI)('grantRoles', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('revokeTokenRole', async () => {
+describe('revokeTokenRole', async () => {
   test('default', async () => {
     const { token: address } = await actions.token.createSync(client, {
       admin: client.account,
@@ -1161,7 +1155,7 @@ describe.skipIf(!!process.env.CI)('revokeTokenRole', async () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('renounceTokenRole', async () => {
+describe('renounceTokenRole', async () => {
   test('default', async () => {
     const { token: address } = await actions.token.createSync(client, {
       admin: client.account,
@@ -1202,7 +1196,7 @@ describe.skipIf(!!process.env.CI)('renounceTokenRole', async () => {
 
 describe.todo('setRoleAdmin')
 
-describe.skipIf(!!process.env.CI)('watchCreate', () => {
+describe('watchCreate', () => {
   test('default', async () => {
     const receivedTokens: Array<{
       args: actions.token.watchCreate.Args
@@ -1332,7 +1326,7 @@ describe.skipIf(!!process.env.CI)('watchCreate', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchMint', () => {
+describe('watchMint', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token: address } = await actions.token.createSync(client, {
@@ -1478,7 +1472,7 @@ describe.skipIf(!!process.env.CI)('watchMint', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchApprove', () => {
+describe('watchApprove', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token: address } = await actions.token.createSync(client, {
@@ -1614,7 +1608,7 @@ describe.skipIf(!!process.env.CI)('watchApprove', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchBurn', () => {
+describe('watchBurn', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token: address } = await actions.token.createSync(client, {
@@ -1813,7 +1807,7 @@ describe.skipIf(!!process.env.CI)('watchBurn', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchAdminRole', () => {
+describe('watchAdminRole', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token: address } = await actions.token.createSync(client, {
@@ -1875,7 +1869,7 @@ describe.skipIf(!!process.env.CI)('watchAdminRole', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchRole', () => {
+describe('watchRole', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token: address } = await actions.token.createSync(client, {
@@ -2013,7 +2007,7 @@ describe.skipIf(!!process.env.CI)('watchRole', () => {
   })
 })
 
-describe.skipIf(!!process.env.CI)('watchTransfer', () => {
+describe('watchTransfer', () => {
   test('default', async () => {
     // Create a new token for testing
     const { token: address } = await actions.token.createSync(client, {

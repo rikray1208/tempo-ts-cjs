@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { Transaction } from 'tempo/ox'
+import { describe, expect, test } from 'vitest'
 
 describe('fromRpc', () => {
   test('default', () => {
