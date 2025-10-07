@@ -1,8 +1,8 @@
 import * as Hex from 'ox/Hex';
 import * as Signature from 'ox/Signature';
-import { encodeFunctionData, } from 'viem';
+import { encodeFunctionData, parseEventLogs, } from 'viem';
 import { parseAccount } from 'viem/accounts';
-import { multicall, readContract, sendTransaction, simulateContract, watchContractEvent, writeContract, } from 'viem/actions';
+import { multicall, readContract, sendTransaction, sendTransactionSync, watchContractEvent, writeContract, writeContractSync, } from 'viem/actions';
 import * as TokenId from "../../ox/TokenId.js";
 import * as TokenRole from "../../ox/TokenRole.js";
 import { tip20Abi, tip20FactoryAbi } from "../abis.js";
@@ -28,7 +28,7 @@ const transferPolicy = {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.approve(client, {
+ * const result = await actions.token.approve(client, {
  *   spender: '0x...',
  *   amount: 100n,
  * })
@@ -40,13 +40,18 @@ const transferPolicy = {
  */
 export async function approve(client, parameters) {
     const { token = usdAddress, ...rest } = parameters;
-    const call = approve.call({ ...rest, token });
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return approve.inner(writeContract, client, parameters, { ...rest, token });
 }
 (function (approve) {
+    /** @internal */
+    async function inner(action, client, parameters, args) {
+        const call = approve.call(args);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    approve.inner = inner;
     /**
      * Defines a call to the `approve` function.
      *
@@ -90,7 +95,56 @@ export async function approve(client, parameters) {
         });
     }
     approve.call = call;
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'Approval',
+        });
+        if (!log)
+            throw new Error('`Approval` event not found.');
+        return log;
+    }
+    approve.extractEvent = extractEvent;
 })(approve || (approve = {}));
+/**
+ * Approves a spender to transfer TIP20 tokens on behalf of the caller.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.approveSync(client, {
+ *   spender: '0x...',
+ *   amount: 100n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function approveSync(client, parameters) {
+    const { token = usdAddress, ...rest } = parameters;
+    const receipt = await approve.inner(writeContractSync, client, parameters, {
+        ...rest,
+        token,
+    });
+    const { args } = approve.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Burns TIP20 tokens from a blocked address.
  *
@@ -107,7 +161,7 @@ export async function approve(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.burnBlocked(client, {
+ * const result = await actions.token.burnBlocked(client, {
  *   from: '0x...',
  *   amount: 100n,
  *   token: '0x...',
@@ -119,13 +173,18 @@ export async function approve(client, parameters) {
  * @returns The transaction hash.
  */
 export async function burnBlocked(client, parameters) {
-    const call = burnBlocked.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return burnBlocked.inner(writeContract, client, parameters);
 }
 (function (burnBlocked) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = burnBlocked.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    burnBlocked.inner = inner;
     /**
      * Defines a call to the `burnBlocked` function.
      *
@@ -169,7 +228,59 @@ export async function burnBlocked(client, parameters) {
         });
     }
     burnBlocked.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'BurnBlocked',
+        });
+        if (!log)
+            throw new Error('`BurnBlocked` event not found.');
+        return log;
+    }
+    burnBlocked.extractEvent = extractEvent;
 })(burnBlocked || (burnBlocked = {}));
+/**
+ * Burns TIP20 tokens from a blocked address.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.burnBlockedSync(client, {
+ *   from: '0x...',
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function burnBlockedSync(client, parameters) {
+    const receipt = await burnBlocked.inner(writeContractSync, client, parameters);
+    const { args } = burnBlocked.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Burns TIP20 tokens from the caller's balance.
  *
@@ -186,7 +297,7 @@ export async function burnBlocked(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.burn(client, {
+ * const result = await actions.token.burn(client, {
  *   amount: 100n,
  *   token: '0x...',
  * })
@@ -197,13 +308,18 @@ export async function burnBlocked(client, parameters) {
  * @returns The transaction hash.
  */
 export async function burn(client, parameters) {
-    const call = burn.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return burn.inner(writeContract, client, parameters);
 }
 (function (burn) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = burn.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    burn.inner = inner;
     /**
      * Defines a call to the `burn` or `burnWithMemo` function.
      *
@@ -254,7 +370,58 @@ export async function burn(client, parameters) {
         });
     }
     burn.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'Burn',
+        });
+        if (!log)
+            throw new Error('`Burn` event not found.');
+        return log;
+    }
+    burn.extractEvent = extractEvent;
 })(burn || (burn = {}));
+/**
+ * Burns TIP20 tokens from the caller's balance.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.burnSync(client, {
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function burnSync(client, parameters) {
+    const receipt = await burn.inner(writeContractSync, client, parameters);
+    const { args } = burn.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Changes the transfer policy ID for a TIP20 token.
  *
@@ -271,7 +438,7 @@ export async function burn(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.changeTransferPolicy(client, {
+ * const result = await actions.token.changeTransferPolicy(client, {
  *   token: '0x...',
  *   policyId: 1n,
  * })
@@ -282,13 +449,18 @@ export async function burn(client, parameters) {
  * @returns The transaction hash.
  */
 export async function changeTransferPolicy(client, parameters) {
-    const call = changeTransferPolicy.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return changeTransferPolicy.inner(writeContract, client, parameters);
 }
 (function (changeTransferPolicy) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = changeTransferPolicy.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    changeTransferPolicy.inner = inner;
     /**
      * Defines a call to the `changeTransferPolicyId` function.
      *
@@ -331,7 +503,58 @@ export async function changeTransferPolicy(client, parameters) {
         });
     }
     changeTransferPolicy.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'TransferPolicyUpdate',
+        });
+        if (!log)
+            throw new Error('`TransferPolicyUpdate` event not found.');
+        return log;
+    }
+    changeTransferPolicy.extractEvent = extractEvent;
 })(changeTransferPolicy || (changeTransferPolicy = {}));
+/**
+ * Changes the transfer policy ID for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.changeTransferPolicySync(client, {
+ *   token: '0x...',
+ *   policyId: 1n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function changeTransferPolicySync(client, parameters) {
+    const receipt = await changeTransferPolicy.inner(writeContractSync, client, parameters);
+    const { args } = changeTransferPolicy.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Creates a new TIP20 token.
  *
@@ -348,7 +571,7 @@ export async function changeTransferPolicy(client, parameters) {
  *   transport: http(),
  * })
  *
- * const { hash, id, address } = await actions.token.create(client, {
+ * const result = await actions.token.create(client, {
  *   name: 'My Token',
  *   symbol: 'MTK',
  *   currency: 'USD',
@@ -360,28 +583,24 @@ export async function changeTransferPolicy(client, parameters) {
  * @returns The transaction hash.
  */
 export async function create(client, parameters) {
-    const { account = client.account, admin: admin_ = client.account, chain = client.chain, ...rest } = parameters;
-    const admin = admin_ ? parseAccount(admin_) : undefined;
-    if (!admin)
-        throw new Error('admin is required.');
-    const call = create.call({ ...rest, admin: admin.address });
-    const { request, result } = await simulateContract(client, {
-        ...rest,
-        account,
-        chain,
-        ...call,
-    });
-    const hash = await writeContract(client, request);
-    const id = Hex.toBigInt(result);
-    const address = TokenId.toAddress(id);
-    return {
-        address,
-        admin: admin.address,
-        hash,
-        id,
-    };
+    return create.inner(writeContract, client, parameters);
 }
 (function (create) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const { account = client.account, admin: admin_ = client.account, chain = client.chain, ...rest } = parameters;
+        const admin = admin_ ? parseAccount(admin_) : undefined;
+        if (!admin)
+            throw new Error('admin is required.');
+        const call = create.call({ ...rest, admin: admin.address });
+        return (await action(client, {
+            ...parameters,
+            account,
+            chain,
+            ...call,
+        }));
+    }
+    create.inner = inner;
     /**
      * Defines a call to the `createToken` function.
      *
@@ -426,7 +645,60 @@ export async function create(client, parameters) {
         });
     }
     create.call = call;
+    /**
+     * Extracts the `TokenCreated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `TokenCreated` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20FactoryAbi,
+            logs,
+            eventName: 'TokenCreated',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`TokenCreated` event not found.');
+        return log;
+    }
+    create.extractEvent = extractEvent;
 })(create || (create = {}));
+/**
+ * Creates a new TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.createSync(client, {
+ *   name: 'My Token',
+ *   symbol: 'MTK',
+ *   currency: 'USD',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function createSync(client, parameters) {
+    const receipt = await create.inner(writeContractSync, client, parameters);
+    const { args } = create.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Gets TIP20 token allowance.
  *
@@ -635,7 +907,7 @@ export async function getMetadata(client, parameters = {}) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.grantRoles(client, {
+ * const result = await actions.token.grantRoles(client, {
  *   token: '0x...',
  *   to: '0x...',
  *   roles: ['minter'],
@@ -647,18 +919,23 @@ export async function getMetadata(client, parameters = {}) {
  * @returns The transaction hash.
  */
 export async function grantRoles(client, parameters) {
-    return sendTransaction(client, {
-        ...parameters,
-        calls: parameters.roles.map((role) => {
-            const call = grantRoles.call({ ...parameters, role });
-            return {
-                ...call,
-                data: encodeFunctionData(call),
-            };
-        }),
-    });
+    return grantRoles.inner(sendTransaction, client, parameters);
 }
 (function (grantRoles) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        return (await action(client, {
+            ...parameters,
+            calls: parameters.roles.map((role) => {
+                const call = grantRoles.call({ ...parameters, role });
+                return {
+                    ...call,
+                    data: encodeFunctionData(call),
+                };
+            }),
+        }));
+    }
+    grantRoles.inner = inner;
     /**
      * Defines a call to the `grantRole` function.
      *
@@ -703,7 +980,60 @@ export async function grantRoles(client, parameters) {
         });
     }
     grantRoles.call = call;
+    /**
+     * Extracts the events from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The events.
+     */
+    function extractEvents(logs) {
+        const events = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'RoleMembershipUpdated',
+        });
+        if (events.length === 0)
+            throw new Error('`RoleMembershipUpdated` events not found.');
+        return events;
+    }
+    grantRoles.extractEvents = extractEvents;
 })(grantRoles || (grantRoles = {}));
+/**
+ * Grants a role for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.grantRolesSync(client, {
+ *   token: '0x...',
+ *   to: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function grantRolesSync(client, parameters) {
+    const receipt = await grantRoles.inner(sendTransactionSync, client, parameters);
+    const events = grantRoles.extractEvents(receipt.logs);
+    const value = events.map((event) => event.args);
+    return {
+        receipt,
+        value,
+    };
+}
 /**
  * Mints TIP20 tokens to an address.
  *
@@ -720,7 +1050,7 @@ export async function grantRoles(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.mint(client, {
+ * const result = await actions.token.mint(client, {
  *   to: '0x...',
  *   amount: 100n,
  *   token: '0x...',
@@ -732,15 +1062,19 @@ export async function grantRoles(client, parameters) {
  * @returns The transaction hash.
  */
 export async function mint(client, parameters) {
-    const call = mint.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        // TODO: fix
-        gas: 30000n,
-        ...call,
-    });
+    return mint.inner(writeContract, client, parameters);
 }
 (function (mint) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = mint.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            gas: 30000n,
+            ...call,
+        }));
+    }
+    mint.inner = inner;
     /**
      * Defines a call to the `mint` or `mintWithMemo` function.
      *
@@ -792,7 +1126,59 @@ export async function mint(client, parameters) {
         });
     }
     mint.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'Mint',
+        });
+        if (!log)
+            throw new Error('`Mint` event not found.');
+        return log;
+    }
+    mint.extractEvent = extractEvent;
 })(mint || (mint = {}));
+/**
+ * Mints TIP20 tokens to an address.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.mintSync(client, {
+ *   to: '0x...',
+ *   amount: 100n,
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function mintSync(client, parameters) {
+    const receipt = await mint.inner(writeContractSync, client, parameters);
+    const { args } = mint.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Pauses a TIP20 token.
  *
@@ -809,7 +1195,7 @@ export async function mint(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.pause(client, {
+ * const result = await actions.token.pause(client, {
  *   token: '0x...',
  * })
  * ```
@@ -819,13 +1205,18 @@ export async function mint(client, parameters) {
  * @returns The transaction hash.
  */
 export async function pause(client, parameters) {
-    const call = pause.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return pause.inner(writeContract, client, parameters);
 }
 (function (pause) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = pause.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    pause.inner = inner;
     /**
      * Defines a call to the `pause` function.
      *
@@ -867,7 +1258,57 @@ export async function pause(client, parameters) {
         });
     }
     pause.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'PauseStateUpdate',
+        });
+        if (!log)
+            throw new Error('`PauseStateUpdate` event not found.');
+        return log;
+    }
+    pause.extractEvent = extractEvent;
 })(pause || (pause = {}));
+/**
+ * Pauses a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.pauseSync(client, {
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function pauseSync(client, parameters) {
+    const receipt = await pause.inner(writeContractSync, client, parameters);
+    const { args } = pause.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Approves a spender using a signed permit.
  *
@@ -884,7 +1325,7 @@ export async function pause(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.permit(client, {
+ * const result = await actions.token.permit(client, {
  *   owner: '0x...',
  *   spender: '0x...',
  *   value: 100n,
@@ -898,13 +1339,18 @@ export async function pause(client, parameters) {
  * @returns The transaction hash.
  */
 export async function permit(client, parameters) {
-    const call = permit.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return permit.inner(writeContract, client, parameters);
 }
 (function (permit) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = permit.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    permit.inner = inner;
     /**
      * Defines a call to the `permit` function.
      *
@@ -961,7 +1407,61 @@ export async function permit(client, parameters) {
         });
     }
     permit.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'Approval',
+        });
+        if (!log)
+            throw new Error('`Approval` event not found.');
+        return log;
+    }
+    permit.extractEvent = extractEvent;
 })(permit || (permit = {}));
+/**
+ * Approves a spender using a signed permit.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.permitSync(client, {
+ *   owner: '0x...',
+ *   spender: '0x...',
+ *   value: 100n,
+ *   deadline: 1234567890n,
+ *   signature: { r: 0n, s: 0n, yParity: 0 },
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function permitSync(client, parameters) {
+    const receipt = await permit.inner(writeContractSync, client, parameters);
+    const { args } = permit.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Renounces a role for a TIP20 token.
  *
@@ -978,7 +1478,7 @@ export async function permit(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.renounceRoles(client, {
+ * const result = await actions.token.renounceRoles(client, {
  *   token: '0x...',
  *   roles: ['minter'],
  * })
@@ -989,18 +1489,23 @@ export async function permit(client, parameters) {
  * @returns The transaction hash.
  */
 export async function renounceRoles(client, parameters) {
-    return sendTransaction(client, {
-        ...parameters,
-        calls: parameters.roles.map((role) => {
-            const call = renounceRoles.call({ ...parameters, role });
-            return {
-                ...call,
-                data: encodeFunctionData(call),
-            };
-        }),
-    });
+    return renounceRoles.inner(sendTransaction, client, parameters);
 }
 (function (renounceRoles) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        return (await action(client, {
+            ...parameters,
+            calls: parameters.roles.map((role) => {
+                const call = renounceRoles.call({ ...parameters, role });
+                return {
+                    ...call,
+                    data: encodeFunctionData(call),
+                };
+            }),
+        }));
+    }
+    renounceRoles.inner = inner;
     /**
      * Defines a call to the `renounceRole` function.
      *
@@ -1044,7 +1549,59 @@ export async function renounceRoles(client, parameters) {
         });
     }
     renounceRoles.call = call;
+    /**
+     * Extracts the events from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The events.
+     */
+    function extractEvents(logs) {
+        const events = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'RoleMembershipUpdated',
+        });
+        if (events.length === 0)
+            throw new Error('`RoleMembershipUpdated` events not found.');
+        return events;
+    }
+    renounceRoles.extractEvents = extractEvents;
 })(renounceRoles || (renounceRoles = {}));
+/**
+ * Renounces a role for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.renounceRolesSync(client, {
+ *   token: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function renounceRolesSync(client, parameters) {
+    const receipt = await renounceRoles.inner(sendTransactionSync, client, parameters);
+    const events = renounceRoles.extractEvents(receipt.logs);
+    const value = events.map((event) => event.args);
+    return {
+        receipt,
+        value,
+    };
+}
 /**
  * Revokes a role for a TIP20 token.
  *
@@ -1061,7 +1618,7 @@ export async function renounceRoles(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.revokeRoles(client, {
+ * const result = await actions.token.revokeRoles(client, {
  *   token: '0x...',
  *   from: '0x...',
  *   roles: ['minter'],
@@ -1073,18 +1630,23 @@ export async function renounceRoles(client, parameters) {
  * @returns The transaction hash.
  */
 export async function revokeRoles(client, parameters) {
-    return sendTransaction(client, {
-        ...parameters,
-        calls: parameters.roles.map((role) => {
-            const call = revokeRoles.call({ ...parameters, role });
-            return {
-                ...call,
-                data: encodeFunctionData(call),
-            };
-        }),
-    });
+    return revokeRoles.inner(sendTransaction, client, parameters);
 }
 (function (revokeRoles) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        return (await action(client, {
+            ...parameters,
+            calls: parameters.roles.map((role) => {
+                const call = revokeRoles.call({ ...parameters, role });
+                return {
+                    ...call,
+                    data: encodeFunctionData(call),
+                };
+            }),
+        }));
+    }
+    revokeRoles.inner = inner;
     /**
      * Defines a call to the `revokeRole` function.
      *
@@ -1129,7 +1691,60 @@ export async function revokeRoles(client, parameters) {
         });
     }
     revokeRoles.call = call;
+    /**
+     * Extracts the events from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The events.
+     */
+    function extractEvents(logs) {
+        const events = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'RoleMembershipUpdated',
+        });
+        if (events.length === 0)
+            throw new Error('`RoleMembershipUpdated` events not found.');
+        return events;
+    }
+    revokeRoles.extractEvents = extractEvents;
 })(revokeRoles || (revokeRoles = {}));
+/**
+ * Revokes a role for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.revokeRolesSync(client, {
+ *   token: '0x...',
+ *   from: '0x...',
+ *   roles: ['minter'],
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function revokeRolesSync(client, parameters) {
+    const receipt = await revokeRoles.inner(sendTransactionSync, client, parameters);
+    const events = revokeRoles.extractEvents(receipt.logs);
+    const value = events.map((event) => event.args);
+    return {
+        receipt,
+        value,
+    };
+}
 /**
  * Sets the supply cap for a TIP20 token.
  *
@@ -1146,7 +1761,7 @@ export async function revokeRoles(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.setSupplyCap(client, {
+ * const result = await actions.token.setSupplyCap(client, {
  *   token: '0x...',
  *   supplyCap: 1000000n,
  * })
@@ -1157,13 +1772,18 @@ export async function revokeRoles(client, parameters) {
  * @returns The transaction hash.
  */
 export async function setSupplyCap(client, parameters) {
-    const call = setSupplyCap.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return setSupplyCap.inner(writeContract, client, parameters);
 }
 (function (setSupplyCap) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = setSupplyCap.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    setSupplyCap.inner = inner;
     /**
      * Defines a call to the `setSupplyCap` function.
      *
@@ -1206,7 +1826,58 @@ export async function setSupplyCap(client, parameters) {
         });
     }
     setSupplyCap.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'SupplyCapUpdate',
+        });
+        if (!log)
+            throw new Error('`SupplyCapUpdate` event not found.');
+        return log;
+    }
+    setSupplyCap.extractEvent = extractEvent;
 })(setSupplyCap || (setSupplyCap = {}));
+/**
+ * Sets the supply cap for a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.setSupplyCapSync(client, {
+ *   token: '0x...',
+ *   supplyCap: 1000000n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setSupplyCapSync(client, parameters) {
+    const receipt = await setSupplyCap.inner(writeContractSync, client, parameters);
+    const { args } = setSupplyCap.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Sets the admin role for a specific role in a TIP20 token.
  *
@@ -1223,7 +1894,7 @@ export async function setSupplyCap(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.setRoleAdmin(client, {
+ * const result = await actions.token.setRoleAdmin(client, {
  *   token: '0x...',
  *   role: 'minter',
  *   adminRole: 'admin',
@@ -1235,13 +1906,18 @@ export async function setSupplyCap(client, parameters) {
  * @returns The transaction hash.
  */
 export async function setRoleAdmin(client, parameters) {
-    const call = setRoleAdmin.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return setRoleAdmin.inner(writeContract, client, parameters);
 }
 (function (setRoleAdmin) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = setRoleAdmin.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    setRoleAdmin.inner = inner;
     /**
      * Defines a call to the `setRoleAdmin` function.
      *
@@ -1287,7 +1963,59 @@ export async function setRoleAdmin(client, parameters) {
         });
     }
     setRoleAdmin.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'RoleAdminUpdated',
+        });
+        if (!log)
+            throw new Error('`RoleAdminUpdated` event not found.');
+        return log;
+    }
+    setRoleAdmin.extractEvent = extractEvent;
 })(setRoleAdmin || (setRoleAdmin = {}));
+/**
+ * Sets the admin role for a specific role in a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.setRoleAdminSync(client, {
+ *   token: '0x...',
+ *   role: 'minter',
+ *   adminRole: 'admin',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setRoleAdminSync(client, parameters) {
+    const receipt = await setRoleAdmin.inner(writeContractSync, client, parameters);
+    const { args } = setRoleAdmin.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Transfers TIP20 tokens to another address.
  *
@@ -1304,7 +2032,7 @@ export async function setRoleAdmin(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.transfer(client, {
+ * const result = await actions.token.transfer(client, {
  *   to: '0x...',
  *   amount: 100n,
  * })
@@ -1315,13 +2043,18 @@ export async function setRoleAdmin(client, parameters) {
  * @returns The transaction hash.
  */
 export async function transfer(client, parameters) {
-    const call = transfer.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return transfer.inner(writeContract, client, parameters);
 }
 (function (transfer) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = transfer.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    transfer.inner = inner;
     /**
      * Defines a call to the `transfer`, `transferFrom`, `transferWithMemo`, or `transferFromWithMemo` function.
      *
@@ -1385,7 +2118,58 @@ export async function transfer(client, parameters) {
         });
     }
     transfer.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'Transfer',
+        });
+        if (!log)
+            throw new Error('`Transfer` event not found.');
+        return log;
+    }
+    transfer.extractEvent = extractEvent;
 })(transfer || (transfer = {}));
+/**
+ * Transfers TIP20 tokens to another address.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.transferSync(client, {
+ *   to: '0x...',
+ *   amount: 100n,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function transferSync(client, parameters) {
+    const receipt = await transfer.inner(writeContractSync, client, parameters);
+    const { args } = transfer.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Unpauses a TIP20 token.
  *
@@ -1402,7 +2186,7 @@ export async function transfer(client, parameters) {
  *   transport: http(),
  * })
  *
- * const hash = await actions.token.unpause(client, {
+ * const result = await actions.token.unpause(client, {
  *   token: '0x...',
  * })
  * ```
@@ -1412,13 +2196,18 @@ export async function transfer(client, parameters) {
  * @returns The transaction hash.
  */
 export async function unpause(client, parameters) {
-    const call = unpause.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return unpause.inner(writeContract, client, parameters);
 }
 (function (unpause) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = unpause.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    unpause.inner = inner;
     /**
      * Defines a call to the `unpause` function.
      *
@@ -1460,7 +2249,57 @@ export async function unpause(client, parameters) {
         });
     }
     unpause.call = call;
+    /**
+     * Extracts the event from the logs.
+     *
+     * @param logs - Logs.
+     * @returns The event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip20Abi,
+            logs,
+            eventName: 'PauseStateUpdate',
+        });
+        if (!log)
+            throw new Error('`PauseStateUpdate` event not found.');
+        return log;
+    }
+    unpause.extractEvent = extractEvent;
 })(unpause || (unpause = {}));
+/**
+ * Unpauses a TIP20 token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.token.unpauseSync(client, {
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function unpauseSync(client, parameters) {
+    const receipt = await unpause.inner(writeContractSync, client, parameters);
+    const { args } = unpause.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Watches for TIP20 token approval events.
  *

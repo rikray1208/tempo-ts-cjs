@@ -1,4 +1,5 @@
-import { readContract, watchContractEvent, writeContract } from 'viem/actions';
+import { parseEventLogs, } from 'viem';
+import { readContract, watchContractEvent, writeContract, writeContractSync, } from 'viem/actions';
 import * as TokenId from "../../ox/TokenId.js";
 import { feeAmmAbi } from "../abis.js";
 import { feeManagerAddress } from "../addresses.js";
@@ -231,13 +232,18 @@ export async function getLiquidityBalance(client, parameters) {
  * @returns The transaction hash.
  */
 export async function rebalanceSwap(client, parameters) {
-    const call = rebalanceSwap.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return rebalanceSwap.inner(writeContract, client, parameters);
 }
 (function (rebalanceSwap) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = rebalanceSwap.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    rebalanceSwap.inner = inner;
     /**
      * Defines a call to the `rebalanceSwap` function.
      *
@@ -293,7 +299,61 @@ export async function rebalanceSwap(client, parameters) {
         });
     }
     rebalanceSwap.call = call;
+    /**
+     * Extracts the `RebalanceSwap` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `RebalanceSwap` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: feeAmmAbi,
+            logs,
+            eventName: 'RebalanceSwap',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`RebalanceSwap` event not found.');
+        return log;
+    }
+    rebalanceSwap.extractEvent = extractEvent;
 })(rebalanceSwap || (rebalanceSwap = {}));
+/**
+ * Performs a rebalance swap from validator token to user token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.amm.rebalanceSwapSync(client, {
+ *   userToken: '0x...',
+ *   validatorToken: '0x...',
+ *   amountOut: 100n,
+ *   to: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function rebalanceSwapSync(client, parameters) {
+    const receipt = await rebalanceSwap.inner(writeContractSync, client, parameters);
+    const { args } = rebalanceSwap.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Adds liquidity to a pool.
  *
@@ -328,13 +388,18 @@ export async function rebalanceSwap(client, parameters) {
  * @returns The transaction hash.
  */
 export async function mint(client, parameters) {
-    const call = mint.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return mint.inner(writeContract, client, parameters);
 }
 (function (mint) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = mint.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    mint.inner = inner;
     /**
      * Defines a call to the `mint` function.
      *
@@ -401,7 +466,66 @@ export async function mint(client, parameters) {
         });
     }
     mint.call = call;
+    /**
+     * Extracts the `Mint` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `Mint` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: feeAmmAbi,
+            logs,
+            eventName: 'Mint',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`Mint` event not found.');
+        return log;
+    }
+    mint.extractEvent = extractEvent;
 })(mint || (mint = {}));
+/**
+ * Adds liquidity to a pool.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const hash = await actions.amm.mint(client, {
+ *   userToken: {
+ *     address: '0x20c0...beef',
+ *     amount: 100n,
+ *   },
+ *   validatorToken: {
+ *     address: '0x20c0...babe',
+ *     amount: 100n,
+ *   },
+ *   to: '0xfeed...fede',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function mintSync(client, parameters) {
+    const receipt = await mint.inner(writeContractSync, client, parameters);
+    const { args } = mint.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Removes liquidity from a pool.
  *
@@ -431,13 +555,18 @@ export async function mint(client, parameters) {
  * @returns The transaction hash.
  */
 export async function burn(client, parameters) {
-    const call = burn.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return burn.inner(writeContract, client, parameters);
 }
 (function (burn) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = burn.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    burn.inner = inner;
     /**
      * Defines a call to the `burn` function.
      *
@@ -493,7 +622,61 @@ export async function burn(client, parameters) {
         });
     }
     burn.call = call;
+    /**
+     * Extracts the `Burn` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `Burn` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: feeAmmAbi,
+            logs,
+            eventName: 'Burn',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`Burn` event not found.');
+        return log;
+    }
+    burn.extractEvent = extractEvent;
 })(burn || (burn = {}));
+/**
+ * Removes liquidity from a pool.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.amm.burnSync(client, {
+ *   userToken: '0x20c0...beef',
+ *   validatorToken: '0x20c0...babe',
+ *   liquidity: 50n,
+ *   to: '0xfeed...fede',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function burnSync(client, parameters) {
+    const receipt = await burn.inner(writeContractSync, client, parameters);
+    const { args } = burn.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Watches for rebalance swap events.
  *

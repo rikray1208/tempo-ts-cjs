@@ -5,4 +5,5 @@ export * from "./client.js";
 export { decorator as tempoActions } from "./decorator.js";
 export * from "./formatters.js";
 export * from "./transaction.js";
+export * from "./transport.js";
 //# sourceMappingURL=index.js.map

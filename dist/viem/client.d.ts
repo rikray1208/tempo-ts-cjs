@@ -19,9 +19,9 @@ export type Client<transport extends Transport = Transport, chain extends Chain 
  * @param parameters - The parameters for the client.
  * @returns A Tempo client.
  */
-export declare function createTempoClient<transport extends Transport, chain extends Chain | undefined = typeof tempo, accountOrAddress extends Account | Address | undefined = undefined, rpcSchema extends RpcSchema | undefined = undefined>(parameters?: createTempoClient.Parameters<transport, chain, accountOrAddress, rpcSchema>): createTempoClient.ReturnType<transport, chain, accountOrAddress extends Address ? JsonRpcAccount<accountOrAddress> : accountOrAddress>;
+export declare function createTempoClient<transport extends Transport, chain extends Chain | undefined = typeof tempo, accountOrAddress extends Account | Address | undefined = undefined, rpcSchema extends RpcSchema | undefined = undefined>(parameters?: createTempoClient.Parameters<transport, chain, accountOrAddress, rpcSchema>): createTempoClient.ReturnValue<transport, chain, accountOrAddress extends Address ? JsonRpcAccount<accountOrAddress> : accountOrAddress>;
 export declare namespace createTempoClient {
     type Parameters<transport extends Transport = Transport, chain extends Chain | undefined = Chain | undefined, accountOrAddress extends Account | Address | undefined = Account | Address | undefined, rpcSchema extends RpcSchema | undefined = undefined> = PartialBy<ClientConfig<transport, chain, accountOrAddress, rpcSchema>, 'transport'>;
-    type ReturnType<transport extends Transport = Transport, chain extends Chain | undefined = Chain | undefined, accountOrAddress extends Account | undefined = undefined> = Client<transport, chain, accountOrAddress>;
+    type ReturnValue<transport extends Transport = Transport, chain extends Chain | undefined = Chain | undefined, accountOrAddress extends Account | undefined = undefined> = Client<transport, chain, accountOrAddress>;
 }
 //# sourceMappingURL=client.d.ts.map

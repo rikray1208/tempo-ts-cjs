@@ -1,5 +1,6 @@
+import { parseEventLogs, } from 'viem';
 import { parseAccount } from 'viem/accounts';
-import { readContract, watchContractEvent, writeContract } from 'viem/actions';
+import { readContract, watchContractEvent, writeContract, writeContractSync, } from 'viem/actions';
 import * as TokenId from "../../ox/TokenId.js";
 import { feeManagerAbi } from "../abis.js";
 import { feeManagerAddress } from "../addresses.js";
@@ -85,13 +86,18 @@ export async function getUserToken(client, ...parameters) {
  * @returns The transaction hash.
  */
 export async function setUserToken(client, parameters) {
-    const call = setUserToken.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return setUserToken.inner(writeContract, client, parameters);
 }
 (function (setUserToken) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = setUserToken.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    setUserToken.inner = inner;
     /**
      * Defines a call to the `setUserToken` function.
      *
@@ -136,7 +142,52 @@ export async function setUserToken(client, parameters) {
         });
     }
     setUserToken.call = call;
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: feeManagerAbi,
+            logs,
+            eventName: 'UserTokenSet',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`UserTokenSet` event not found.');
+        return log;
+    }
+    setUserToken.extractEvent = extractEvent;
 })(setUserToken || (setUserToken = {}));
+/**
+ * Sets the user's default fee token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.fee.setUserTokenSync(client, {
+ *   token: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setUserTokenSync(client, parameters) {
+    const receipt = await setUserToken.inner(writeContractSync, client, parameters);
+    const { args } = setUserToken.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Watches for user token set events.
  *

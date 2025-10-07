@@ -1,5 +1,6 @@
+import { parseEventLogs, } from 'viem';
 import { parseAccount } from 'viem/accounts';
-import { readContract, simulateContract, watchContractEvent, writeContract, } from 'viem/actions';
+import { readContract, watchContractEvent, writeContract, writeContractSync, } from 'viem/actions';
 import { tip403RegistryAbi } from "../abis.js";
 import { tip403RegistryAddress } from "../addresses.js";
 import { defineCall } from "../utils.js";
@@ -34,21 +35,24 @@ const policyTypeMap = {
  * @returns The transaction hash and policy ID.
  */
 export async function create(client, parameters) {
-    const { account = client.account, addresses, chain = client.chain, type, ...rest } = parameters;
-    if (!account)
-        throw new Error('`account` is required');
-    const admin = parseAccount(account).address;
-    const call = create.call({ admin, type, addresses });
-    const { request, result } = await simulateContract(client, {
-        ...rest,
-        account,
-        chain,
-        ...call,
-    });
-    const hash = await writeContract(client, request);
-    return { hash, policyId: result };
+    return create.inner(writeContract, client, parameters);
 }
 (function (create) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const { account = client.account, addresses, chain = client.chain, type, ...rest } = parameters;
+        if (!account)
+            throw new Error('`account` is required');
+        const admin = parseAccount(account).address;
+        const call = create.call({ admin, type, addresses });
+        return action(client, {
+            ...rest,
+            account,
+            chain,
+            ...call,
+        });
+    }
+    create.inner = inner;
     /**
      * Defines a call to the `createPolicy` function.
      *
@@ -99,7 +103,59 @@ export async function create(client, parameters) {
         });
     }
     create.call = call;
+    /**
+     * Extracts the `PolicyCreated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `PolicyCreated` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip403RegistryAbi,
+            logs,
+            eventName: 'PolicyCreated',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`PolicyCreated` event not found.');
+        return log;
+    }
+    create.extractEvent = extractEvent;
 })(create || (create = {}));
+/**
+ * Creates a new policy.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.createSync(client, {
+ *   admin: '0x...',
+ *   type: 'whitelist',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function createSync(client, parameters) {
+    const receipt = await create.inner(writeContractSync, client, parameters);
+    const { args } = create.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Sets the admin for a policy.
  *
@@ -127,13 +183,18 @@ export async function create(client, parameters) {
  * @returns The transaction hash.
  */
 export async function setAdmin(client, parameters) {
-    const call = setAdmin.call(parameters);
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return setAdmin.inner(writeContract, client, parameters);
 }
 (function (setAdmin) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const call = setAdmin.call(parameters);
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    setAdmin.inner = inner;
     /**
      * Defines a call to the `setPolicyAdmin` function.
      *
@@ -180,7 +241,59 @@ export async function setAdmin(client, parameters) {
         });
     }
     setAdmin.call = call;
+    /**
+     * Extracts the `PolicyAdminUpdated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `PolicyAdminUpdated` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip403RegistryAbi,
+            logs,
+            eventName: 'PolicyAdminUpdated',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`PolicyAdminUpdated` event not found.');
+        return log;
+    }
+    setAdmin.extractEvent = extractEvent;
 })(setAdmin || (setAdmin = {}));
+/**
+ * Sets the admin for a policy.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.setAdminSync(client, {
+ *   policyId: 2n,
+ *   admin: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function setAdminSync(client, parameters) {
+    const receipt = await setAdmin.inner(writeContractSync, client, parameters);
+    const { args } = setAdmin.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Modifies a policy whitelist.
  *
@@ -209,14 +322,19 @@ export async function setAdmin(client, parameters) {
  * @returns The transaction hash.
  */
 export async function modifyWhitelist(client, parameters) {
-    const { address: targetAccount, ...rest } = parameters;
-    const call = modifyWhitelist.call({ ...rest, address: targetAccount });
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return modifyWhitelist.inner(writeContract, client, parameters);
 }
 (function (modifyWhitelist) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const { address: targetAccount, ...rest } = parameters;
+        const call = modifyWhitelist.call({ ...rest, address: targetAccount });
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    modifyWhitelist.inner = inner;
     /**
      * Defines a call to the `modifyPolicyWhitelist` function.
      *
@@ -265,7 +383,60 @@ export async function modifyWhitelist(client, parameters) {
         });
     }
     modifyWhitelist.call = call;
+    /**
+     * Extracts the `WhitelistUpdated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `WhitelistUpdated` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip403RegistryAbi,
+            logs,
+            eventName: 'WhitelistUpdated',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`WhitelistUpdated` event not found.');
+        return log;
+    }
+    modifyWhitelist.extractEvent = extractEvent;
 })(modifyWhitelist || (modifyWhitelist = {}));
+/**
+ * Modifies a policy whitelist.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.modifyWhitelistSync(client, {
+ *   policyId: 2n,
+ *   account: '0x...',
+ *   allowed: true,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function modifyWhitelistSync(client, parameters) {
+    const receipt = await modifyWhitelist.inner(writeContractSync, client, parameters);
+    const { args } = modifyWhitelist.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Modifies a policy blacklist.
  *
@@ -294,14 +465,19 @@ export async function modifyWhitelist(client, parameters) {
  * @returns The transaction hash.
  */
 export async function modifyBlacklist(client, parameters) {
-    const { address: targetAccount, ...rest } = parameters;
-    const call = modifyBlacklist.call({ ...rest, address: targetAccount });
-    return writeContract(client, {
-        ...parameters,
-        ...call,
-    });
+    return modifyBlacklist.inner(writeContract, client, parameters);
 }
 (function (modifyBlacklist) {
+    /** @internal */
+    async function inner(action, client, parameters) {
+        const { address: targetAccount, ...rest } = parameters;
+        const call = modifyBlacklist.call({ ...rest, address: targetAccount });
+        return (await action(client, {
+            ...parameters,
+            ...call,
+        }));
+    }
+    modifyBlacklist.inner = inner;
     /**
      * Defines a call to the `modifyPolicyBlacklist` function.
      *
@@ -350,7 +526,60 @@ export async function modifyBlacklist(client, parameters) {
         });
     }
     modifyBlacklist.call = call;
+    /**
+     * Extracts the `BlacklistUpdated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `BlacklistUpdated` event.
+     */
+    function extractEvent(logs) {
+        const [log] = parseEventLogs({
+            abi: tip403RegistryAbi,
+            logs,
+            eventName: 'BlacklistUpdated',
+            strict: true,
+        });
+        if (!log)
+            throw new Error('`BlacklistUpdated` event not found.');
+        return log;
+    }
+    modifyBlacklist.extractEvent = extractEvent;
 })(modifyBlacklist || (modifyBlacklist = {}));
+/**
+ * Modifies a policy blacklist.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.modifyBlacklistSync(client, {
+ *   policyId: 2n,
+ *   account: '0x...',
+ *   restricted: true,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export async function modifyBlacklistSync(client, parameters) {
+    const receipt = await modifyBlacklist.inner(writeContractSync, client, parameters);
+    const { args } = modifyBlacklist.extractEvent(receipt.logs);
+    return {
+        ...args,
+        receipt,
+    };
+}
 /**
  * Gets policy data.
  *

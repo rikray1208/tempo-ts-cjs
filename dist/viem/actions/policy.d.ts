@@ -1,4 +1,5 @@
-import type { Account, Address, Chain, Client, ExtractAbiItem, GetEventArgs, ReadContractReturnType, Transport, Log as viem_Log, WatchContractEventParameters, WriteContractReturnType } from 'viem';
+import { type Account, type Address, type Chain, type Client, type ExtractAbiItem, type GetEventArgs, type Log, type ReadContractReturnType, type TransactionReceipt, type Transport, type Log as viem_Log, type WatchContractEventParameters, type WriteContractReturnType } from 'viem';
+import { writeContract, writeContractSync } from 'viem/actions';
 import type { Compute, UnionOmit } from "../../internal/types.js";
 import { tip403RegistryAbi } from "../abis.js";
 import type { ReadParameters, WriteParameters } from "../types.js";
@@ -29,7 +30,7 @@ export type PolicyType = 'whitelist' | 'blacklist';
  * @param parameters - Parameters.
  * @returns The transaction hash and policy ID.
  */
-export declare function create<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: create.Parameters<chain, account>): Promise<create.ReturnType>;
+export declare function create<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: create.Parameters<chain, account>): Promise<create.ReturnValue>;
 export declare namespace create {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Omit<Args, 'admin'> & {
         /** Address of the policy admin. */
@@ -43,10 +44,9 @@ export declare namespace create {
         /** Type of policy to create. */
         type: PolicyType;
     };
-    type ReturnType = Compute<{
-        hash: WriteContractReturnType;
-        policyId: bigint;
-    }>;
+    type ReturnValue = WriteContractReturnType;
+    /** @internal */
+    function inner<action extends typeof writeContract | typeof writeContractSync, chain extends Chain | undefined, account extends Account | undefined>(action: action, client: Client<Transport, chain, account>, parameters: Parameters<chain, account>): Promise<ReturnType<action>>;
     /**
      * Defines a call to the `createPolicy` function.
      *
@@ -136,6 +136,292 @@ export declare namespace create {
         data: import("viem").Hex;
         to: Address;
     };
+    /**
+     * Extracts the `PolicyCreated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `PolicyCreated` event.
+     */
+    function extractEvent(logs: Log[]): Log<bigint, number, false, undefined, true, readonly [{
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "accounts";
+            readonly type: "address[]";
+            readonly internalType: "address[]";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "isAuthorized";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "user";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyBlacklist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyWhitelist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "policyData";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "policyIdCounter";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "setPolicyAdmin";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "event";
+        readonly name: "BlacklistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyAdminUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyCreated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly indexed: false;
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "WhitelistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "error";
+        readonly name: "ArrayLengthMismatch";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "IncompatiblePolicyType";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "PolicyDoesNotExist";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "Unauthorized";
+        readonly inputs: readonly [];
+    }], "PolicyCreated">;
+}
+/**
+ * Creates a new policy.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.createSync(client, {
+ *   admin: '0x...',
+ *   type: 'whitelist',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export declare function createSync<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: createSync.Parameters<chain, account>): Promise<createSync.ReturnValue>;
+export declare namespace createSync {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = create.Parameters<chain, account>;
+    type Args = create.Args;
+    type ReturnValue = Compute<GetEventArgs<typeof tip403RegistryAbi, 'PolicyCreated', {
+        IndexedOnly: false;
+        Required: true;
+    }> & {
+        receipt: TransactionReceipt;
+    }>;
 }
 /**
  * Sets the admin for a policy.
@@ -163,7 +449,7 @@ export declare namespace create {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function setAdmin<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: setAdmin.Parameters<chain, account>): Promise<setAdmin.ReturnType>;
+export declare function setAdmin<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: setAdmin.Parameters<chain, account>): Promise<setAdmin.ReturnValue>;
 export declare namespace setAdmin {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
@@ -172,7 +458,9 @@ export declare namespace setAdmin {
         /** Policy ID. */
         policyId: bigint;
     };
-    type ReturnType = WriteContractReturnType;
+    type ReturnValue = WriteContractReturnType;
+    /** @internal */
+    function inner<action extends typeof writeContract | typeof writeContractSync, chain extends Chain | undefined, account extends Account | undefined>(action: action, client: Client<Transport, chain, account>, parameters: setAdmin.Parameters<chain, account>): Promise<ReturnType<action>>;
     /**
      * Defines a call to the `setPolicyAdmin` function.
      *
@@ -235,6 +523,292 @@ export declare namespace setAdmin {
         data: import("viem").Hex;
         to: Address;
     };
+    /**
+     * Extracts the `PolicyAdminUpdated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `PolicyAdminUpdated` event.
+     */
+    function extractEvent(logs: Log[]): Log<bigint, number, false, undefined, true, readonly [{
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "accounts";
+            readonly type: "address[]";
+            readonly internalType: "address[]";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "isAuthorized";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "user";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyBlacklist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyWhitelist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "policyData";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "policyIdCounter";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "setPolicyAdmin";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "event";
+        readonly name: "BlacklistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyAdminUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyCreated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly indexed: false;
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "WhitelistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "error";
+        readonly name: "ArrayLengthMismatch";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "IncompatiblePolicyType";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "PolicyDoesNotExist";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "Unauthorized";
+        readonly inputs: readonly [];
+    }], "PolicyAdminUpdated">;
+}
+/**
+ * Sets the admin for a policy.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.setAdminSync(client, {
+ *   policyId: 2n,
+ *   admin: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export declare function setAdminSync<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: setAdminSync.Parameters<chain, account>): Promise<setAdminSync.ReturnValue>;
+export declare namespace setAdminSync {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = setAdmin.Parameters<chain, account>;
+    type Args = setAdmin.Args;
+    type ReturnValue = Compute<GetEventArgs<typeof tip403RegistryAbi, 'PolicyAdminUpdated', {
+        IndexedOnly: false;
+        Required: true;
+    }> & {
+        receipt: TransactionReceipt;
+    }>;
 }
 /**
  * Modifies a policy whitelist.
@@ -263,7 +837,7 @@ export declare namespace setAdmin {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function modifyWhitelist<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: modifyWhitelist.Parameters<chain, account>): Promise<modifyWhitelist.ReturnType>;
+export declare function modifyWhitelist<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: modifyWhitelist.Parameters<chain, account>): Promise<modifyWhitelist.ReturnValue>;
 export declare namespace modifyWhitelist {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
@@ -274,7 +848,9 @@ export declare namespace modifyWhitelist {
         /** Policy ID. */
         policyId: bigint;
     };
-    type ReturnType = WriteContractReturnType;
+    type ReturnValue = WriteContractReturnType;
+    /** @internal */
+    function inner<action extends typeof writeContract | typeof writeContractSync, chain extends Chain | undefined, account extends Account | undefined>(action: action, client: Client<Transport, chain, account>, parameters: modifyWhitelist.Parameters<chain, account>): Promise<ReturnType<action>>;
     /**
      * Defines a call to the `modifyPolicyWhitelist` function.
      *
@@ -343,6 +919,293 @@ export declare namespace modifyWhitelist {
         data: import("viem").Hex;
         to: Address;
     };
+    /**
+     * Extracts the `WhitelistUpdated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `WhitelistUpdated` event.
+     */
+    function extractEvent(logs: Log[]): Log<bigint, number, false, undefined, true, readonly [{
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "accounts";
+            readonly type: "address[]";
+            readonly internalType: "address[]";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "isAuthorized";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "user";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyBlacklist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyWhitelist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "policyData";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "policyIdCounter";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "setPolicyAdmin";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "event";
+        readonly name: "BlacklistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyAdminUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyCreated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly indexed: false;
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "WhitelistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "error";
+        readonly name: "ArrayLengthMismatch";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "IncompatiblePolicyType";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "PolicyDoesNotExist";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "Unauthorized";
+        readonly inputs: readonly [];
+    }], "WhitelistUpdated">;
+}
+/**
+ * Modifies a policy whitelist.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.modifyWhitelistSync(client, {
+ *   policyId: 2n,
+ *   account: '0x...',
+ *   allowed: true,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export declare function modifyWhitelistSync<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: modifyWhitelistSync.Parameters<chain, account>): Promise<modifyWhitelistSync.ReturnValue>;
+export declare namespace modifyWhitelistSync {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = modifyWhitelist.Parameters<chain, account>;
+    type Args = modifyWhitelist.Args;
+    type ReturnValue = Compute<GetEventArgs<typeof tip403RegistryAbi, 'WhitelistUpdated', {
+        IndexedOnly: false;
+        Required: true;
+    }> & {
+        receipt: TransactionReceipt;
+    }>;
 }
 /**
  * Modifies a policy blacklist.
@@ -371,7 +1234,7 @@ export declare namespace modifyWhitelist {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function modifyBlacklist<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: modifyBlacklist.Parameters<chain, account>): Promise<modifyBlacklist.ReturnType>;
+export declare function modifyBlacklist<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: modifyBlacklist.Parameters<chain, account>): Promise<modifyBlacklist.ReturnValue>;
 export declare namespace modifyBlacklist {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
@@ -382,7 +1245,9 @@ export declare namespace modifyBlacklist {
         /** Whether the account is restricted. */
         restricted: boolean;
     };
-    type ReturnType = WriteContractReturnType;
+    type ReturnValue = WriteContractReturnType;
+    /** @internal */
+    function inner<action extends typeof writeContract | typeof writeContractSync, chain extends Chain | undefined, account extends Account | undefined>(action: action, client: Client<Transport, chain, account>, parameters: modifyBlacklist.Parameters<chain, account>): Promise<ReturnType<action>>;
     /**
      * Defines a call to the `modifyPolicyBlacklist` function.
      *
@@ -451,6 +1316,293 @@ export declare namespace modifyBlacklist {
         data: import("viem").Hex;
         to: Address;
     };
+    /**
+     * Extracts the `BlacklistUpdated` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `BlacklistUpdated` event.
+     */
+    function extractEvent(logs: Log[]): Log<bigint, number, false, undefined, true, readonly [{
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "accounts";
+            readonly type: "address[]";
+            readonly internalType: "address[]";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "createPolicy";
+        readonly inputs: readonly [{
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "newPolicyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "isAuthorized";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "user";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyBlacklist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "modifyPolicyWhitelist";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly internalType: "bool";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "policyData";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "policyIdCounter";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "setPolicyAdmin";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "event";
+        readonly name: "BlacklistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "restricted";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyAdminUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "admin";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "PolicyCreated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "policyType";
+            readonly type: "uint8";
+            readonly indexed: false;
+            readonly internalType: "enum TIP403Registry.PolicyType";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "WhitelistUpdated";
+        readonly inputs: readonly [{
+            readonly name: "policyId";
+            readonly type: "uint64";
+            readonly indexed: true;
+            readonly internalType: "uint64";
+        }, {
+            readonly name: "updater";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "account";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "allowed";
+            readonly type: "bool";
+            readonly indexed: false;
+            readonly internalType: "bool";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "error";
+        readonly name: "ArrayLengthMismatch";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "IncompatiblePolicyType";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "PolicyDoesNotExist";
+        readonly inputs: readonly [];
+    }, {
+        readonly type: "error";
+        readonly name: "Unauthorized";
+        readonly inputs: readonly [];
+    }], "BlacklistUpdated">;
+}
+/**
+ * Modifies a policy blacklist.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.policy.modifyBlacklistSync(client, {
+ *   policyId: 2n,
+ *   account: '0x...',
+ *   restricted: true,
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export declare function modifyBlacklistSync<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: modifyBlacklistSync.Parameters<chain, account>): Promise<modifyBlacklistSync.ReturnValue>;
+export declare namespace modifyBlacklistSync {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = modifyBlacklist.Parameters<chain, account>;
+    type Args = modifyBlacklist.Args;
+    type ReturnValue = Compute<GetEventArgs<typeof tip403RegistryAbi, 'BlacklistUpdated', {
+        IndexedOnly: false;
+        Required: true;
+    }> & {
+        receipt: TransactionReceipt;
+    }>;
 }
 /**
  * Gets policy data.
@@ -475,14 +1627,14 @@ export declare namespace modifyBlacklist {
  * @param parameters - Parameters.
  * @returns The policy data.
  */
-export declare function getData<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getData.Parameters): Promise<getData.ReturnType>;
+export declare function getData<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getData.Parameters): Promise<getData.ReturnValue>;
 export declare namespace getData {
     type Parameters = ReadParameters & Args;
     type Args = {
         /** Policy ID. */
         policyId: bigint;
     };
-    type ReturnType = Compute<{
+    type ReturnValue = Compute<{
         /** Admin address. */
         admin: Address;
         /** Policy type. */
@@ -549,7 +1701,7 @@ export declare namespace getData {
  * @param parameters - Parameters.
  * @returns Whether the user is authorized.
  */
-export declare function isAuthorized<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: isAuthorized.Parameters): Promise<isAuthorized.ReturnType>;
+export declare function isAuthorized<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: isAuthorized.Parameters): Promise<isAuthorized.ReturnValue>;
 export declare namespace isAuthorized {
     type Parameters = ReadParameters & Args;
     type Args = {
@@ -558,7 +1710,7 @@ export declare namespace isAuthorized {
         /** User address to check. */
         user: Address;
     };
-    type ReturnType = ReadContractReturnType<typeof tip403RegistryAbi, 'isAuthorized', never>;
+    type ReturnValue = ReadContractReturnType<typeof tip403RegistryAbi, 'isAuthorized', never>;
     /**
      * Defines a call to the `isAuthorized` function.
      *

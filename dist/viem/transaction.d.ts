@@ -42,9 +42,9 @@ export type TransactionSerialized<type extends TransactionType = TransactionType
 export type TransactionSerializedFeeToken = `0x77${string}`;
 export type TransactionType = viem_TransactionType | 'feeToken';
 export declare function isTempoTransaction(transaction: Record<string, unknown>): boolean;
-export declare function parseTransaction<const serialized extends TransactionSerializedGeneric>(serializedTransaction: serialized): parseTransaction.ReturnType<serialized>;
+export declare function parseTransaction<const serialized extends TransactionSerializedGeneric>(serializedTransaction: serialized): parseTransaction.ReturnValue<serialized>;
 export declare namespace parseTransaction {
-    type ReturnType<serialized extends TransactionSerializedGeneric = TransactionSerializedGeneric> = serialized extends TransactionSerializedFeeToken ? TransactionSerializableFeeToken : ParseTransactionReturnType<serialized>;
+    type ReturnValue<serialized extends TransactionSerializedGeneric = TransactionSerializedGeneric> = serialized extends TransactionSerializedFeeToken ? TransactionSerializableFeeToken : ParseTransactionReturnType<serialized>;
 }
 export declare function serializeTransaction(transaction: TransactionSerializable & {
     calls?: readonly Calls.Call[] | undefined;

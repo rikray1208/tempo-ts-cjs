@@ -1,4 +1,5 @@
-import type { Account, Address, Chain, Client, ExtractAbiItem, GetEventArgs, Hex, ReadContractReturnType, Transport, Log as viem_Log, WatchContractEventParameters, WriteContractReturnType } from 'viem';
+import { type Account, type Address, type Chain, type Client, type ExtractAbiItem, type GetEventArgs, type Hex, type Log, type ReadContractReturnType, type TransactionReceipt, type Transport, type Log as viem_Log, type WatchContractEventParameters, type WriteContractReturnType } from 'viem';
+import { writeContract, writeContractSync } from 'viem/actions';
 import type { Compute, UnionOmit } from "../../internal/types.js";
 import * as TokenId from "../../ox/TokenId.js";
 import { feeAmmAbi } from "../abis.js";
@@ -27,7 +28,7 @@ import type { ReadParameters, WriteParameters } from "../types.js";
  * @param parameters - Parameters.
  * @returns The pool ID.
  */
-export declare function getPoolId<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getPoolId.Parameters): Promise<getPoolId.ReturnType>;
+export declare function getPoolId<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getPoolId.Parameters): Promise<getPoolId.ReturnValue>;
 export declare namespace getPoolId {
     type Parameters = ReadParameters & Args;
     type Args = {
@@ -36,7 +37,7 @@ export declare namespace getPoolId {
         /** Address or ID of the validator token. */
         validatorToken: TokenId.TokenIdOrAddress;
     };
-    type ReturnType = ReadContractReturnType<typeof feeAmmAbi, 'getPoolId', never>;
+    type ReturnValue = ReadContractReturnType<typeof feeAmmAbi, 'getPoolId', never>;
     /**
      * Defines a call to the `getPoolId` function.
      *
@@ -98,7 +99,7 @@ export declare namespace getPoolId {
  * @param parameters - Parameters.
  * @returns The pool reserves.
  */
-export declare function getPool<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getPool.Parameters): Promise<getPool.ReturnType>;
+export declare function getPool<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getPool.Parameters): Promise<getPool.ReturnValue>;
 export declare namespace getPool {
     type Parameters = ReadParameters & Args;
     type Args = {
@@ -107,7 +108,7 @@ export declare namespace getPool {
         /** Address or ID of the validator token. */
         validatorToken: TokenId.TokenIdOrAddress;
     };
-    type ReturnType = Compute<{
+    type ReturnValue = Compute<{
         /** Reserve of user token. */
         reserveUserToken: bigint;
         /** Reserve of validator token. */
@@ -185,14 +186,14 @@ export declare namespace getPool {
  * @param parameters - Parameters.
  * @returns The total supply of LP tokens.
  */
-export declare function getTotalSupply<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getTotalSupply.Parameters): Promise<getTotalSupply.ReturnType>;
+export declare function getTotalSupply<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getTotalSupply.Parameters): Promise<getTotalSupply.ReturnValue>;
 export declare namespace getTotalSupply {
     type Parameters = ReadParameters & Args;
     type Args = {
         /** Pool ID. */
         poolId: Hex;
     };
-    type ReturnType = ReadContractReturnType<typeof feeAmmAbi, 'totalSupply', never>;
+    type ReturnValue = ReadContractReturnType<typeof feeAmmAbi, 'totalSupply', never>;
     /**
      * Defines a call to the `totalSupply` function.
      *
@@ -255,7 +256,7 @@ export declare namespace getTotalSupply {
  * @param parameters - Parameters.
  * @returns The LP token balance.
  */
-export declare function getLiquidityBalance<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getLiquidityBalance.Parameters): Promise<getLiquidityBalance.ReturnType>;
+export declare function getLiquidityBalance<chain extends Chain | undefined>(client: Client<Transport, chain>, parameters: getLiquidityBalance.Parameters): Promise<getLiquidityBalance.ReturnValue>;
 export declare namespace getLiquidityBalance {
     type Parameters = ReadParameters & Args;
     type Args = {
@@ -264,7 +265,7 @@ export declare namespace getLiquidityBalance {
         /** Pool ID. */
         poolId: Hex;
     };
-    type ReturnType = ReadContractReturnType<typeof feeAmmAbi, 'liquidityBalances', never>;
+    type ReturnValue = ReadContractReturnType<typeof feeAmmAbi, 'liquidityBalances', never>;
     /**
      * Defines a call to the `liquidityBalances` function.
      *
@@ -330,7 +331,7 @@ export declare namespace getLiquidityBalance {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function rebalanceSwap<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: rebalanceSwap.Parameters<chain, account>): Promise<rebalanceSwap.ReturnType>;
+export declare function rebalanceSwap<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: rebalanceSwap.Parameters<chain, account>): Promise<rebalanceSwap.ReturnValue>;
 export declare namespace rebalanceSwap {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
@@ -343,7 +344,9 @@ export declare namespace rebalanceSwap {
         /** Address or ID of the validator token. */
         validatorToken: TokenId.TokenIdOrAddress;
     };
-    type ReturnType = WriteContractReturnType;
+    type ReturnValue = WriteContractReturnType;
+    /** @internal */
+    function inner<action extends typeof writeContract | typeof writeContractSync, chain extends Chain | undefined, account extends Account | undefined>(action: action, client: Client<Transport, chain, account>, parameters: rebalanceSwap.Parameters<chain, account>): Promise<ReturnType<action>>;
     /**
      * Defines a call to the `rebalanceSwap` function.
      *
@@ -422,6 +425,408 @@ export declare namespace rebalanceSwap {
         data: Hex;
         to: Address;
     };
+    /**
+     * Extracts the `RebalanceSwap` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `RebalanceSwap` event.
+     */
+    function extractEvent(logs: Log[]): Log<bigint, number, false, undefined, true, readonly [{
+        readonly type: "constructor";
+        readonly inputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "M";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "MIN_LIQUIDITY";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "N";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "SCALE";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "burn";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "getPool";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "tuple";
+            readonly internalType: "struct FeeAMM.Pool";
+            readonly components: readonly [{
+                readonly name: "reserveUserToken";
+                readonly type: "uint128";
+                readonly internalType: "uint128";
+            }, {
+                readonly name: "reserveValidatorToken";
+                readonly type: "uint128";
+                readonly internalType: "uint128";
+            }];
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "getPoolId";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly stateMutability: "pure";
+    }, {
+        readonly type: "function";
+        readonly name: "liquidityBalances";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }, {
+            readonly name: "";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "mint";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "pools";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "reserveUserToken";
+            readonly type: "uint128";
+            readonly internalType: "uint128";
+        }, {
+            readonly name: "reserveValidatorToken";
+            readonly type: "uint128";
+            readonly internalType: "uint128";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "rebalanceSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "totalSupply";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "event";
+        readonly name: "Burn";
+        readonly inputs: readonly [{
+            readonly name: "sender";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly indexed: false;
+            readonly internalType: "address";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "FeeSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "Mint";
+        readonly inputs: readonly [{
+            readonly name: "sender";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "RebalanceSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "swapper";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }], "RebalanceSwap">;
+}
+/**
+ * Performs a rebalance swap from validator token to user token.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.amm.rebalanceSwapSync(client, {
+ *   userToken: '0x...',
+ *   validatorToken: '0x...',
+ *   amountOut: 100n,
+ *   to: '0x...',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export declare function rebalanceSwapSync<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: rebalanceSwapSync.Parameters<chain, account>): Promise<rebalanceSwapSync.ReturnValue>;
+export declare namespace rebalanceSwapSync {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = rebalanceSwap.Parameters<chain, account>;
+    type Args = rebalanceSwap.Args;
+    type ReturnValue = Compute<GetEventArgs<typeof feeAmmAbi, 'RebalanceSwap', {
+        IndexedOnly: false;
+        Required: true;
+    }> & {
+        /** Transaction receipt. */
+        receipt: TransactionReceipt;
+    }>;
 }
 /**
  * Adds liquidity to a pool.
@@ -456,7 +861,7 @@ export declare namespace rebalanceSwap {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function mint<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: mint.Parameters<chain, account>): Promise<mint.ReturnType>;
+export declare function mint<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: mint.Parameters<chain, account>): Promise<mint.ReturnValue>;
 export declare namespace mint {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
@@ -477,7 +882,9 @@ export declare namespace mint {
             amount: bigint;
         };
     };
-    type ReturnType = WriteContractReturnType;
+    type ReturnValue = WriteContractReturnType;
+    /** @internal */
+    function inner<action extends typeof writeContract | typeof writeContractSync, chain extends Chain | undefined, account extends Account | undefined>(action: action, client: Client<Transport, chain, account>, parameters: mint.Parameters<chain, account>): Promise<ReturnType<action>>;
     /**
      * Defines a call to the `mint` function.
      *
@@ -570,6 +977,413 @@ export declare namespace mint {
         data: Hex;
         to: Address;
     };
+    /**
+     * Extracts the `Mint` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `Mint` event.
+     */
+    function extractEvent(logs: Log[]): Log<bigint, number, false, undefined, true, readonly [{
+        readonly type: "constructor";
+        readonly inputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "M";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "MIN_LIQUIDITY";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "N";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "SCALE";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "burn";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "getPool";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "tuple";
+            readonly internalType: "struct FeeAMM.Pool";
+            readonly components: readonly [{
+                readonly name: "reserveUserToken";
+                readonly type: "uint128";
+                readonly internalType: "uint128";
+            }, {
+                readonly name: "reserveValidatorToken";
+                readonly type: "uint128";
+                readonly internalType: "uint128";
+            }];
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "getPoolId";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly stateMutability: "pure";
+    }, {
+        readonly type: "function";
+        readonly name: "liquidityBalances";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }, {
+            readonly name: "";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "mint";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "pools";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "reserveUserToken";
+            readonly type: "uint128";
+            readonly internalType: "uint128";
+        }, {
+            readonly name: "reserveValidatorToken";
+            readonly type: "uint128";
+            readonly internalType: "uint128";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "rebalanceSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "totalSupply";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "event";
+        readonly name: "Burn";
+        readonly inputs: readonly [{
+            readonly name: "sender";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly indexed: false;
+            readonly internalType: "address";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "FeeSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "Mint";
+        readonly inputs: readonly [{
+            readonly name: "sender";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "RebalanceSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "swapper";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }], "Mint">;
+}
+/**
+ * Adds liquidity to a pool.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const hash = await actions.amm.mint(client, {
+ *   userToken: {
+ *     address: '0x20c0...beef',
+ *     amount: 100n,
+ *   },
+ *   validatorToken: {
+ *     address: '0x20c0...babe',
+ *     amount: 100n,
+ *   },
+ *   to: '0xfeed...fede',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export declare function mintSync<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: mintSync.Parameters<chain, account>): Promise<mintSync.ReturnValue>;
+export declare namespace mintSync {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = mint.Parameters<chain, account>;
+    type Args = mint.Args;
+    type ReturnValue = Compute<GetEventArgs<typeof feeAmmAbi, 'Mint', {
+        IndexedOnly: false;
+        Required: true;
+    }> & {
+        /** Transaction receipt. */
+        receipt: TransactionReceipt;
+    }>;
 }
 /**
  * Removes liquidity from a pool.
@@ -599,7 +1413,7 @@ export declare namespace mint {
  * @param parameters - Parameters.
  * @returns The transaction hash.
  */
-export declare function burn<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: burn.Parameters<chain, account>): Promise<burn.ReturnType>;
+export declare function burn<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: burn.Parameters<chain, account>): Promise<burn.ReturnValue>;
 export declare namespace burn {
     type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = WriteParameters<chain, account> & Args;
     type Args = {
@@ -612,7 +1426,9 @@ export declare namespace burn {
         /** Address or ID of the validator token. */
         validatorToken: TokenId.TokenIdOrAddress;
     };
-    type ReturnType = WriteContractReturnType;
+    type ReturnValue = WriteContractReturnType;
+    /** @internal */
+    function inner<action extends typeof writeContract | typeof writeContractSync, chain extends Chain | undefined, account extends Account | undefined>(action: action, client: Client<Transport, chain, account>, parameters: burn.Parameters<chain, account>): Promise<ReturnType<action>>;
     /**
      * Defines a call to the `burn` function.
      *
@@ -695,6 +1511,408 @@ export declare namespace burn {
         data: Hex;
         to: Address;
     };
+    /**
+     * Extracts the `Burn` event from logs.
+     *
+     * @param logs - The logs.
+     * @returns The `Burn` event.
+     */
+    function extractEvent(logs: Log[]): Log<bigint, number, false, undefined, true, readonly [{
+        readonly type: "constructor";
+        readonly inputs: readonly [];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "M";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "MIN_LIQUIDITY";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "N";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "SCALE";
+        readonly inputs: readonly [];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "burn";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "getPool";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "tuple";
+            readonly internalType: "struct FeeAMM.Pool";
+            readonly components: readonly [{
+                readonly name: "reserveUserToken";
+                readonly type: "uint128";
+                readonly internalType: "uint128";
+            }, {
+                readonly name: "reserveValidatorToken";
+                readonly type: "uint128";
+                readonly internalType: "uint128";
+            }];
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "getPoolId";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly stateMutability: "pure";
+    }, {
+        readonly type: "function";
+        readonly name: "liquidityBalances";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }, {
+            readonly name: "";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "mint";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "pools";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "reserveUserToken";
+            readonly type: "uint128";
+            readonly internalType: "uint128";
+        }, {
+            readonly name: "reserveValidatorToken";
+            readonly type: "uint128";
+            readonly internalType: "uint128";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "function";
+        readonly name: "rebalanceSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly internalType: "address";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "nonpayable";
+    }, {
+        readonly type: "function";
+        readonly name: "totalSupply";
+        readonly inputs: readonly [{
+            readonly name: "";
+            readonly type: "bytes32";
+            readonly internalType: "bytes32";
+        }];
+        readonly outputs: readonly [{
+            readonly name: "";
+            readonly type: "uint256";
+            readonly internalType: "uint256";
+        }];
+        readonly stateMutability: "view";
+    }, {
+        readonly type: "event";
+        readonly name: "Burn";
+        readonly inputs: readonly [{
+            readonly name: "sender";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "to";
+            readonly type: "address";
+            readonly indexed: false;
+            readonly internalType: "address";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "FeeSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "Mint";
+        readonly inputs: readonly [{
+            readonly name: "sender";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountUserToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountValidatorToken";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "liquidity";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }, {
+        readonly type: "event";
+        readonly name: "RebalanceSwap";
+        readonly inputs: readonly [{
+            readonly name: "userToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "validatorToken";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "swapper";
+            readonly type: "address";
+            readonly indexed: true;
+            readonly internalType: "address";
+        }, {
+            readonly name: "amountIn";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }, {
+            readonly name: "amountOut";
+            readonly type: "uint256";
+            readonly indexed: false;
+            readonly internalType: "uint256";
+        }];
+        readonly anonymous: false;
+    }], "Burn">;
+}
+/**
+ * Removes liquidity from a pool.
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { tempo } from 'tempo/chains'
+ * import * as actions from 'tempo/viem/actions'
+ * import { privateKeyToAccount } from 'viem/accounts'
+ *
+ * const client = createClient({
+ *   account: privateKeyToAccount('0x...'),
+ *   chain: tempo,
+ *   transport: http(),
+ * })
+ *
+ * const result = await actions.amm.burnSync(client, {
+ *   userToken: '0x20c0...beef',
+ *   validatorToken: '0x20c0...babe',
+ *   liquidity: 50n,
+ *   to: '0xfeed...fede',
+ * })
+ * ```
+ *
+ * @param client - Client.
+ * @param parameters - Parameters.
+ * @returns The transaction receipt and event data.
+ */
+export declare function burnSync<chain extends Chain | undefined, account extends Account | undefined>(client: Client<Transport, chain, account>, parameters: burnSync.Parameters<chain, account>): Promise<burnSync.ReturnValue>;
+export declare namespace burnSync {
+    type Parameters<chain extends Chain | undefined = Chain | undefined, account extends Account | undefined = Account | undefined> = burn.Parameters<chain, account>;
+    type Args = burn.Args;
+    type ReturnValue = Compute<GetEventArgs<typeof feeAmmAbi, 'Burn', {
+        IndexedOnly: false;
+        Required: true;
+    }> & {
+        /** Transaction receipt. */
+        receipt: TransactionReceipt;
+    }>;
 }
 /**
  * Watches for rebalance swap events.
