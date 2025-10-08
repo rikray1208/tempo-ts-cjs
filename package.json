@@ -41,13 +41,6 @@
 			"optional": true
 		}
 	},
-	"devEngines": {
-		"runtime": {
-			"name": "bun",
-			"version": ">=1.2",
-			"onFail": "error"
-		}
-	},
 	"author": "jxom <j@wevm.dev>",
 	"license": "MIT",
 	"devDependencies": {
