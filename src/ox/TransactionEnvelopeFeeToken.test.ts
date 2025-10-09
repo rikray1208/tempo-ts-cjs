@@ -1,4 +1,3 @@
-import { setTimeout } from 'node:timers/promises'
 import { Authorization, Hex, Rlp, RpcTransport, Secp256k1, Value } from 'ox'
 import { TransactionEnvelopeFeeToken } from 'tempo.ts/ox'
 import { Instance } from 'tempo.ts/prool'
