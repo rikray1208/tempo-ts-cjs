@@ -146,7 +146,7 @@ describe('buy', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 
@@ -175,7 +175,7 @@ describe('buy', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 })
@@ -263,7 +263,7 @@ describe('cancel', () => {
         sender:    0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 
@@ -287,7 +287,7 @@ describe('cancel', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 })
@@ -440,7 +440,7 @@ describe('getBuyQuote', () => {
         args:                             (0x20C0000000000000000000000000000000000004, 0x20c0000000000000000000000000000000000005, 100000000000000000000)
 
       Docs: https://viem.sh/docs/contract/readContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 })
@@ -516,7 +516,7 @@ describe('getOrder', () => {
         args:              (999)
 
       Docs: https://viem.sh/docs/contract/readContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 
@@ -875,7 +875,7 @@ describe('getSellQuote', () => {
         args:                            (0x20c0000000000000000000000000000000000005, 0x20C0000000000000000000000000000000000004, 100000000000000000000)
 
       Docs: https://viem.sh/docs/contract/readContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 })
@@ -985,7 +985,7 @@ describe('place', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
 
     // Test tick below min tick should fail
@@ -1009,7 +1009,7 @@ describe('place', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 
@@ -1144,7 +1144,7 @@ describe('placeFlip', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
 
     await expect(
@@ -1167,7 +1167,7 @@ describe('placeFlip', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 
@@ -1205,7 +1205,7 @@ describe('placeFlip', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
 
     await expect(
@@ -1228,7 +1228,7 @@ describe('placeFlip', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 
@@ -1302,7 +1302,7 @@ describe('sell', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 
@@ -1331,7 +1331,7 @@ describe('sell', () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.38.2]
+      Version: viem@2.38.3]
     `)
   })
 })
