@@ -1,4 +1,4 @@
-// Generated with `bun run gen:abis`. Do not modify manually.
+// Generated with `pnpm gen:abis`. Do not modify manually.
 
 export const tip20 = [
   {
@@ -1178,4 +1178,5 @@ export const stablecoinExchange = [
   { name: 'MaxInputExceeded', type: 'error', inputs: [] },
   { name: 'InsufficientOutput', type: 'error', inputs: [] },
   { name: 'PairDoesNotExist', type: 'error', inputs: [] },
+  { name: 'PairAlreadyExists', type: 'error', inputs: [] },
 ] as const

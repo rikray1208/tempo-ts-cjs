@@ -19,10 +19,10 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Check code
-        run: bun check
+        run: pnpm check
 
       - name: Check types
-        run: bun check:types
+        run: pnpm check:types
 
   test:
     name: Test Runtime
@@ -49,13 +49,13 @@ jobs:
       - name: Install Tempo binary
         if: steps.cache-tempo.outputs.cache-hit != 'true'
         shell: bash
-        run: bun run test:install
+        run: pnpm test:install
 
       - name: Add Tempo binary to PATH
         shell: bash
         run: echo "$GITHUB_WORKSPACE/test/tempo/target/release" >> $GITHUB_PATH
 
       - name: Run tests
-        run: bun run test --bail=1
+        run: pnpm test --bail=1
         env:
           CI: true

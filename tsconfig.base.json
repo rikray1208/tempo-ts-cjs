@@ -6,7 +6,7 @@
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"target": "esnext",
-		"types": ["bun"],
+		"types": ["node"],
 
 		// Other Outputs
 		"sourceMap": true,
