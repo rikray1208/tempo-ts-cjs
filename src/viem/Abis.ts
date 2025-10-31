@@ -7,7 +7,7 @@ export const nonce = [
     stateMutability: 'view',
     inputs: [
       { type: 'address', name: 'account' },
-      { type: 'uint64', name: 'nonceKey' },
+      { type: 'uint256', name: 'nonceKey' },
     ],
     outputs: [{ type: 'uint64', name: 'nonce' }],
   },
@@ -23,7 +23,7 @@ export const nonce = [
     type: 'event',
     inputs: [
       { type: 'address', name: 'account', indexed: true },
-      { type: 'uint64', name: 'nonceKey', indexed: true },
+      { type: 'uint256', name: 'nonceKey', indexed: true },
       { type: 'uint64', name: 'newNonce' },
     ],
   },
@@ -37,6 +37,7 @@ export const nonce = [
   },
   { name: 'ProtocolNonceNotSupported', type: 'error', inputs: [] },
   { name: 'InvalidNonceKey', type: 'error', inputs: [] },
+  { name: 'NonceOverflow', type: 'error', inputs: [] },
 ] as const
 
 export const stablecoinExchange = [
@@ -296,16 +297,12 @@ export const stablecoinExchange = [
     type: 'error',
     inputs: [{ type: 'int16', name: 'tick' }],
   },
+  { name: 'InvalidTick', type: 'error', inputs: [] },
   { name: 'InvalidFlipTick', type: 'error', inputs: [] },
   { name: 'InsufficientBalance', type: 'error', inputs: [] },
   { name: 'InsufficientLiquidity', type: 'error', inputs: [] },
   { name: 'InsufficientOutput', type: 'error', inputs: [] },
   { name: 'MaxInputExceeded', type: 'error', inputs: [] },
-  {
-    name: 'Fatal',
-    type: 'error',
-    inputs: [{ type: 'string', name: 'message' }],
-  },
 ] as const
 
 export const tip20 = [
@@ -445,23 +442,6 @@ export const tip20 = [
     outputs: [{ type: 'uint64' }],
   },
   {
-    name: 'nonces',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [{ type: 'address', name: 'owner' }],
-    outputs: [{ type: 'uint256' }],
-  },
-  {
-    name: 'salts',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [
-      { type: 'address', name: 'owner' },
-      { type: 'bytes4', name: 'salt' },
-    ],
-    outputs: [{ type: 'bool' }],
-  },
-  {
     name: 'burnBlocked',
     type: 'function',
     stateMutability: 'nonpayable',
@@ -580,6 +560,62 @@ export const tip20 = [
     outputs: [{ type: 'bytes32' }],
   },
   {
+    name: 'startReward',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { type: 'uint256', name: 'amount' },
+      { type: 'uint128', name: 'seconds' },
+    ],
+    outputs: [{ type: 'uint64' }],
+  },
+  {
+    name: 'setRewardRecipient',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ type: 'address', name: 'recipient' }],
+    outputs: [],
+  },
+  {
+    name: 'cancelReward',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ type: 'uint64', name: 'id' }],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    name: 'finalizeStreams',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [],
+  },
+  {
+    name: 'getStream',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ type: 'uint64', name: 'id' }],
+    outputs: [
+      {
+        type: 'tuple',
+        components: [
+          { type: 'address', name: 'funder' },
+          { type: 'uint64', name: 'startTime' },
+          { type: 'uint64', name: 'endTime' },
+          { type: 'uint256', name: 'ratePerSecondScaled' },
+          { type: 'uint256', name: 'amountTotal' },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'totalRewardPerSecond',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
     name: 'Transfer',
     type: 'event',
     inputs: [
@@ -671,21 +707,49 @@ export const tip20 = [
       { type: 'address', name: 'newQuoteToken', indexed: true },
     ],
   },
+  {
+    name: 'RewardScheduled',
+    type: 'event',
+    inputs: [
+      { type: 'address', name: 'funder', indexed: true },
+      { type: 'uint64', name: 'id', indexed: true },
+      { type: 'uint256', name: 'amount' },
+      { type: 'uint32', name: 'durationSeconds' },
+    ],
+  },
+  {
+    name: 'RewardCanceled',
+    type: 'event',
+    inputs: [
+      { type: 'address', name: 'funder', indexed: true },
+      { type: 'uint64', name: 'id', indexed: true },
+      { type: 'uint256', name: 'refund' },
+    ],
+  },
+  {
+    name: 'RewardRecipientSet',
+    type: 'event',
+    inputs: [
+      { type: 'address', name: 'holder', indexed: true },
+      { type: 'address', name: 'recipient', indexed: true },
+    ],
+  },
   { name: 'InsufficientBalance', type: 'error', inputs: [] },
   { name: 'InsufficientAllowance', type: 'error', inputs: [] },
   { name: 'SupplyCapExceeded', type: 'error', inputs: [] },
-  { name: 'InvalidSignature', type: 'error', inputs: [] },
   { name: 'InvalidPayload', type: 'error', inputs: [] },
-  { name: 'InvalidNonce', type: 'error', inputs: [] },
   { name: 'StringTooLong', type: 'error', inputs: [] },
   { name: 'PolicyForbids', type: 'error', inputs: [] },
   { name: 'InvalidRecipient', type: 'error', inputs: [] },
-  { name: 'Expired', type: 'error', inputs: [] },
-  { name: 'SaltAlreadyUsed', type: 'error', inputs: [] },
   { name: 'ContractPaused', type: 'error', inputs: [] },
   { name: 'InvalidCurrency', type: 'error', inputs: [] },
   { name: 'InvalidQuoteToken', type: 'error', inputs: [] },
   { name: 'TransfersDisabled', type: 'error', inputs: [] },
+  { name: 'InvalidAmount', type: 'error', inputs: [] },
+  { name: 'NotStreamFunder', type: 'error', inputs: [] },
+  { name: 'StreamInactive', type: 'error', inputs: [] },
+  { name: 'NoOptedInSupply', type: 'error', inputs: [] },
+  { name: 'Unauthorized', type: 'error', inputs: [] },
   {
     name: 'hasRole',
     type: 'function',
@@ -795,6 +859,18 @@ export const tip20Factory = [
       { type: 'address', name: 'admin' },
     ],
   },
+] as const
+
+export const tip20RewardsRegistry = [
+  {
+    name: 'finalizeStreams',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [],
+  },
+  { name: 'Unauthorized', type: 'error', inputs: [] },
+  { name: 'StreamsAlreadyFinalized', type: 'error', inputs: [] },
 ] as const
 
 export const tip403Registry = [
