@@ -2,6 +2,7 @@ import { getAccount } from '@wagmi/core'
 import { parseEther } from 'viem'
 import { describe, expect, test } from 'vitest'
 import { config, queryClient, setupToken } from '../../../test/wagmi/config.js'
+import * as tokenActions from './token.js'
 import * as actions from './reward.js'
 
 describe('cancelSync', () => {
@@ -26,6 +27,65 @@ describe('cancelSync', () => {
     expect(receipt).toBeDefined()
     expect(result.funder).toBeDefined()
     expect(result.id).toBe(streamId)
+  })
+})
+
+// TODO: unskip
+describe.skip('claimSync', () => {
+  test('default', async () => {
+    const { token } = await setupToken()
+
+    const account = getAccount(config)
+
+    const balanceBefore = await tokenActions.getBalance(config, {
+      account: account.address!,
+      token,
+    })
+
+    // Opt in to rewards
+    await actions.setRecipientSync(config, {
+      recipient: account.address!,
+      token,
+    })
+
+    // Mint reward tokens
+    const rewardAmount = parseEther('100')
+    await tokenActions.mintSync(config, {
+      amount: rewardAmount,
+      to: account.address!,
+      token,
+    })
+
+    // Start immediate reward
+    await actions.startSync(config, {
+      amount: rewardAmount,
+      seconds: 0,
+      token,
+    })
+
+    // Trigger reward accrual by transferring
+    await tokenActions.transferSync(config, {
+      amount: 1n,
+      to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+      token,
+    })
+
+    // Claim rewards
+    const { receipt } = await actions.claimSync(config, {
+      token,
+    })
+
+    expect(receipt).toBeDefined()
+
+    const balanceAfter = await tokenActions.getBalance(config, {
+      account: account.address!,
+      token,
+    })
+
+    // Balance should have increased due to claimed rewards
+    expect(balanceAfter).toBeGreaterThan(
+      balanceBefore + rewardAmount - parseEther('1'),
+    )
   })
 })
 

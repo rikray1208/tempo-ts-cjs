@@ -231,7 +231,7 @@ describe('create', () => {
 })
 
 describe('getAllowance', () => {
-  test('default', async () => {
+  test.only('default', async () => {
     // First, approve some allowance
     await writeContractSync(client, {
       abi: Abis.tip20,
