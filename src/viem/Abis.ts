@@ -303,6 +303,11 @@ export const stablecoinExchange = [
   { name: 'InsufficientLiquidity', type: 'error', inputs: [] },
   { name: 'InsufficientOutput', type: 'error', inputs: [] },
   { name: 'MaxInputExceeded', type: 'error', inputs: [] },
+  {
+    name: 'BelowMinimumOrderSize',
+    type: 'error',
+    inputs: [{ type: 'uint128', name: 'amount' }],
+  },
 ] as const
 
 export const tip20 = [
@@ -584,6 +589,13 @@ export const tip20 = [
     outputs: [{ type: 'uint256' }],
   },
   {
+    name: 'claimRewards',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
     name: 'finalizeStreams',
     type: 'function',
     stateMutability: 'nonpayable',
@@ -734,7 +746,15 @@ export const tip20 = [
       { type: 'address', name: 'recipient', indexed: true },
     ],
   },
-  { name: 'InsufficientBalance', type: 'error', inputs: [] },
+  {
+    name: 'InsufficientBalance',
+    type: 'error',
+    inputs: [
+      { type: 'uint256', name: 'available' },
+      { type: 'uint256', name: 'required' },
+      { type: 'address', name: 'token' },
+    ],
+  },
   { name: 'InsufficientAllowance', type: 'error', inputs: [] },
   { name: 'SupplyCapExceeded', type: 'error', inputs: [] },
   { name: 'InvalidPayload', type: 'error', inputs: [] },
@@ -1295,4 +1315,97 @@ export const feeAmm = [
   { name: 'InsufficientLiquidityForPending', type: 'error', inputs: [] },
   { name: 'TokenTransferFailed', type: 'error', inputs: [] },
   { name: 'InternalError', type: 'error', inputs: [] },
+] as const
+
+export const validatorConfig = [
+  {
+    name: 'getValidators',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [
+      {
+        type: 'tuple[]',
+        name: 'validators',
+        components: [
+          { type: 'bytes32', name: 'publicKey' },
+          { type: 'bool', name: 'active' },
+          { type: 'uint64', name: 'index' },
+          { type: 'address', name: 'validatorAddress' },
+          { type: 'string', name: 'inboundAddress' },
+          { type: 'string', name: 'outboundAddress' },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'addValidator',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { type: 'address', name: 'newValidatorAddress' },
+      { type: 'bytes32', name: 'publicKey' },
+      { type: 'bool', name: 'active' },
+      { type: 'string', name: 'inboundAddress' },
+      { type: 'string', name: 'outboundAddress' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'updateValidator',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { type: 'address', name: 'newValidatorAddress' },
+      { type: 'bytes32', name: 'publicKey' },
+      { type: 'string', name: 'inboundAddress' },
+      { type: 'string', name: 'outboundAddress' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'changeValidatorStatus',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { type: 'address', name: 'validator' },
+      { type: 'bool', name: 'active' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'owner',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+  },
+  {
+    name: 'changeOwner',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ type: 'address', name: 'newOwner' }],
+    outputs: [],
+  },
+  { name: 'Unauthorized', type: 'error', inputs: [] },
+  { name: 'ValidatorAlreadyExists', type: 'error', inputs: [] },
+  { name: 'ValidatorNotFound', type: 'error', inputs: [] },
+  {
+    name: 'NotHostPort',
+    type: 'error',
+    inputs: [
+      { type: 'string', name: 'field' },
+      { type: 'string', name: 'input' },
+      { type: 'string', name: 'backtrace' },
+    ],
+  },
+  {
+    name: 'NotIpPort',
+    type: 'error',
+    inputs: [
+      { type: 'string', name: 'field' },
+      { type: 'string', name: 'input' },
+      { type: 'string', name: 'backtrace' },
+    ],
+  },
 ] as const
