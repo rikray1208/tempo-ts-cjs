@@ -61,7 +61,7 @@ export const tempo = defineInstance((parameters: tempo.Parameters = {}) => {
         ($) =>
           $(
             Object.keys(env).length > 0 ? { env } : {},
-          )`${binary} node --http --dev --no-consensus --engine.disable-precompile-cache --faucet.enabled ${toArgs(
+          )`${binary} node --http --dev --engine.disable-precompile-cache --faucet.enabled ${toArgs(
             {
               ...args,
               builder: {
@@ -79,6 +79,7 @@ export const tempo = defineInstance((parameters: tempo.Parameters = {}) => {
                 amount,
                 privateKey,
               },
+              follow: true,
               port: port! + 10,
               http: {
                 api: 'all',
