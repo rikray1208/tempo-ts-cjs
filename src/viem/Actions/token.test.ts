@@ -499,8 +499,6 @@ describe('mint', () => {
   })
 })
 
-describe.todo('permitToken')
-
 describe('transfer', () => {
   test('default', async () => {
     // Get initial balances

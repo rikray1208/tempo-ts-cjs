@@ -1646,7 +1646,3 @@ describe('useWatchUpdateQuoteToken', () => {
 describe.todo('useBurnBlocked')
 
 describe.todo('useBurnBlockedSync')
-
-describe.todo('usePermit')
-
-describe.todo('usePermitSync')

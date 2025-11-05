@@ -543,22 +543,28 @@ export const tip20 = [
     outputs: [],
   },
   {
-    name: 'permit',
+    name: 'PAUSE_ROLE',
     type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { type: 'address', name: 'owner' },
-      { type: 'address', name: 'spender' },
-      { type: 'uint256', name: 'value' },
-      { type: 'uint256', name: 'deadline' },
-      { type: 'uint8', name: 'v' },
-      { type: 'bytes32', name: 'r' },
-      { type: 'bytes32', name: 's' },
-    ],
-    outputs: [],
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'bytes32' }],
   },
   {
-    name: 'DOMAIN_SEPARATOR',
+    name: 'UNPAUSE_ROLE',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'bytes32' }],
+  },
+  {
+    name: 'ISSUER_ROLE',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'bytes32' }],
+  },
+  {
+    name: 'BURN_BLOCKED_ROLE',
     type: 'function',
     stateMutability: 'view',
     inputs: [],
@@ -676,7 +682,7 @@ export const tip20 = [
       { type: 'address', name: 'from', indexed: true },
       { type: 'address', name: 'to', indexed: true },
       { type: 'uint256', name: 'amount' },
-      { type: 'bytes32', name: 'memo' },
+      { type: 'bytes32', name: 'memo', indexed: true },
     ],
   },
   {
@@ -757,6 +763,7 @@ export const tip20 = [
   },
   { name: 'InsufficientAllowance', type: 'error', inputs: [] },
   { name: 'SupplyCapExceeded', type: 'error', inputs: [] },
+  { name: 'InvalidSupplyCap', type: 'error', inputs: [] },
   { name: 'InvalidPayload', type: 'error', inputs: [] },
   { name: 'StringTooLong', type: 'error', inputs: [] },
   { name: 'PolicyForbids', type: 'error', inputs: [] },
@@ -858,7 +865,7 @@ export const tip20Factory = [
       { type: 'address', name: 'quoteToken' },
       { type: 'address', name: 'admin' },
     ],
-    outputs: [{ type: 'uint256' }],
+    outputs: [{ type: 'address' }],
   },
   {
     name: 'tokenIdCounter',
@@ -866,6 +873,13 @@ export const tip20Factory = [
     stateMutability: 'view',
     inputs: [],
     outputs: [{ type: 'uint256' }],
+  },
+  {
+    name: 'isTIP20',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ type: 'address', name: 'token' }],
+    outputs: [{ type: 'bool' }],
   },
   {
     name: 'TokenCreated',
@@ -876,6 +890,7 @@ export const tip20Factory = [
       { type: 'string', name: 'name' },
       { type: 'string', name: 'symbol' },
       { type: 'string', name: 'currency' },
+      { type: 'address', name: 'quoteToken' },
       { type: 'address', name: 'admin' },
     ],
   },
@@ -1017,16 +1032,6 @@ export const tip403Registry = [
   { name: 'SelfOwnedPolicyMustBeWhitelist', type: 'error', inputs: [] },
 ] as const
 
-export const tip4217Registry = [
-  {
-    name: 'getCurrencyDecimals',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [{ type: 'string', name: 'currency' }],
-    outputs: [{ type: 'uint8' }],
-  },
-] as const
-
 export const tipAccountRegistrar = [
   {
     name: 'delegateToDefault',
@@ -1051,20 +1056,6 @@ export const tipAccountRegistrar = [
 ] as const
 
 export const feeManager = [
-  {
-    name: 'BASIS_POINTS',
-    type: 'function',
-    stateMutability: 'pure',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-  },
-  {
-    name: 'FEE_BPS',
-    type: 'function',
-    stateMutability: 'pure',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-  },
   {
     name: 'userTokens',
     type: 'function',
