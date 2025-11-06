@@ -1141,7 +1141,6 @@ describe('e2e', () => {
         "effectiveGasPrice": "0x4a817c800",
         "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
         "gasUsed": "0x7f58",
-
         "status": "0x0",
         "to": "0x0000000000000000000000000000000000000000",
         "transactionHash": "0x3c8ab736a60336ee86fdf3a9f9b30b228c93368d12194848324a89cd3e2cdab5",
