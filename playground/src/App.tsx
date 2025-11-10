@@ -3,7 +3,14 @@ import { Address } from 'ox'
 import { useState } from 'react'
 import { Actions } from 'tempo.ts/viem'
 import { Hooks } from 'tempo.ts/wagmi'
-import { formatUnits, parseUnits, stringify } from 'viem'
+import {
+  type Chain,
+  type Client,
+  formatUnits,
+  parseUnits,
+  stringify,
+  type Transport,
+} from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
 import {
   useAccount,
@@ -131,7 +138,7 @@ function Balance() {
           params: [account.address],
         })
       } else {
-        await Actions.token.transferSync(client, {
+        await Actions.token.transferSync(client as Client<Transport, Chain>, {
           account: mnemonicToAccount(
             'test test test test test test test test test test test junk',
           ),

@@ -23,42 +23,40 @@ export type Chain<
         feeToken: feeToken
       })
 
-export function define<const chain extends viem_Chain>(chain: chain) {
-  function inner<const chain extends Chain>(chain: chain) {
-    return {
-      blockTime: 1_000,
-      contracts: {
-        multicall3: {
-          address: '0xca11bde05977b3631167028862be2a173976ca11',
-          blockCreated: 0,
-        },
+function config<const chain extends Chain>(chain: chain) {
+  return {
+    blockTime: 1_000,
+    contracts: {
+      multicall3: {
+        address: '0xca11bde05977b3631167028862be2a173976ca11',
+        blockCreated: 0,
       },
-      formatters: {
-        transaction: defineTransaction({
-          format: Formatters.formatTransaction,
-        }),
-        transactionRequest: defineTransactionRequest({
-          format: (
-            ...args: Parameters<
-              typeof Formatters.formatTransactionRequest<chain>
-            >
-          ) => Formatters.formatTransactionRequest<chain>(...args),
-        }),
-      },
-      serializers: {
-        // TODO: casting to satisfy viem – viem v3 to have more flexible serializer type.
-        transaction: Transaction.serialize as SerializeTransactionFn,
-      },
-      ...chain,
-    } as const
-  }
+    },
+    formatters: {
+      transaction: defineTransaction({
+        format: Formatters.formatTransaction,
+      }),
+      transactionRequest: defineTransactionRequest({
+        format: (
+          ...args: Parameters<typeof Formatters.formatTransactionRequest<chain>>
+        ) => Formatters.formatTransactionRequest<chain>(...args),
+      }),
+    },
+    serializers: {
+      // TODO: casting to satisfy viem – viem v3 to have more flexible serializer type.
+      transaction: Transaction.serialize as SerializeTransactionFn,
+    },
+    ...chain,
+  } as const
+}
 
+export function define<const chain extends viem_Chain>(
+  chain: chain,
+): define.ReturnValue<chain> {
   return Object.assign(
-    <properties extends define.Properties | undefined>(
-      properties: properties = {} as properties,
-    ) => inner({ ...chain, ...properties }),
+    (properties = {}) => config({ ...chain, ...properties }),
     { id: chain.id },
-  )
+  ) as never
 }
 
 export declare namespace define {
@@ -74,4 +72,10 @@ export declare namespace define {
      */
     feeToken?: TokenId.TokenIdOrAddress | null | undefined
   }
+
+  type ReturnValue<chain extends viem_Chain> = (<
+    properties extends define.Properties | undefined,
+  >(
+    properties: properties,
+  ) => ReturnType<typeof config<chain & properties>>) & { id: chain['id'] }
 }
