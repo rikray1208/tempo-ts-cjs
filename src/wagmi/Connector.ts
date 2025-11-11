@@ -251,6 +251,7 @@ export function webAuthn(options: webAuthn.Parameters = {}) {
               createOptions.label ??
               options.createOptions?.label ??
               `Account ${new Date().toISOString().split('T')[0]}`,
+            rpId: options.createOptions?.rpId ?? options.rpId,
           })
           config.storage?.setItem(
             `webAuthn.${credential.id}.publicKey`,
@@ -284,6 +285,7 @@ export function webAuthn(options: webAuthn.Parameters = {}) {
                 return publicKey as Hex
               }
             },
+            rpId: options.getOptions?.rpId ?? options.rpId,
           })
         }
 
@@ -386,5 +388,7 @@ export declare namespace webAuthn {
             | undefined
         })
       | undefined
+    /** The RP ID to use for WebAuthn. */
+    rpId?: string | undefined
   }
 }
