@@ -1206,7 +1206,6 @@ export const feeManager = [
   { name: 'OnlySystemContract', type: 'error', inputs: [] },
   { name: 'InvalidToken', type: 'error', inputs: [] },
   { name: 'PoolDoesNotExist', type: 'error', inputs: [] },
-  { name: 'InsufficientLiquidity', type: 'error', inputs: [] },
   { name: 'InsufficientFeeTokenBalance', type: 'error', inputs: [] },
   { name: 'InternalError', type: 'error', inputs: [] },
   { name: 'CannotChangeWithinBlock', type: 'error', inputs: [] },
