@@ -102,7 +102,18 @@ export function Account() {
         Chain ID: {account.chainId}{' '}
         {!isSupportedChain && (
           <button
-            onClick={() => switchChain.switchChain({ chainId: chain.id })}
+            onClick={() =>
+              switchChain.switchChain({
+                chainId: chain.id,
+                addEthereumChainParameter: {
+                  nativeCurrency: {
+                    name: 'USD',
+                    decimals: 18,
+                    symbol: 'USD',
+                  },
+                },
+              })
+            }
             type="button"
           >
             Switch to {chain.name}
