@@ -13,7 +13,6 @@ export const config = createConfig({
   },
   connectors: [webAuthn()],
   chains: [tempoAndantino({ feeToken: alphaUsd })],
-  multiInjectedProviderDiscovery: false,
   transports: {
     [tempoAndantino.id]: webSocket(
       'wss://rpc.testnet.tempo.xyz?supersecretargument=pleasedonotusemeinprod',
