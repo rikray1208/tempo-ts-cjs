@@ -13,7 +13,6 @@ export const config = createConfig({
       : tempoLocal({ feeToken: 1n }),
   ],
   connectors: [webAuthn(), dangerous_secp256k1()],
-  multiInjectedProviderDiscovery: false,
   transports: {
     [tempoAndantino.id]: http(undefined, {
       batch: true,

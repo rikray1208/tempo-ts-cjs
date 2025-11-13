@@ -14,10 +14,12 @@ import {
 import { mnemonicToAccount } from 'viem/accounts'
 import {
   useAccount,
+  useChains,
   useClient,
   useConnect,
   useConnectors,
   useDisconnect,
+  useSwitchChain,
 } from 'wagmi'
 
 const alphaUsd = '0x20c0000000000000000000000000000000000001'
@@ -35,6 +37,9 @@ export function App() {
         <>
           <h2>Account</h2>
           <AccountDetails />
+
+          <h2>Chain</h2>
+          <ChainDetails />
 
           <h2>Balance</h2>
           <Balance />
@@ -65,10 +70,10 @@ export function App() {
 function AccountDetails() {
   const account = useAccount()
   const disconnect = useDisconnect()
+
   return (
     <>
       <div>Address: {account.address}</div>
-      <div>Chain ID: {account.chainId}</div>
       <button
         onClick={() => {
           disconnect.disconnect()
@@ -84,38 +89,79 @@ function AccountDetails() {
 function Connect() {
   const connect = useConnect()
   const connectors = useConnectors()
+
   return (
     <>
       {connectors.map((connector) => (
         <div key={connector.id}>
           <h4>{connector.name}</h4>
-          <button
-            onClick={async () => {
-              connect.connect({
-                connector,
-                capabilities: {
-                  createAccount: { label: 'Tempo.ts Playground' },
-                },
-              })
-            }}
-            type="button"
-          >
-            Sign up
-          </button>
-          <button
-            onClick={async () => {
-              connect.connect({
-                connector,
-              })
-            }}
-            type="button"
-          >
-            Log in
-          </button>
+          {connector.type === 'injected' ? (
+            <button
+              onClick={async () => {
+                connect.connect({
+                  connector,
+                })
+              }}
+              type="button"
+            >
+              Connect
+            </button>
+          ) : (
+            <div>
+              <button
+                onClick={async () => {
+                  connect.connect({
+                    connector,
+                    capabilities: {
+                      createAccount: { label: 'Tempo.ts Playground' },
+                    },
+                  })
+                }}
+                type="button"
+              >
+                Sign up
+              </button>
+              <button
+                onClick={async () => {
+                  connect.connect({
+                    connector,
+                  })
+                }}
+                type="button"
+              >
+                Log in
+              </button>
+            </div>
+          )}
         </div>
       ))}
       {connect.error && <div>Error: {connect.error.message}</div>}
     </>
+  )
+}
+
+function ChainDetails() {
+  const account = useAccount()
+  const chains = useChains()
+  const switchChain = useSwitchChain()
+  return (
+    <div>
+      <div>Chain ID: {account.chainId}</div>
+      <div>
+        {chains.map((chain) => (
+          <button
+            key={chain.id}
+            disabled={switchChain.isPending || account.chainId === chain.id}
+            onClick={() => {
+              switchChain.switchChain({ chainId: chain.id as any })
+            }}
+            type="button"
+          >
+            Switch to {chain.name}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
