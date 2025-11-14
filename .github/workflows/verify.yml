@@ -22,7 +22,7 @@ jobs:
         run: pnpm check
 
       - name: Check types
-        run: pnpm check:types
+        run: pnpm preconstruct && pnpm check:types
 
   test:
     name: Test Runtime
