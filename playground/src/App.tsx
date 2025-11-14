@@ -19,6 +19,7 @@ import {
   useConnect,
   useConnectors,
   useDisconnect,
+  useSendCallsSync,
   useSwitchChain,
 } from 'wagmi'
 
@@ -51,6 +52,9 @@ export function App() {
 
               <h2>Create Token</h2>
               <CreateToken onSuccess={() => balance.refetch()} />
+
+              <h2>Send Calls</h2>
+              <SendCalls />
             </>
           )}
         </>
@@ -209,6 +213,59 @@ function Balance() {
         <div>Error funding account: {fundAccount.error.message}</div>
       )}
     </>
+  )
+}
+
+function SendCalls() {
+  const sendCalls = useSendCallsSync()
+
+  return (
+    <div>
+      <button
+        disabled={sendCalls.isPending}
+        onClick={() =>
+          sendCalls.sendCallsSync({
+            calls: [
+              Actions.token.transfer.call({
+                amount: parseUnits('1', 6),
+                token: alphaUsd,
+                to: '0x0000000000000000000000000000000000000000',
+              }),
+              Actions.token.transfer.call({
+                amount: parseUnits('2', 6),
+                token: alphaUsd,
+                to: '0x0000000000000000000000000000000000000001',
+              }),
+              Actions.token.transfer.call({
+                amount: parseUnits('3', 6),
+                token: alphaUsd,
+                to: '0x0000000000000000000000000000000000000002',
+              }),
+            ],
+          })
+        }
+        type="button"
+      >
+        {sendCalls.isPending ? 'Sending...' : 'Send Calls'}
+      </button>
+
+      {sendCalls.isError && (
+        <div style={{ color: 'red' }}>Error: {sendCalls.error?.message}</div>
+      )}
+
+      {sendCalls.data && (
+        <>
+          <div>Transaction sent successfully!</div>
+          <a
+            href={`https://explore.tempo.xyz/tx/${sendCalls.data.receipts?.at(0)?.transactionHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View receipt
+          </a>
+        </>
+      )}
+    </div>
   )
 }
 
