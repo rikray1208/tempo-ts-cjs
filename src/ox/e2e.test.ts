@@ -7,16 +7,12 @@ import {
   WebCryptoP256,
 } from 'ox'
 import { getTransactionCount } from 'viem/actions'
-import { beforeEach, expect, test } from 'vitest'
-import { chainId, rpcUrl } from '../../test/config.js'
+import { expect, test } from 'vitest'
+import { chainId } from '../../test/config.js'
 import { client, fundAddress } from '../../test/viem/config.js'
 import { SignatureEnvelope } from './index.js'
 import * as Transaction from './Transaction.js'
 import * as TransactionEnvelopeAA from './TransactionEnvelopeAA.js'
-
-beforeEach(async () => {
-  await fetch(`${rpcUrl}/restart`)
-})
 
 test('behavior: default (secp256k1)', async () => {
   const privateKey = Secp256k1.randomPrivateKey()
@@ -165,6 +161,7 @@ test('behavior: default (p256)', async () => {
       },
     ],
     chainId,
+    feeToken: '0x20c0000000000000000000000000000000000001',
     gas: 100_000n,
     maxFeePerGas: Value.fromGwei('20'),
     maxPriorityFeePerGas: Value.fromGwei('10'),
@@ -294,6 +291,7 @@ test('behavior: default (p256 - webcrypto)', async () => {
       },
     ],
     chainId,
+    feeToken: '0x20c0000000000000000000000000000000000001',
     gas: 100_000n,
     maxFeePerGas: Value.fromGwei('20'),
     maxPriorityFeePerGas: Value.fromGwei('10'),
@@ -422,6 +420,7 @@ test('behavior: default (webauthn)', async () => {
       },
     ],
     chainId,
+    feeToken: '0x20c0000000000000000000000000000000000001',
     gas: 100_000n,
     maxFeePerGas: Value.fromGwei('20'),
     maxPriorityFeePerGas: Value.fromGwei('10'),
