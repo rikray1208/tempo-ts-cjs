@@ -42,3 +42,4 @@ export const tempoLocal = /*#__PURE__*/ Chain.define({
 })
 
 export const tempo = /*#__PURE__*/ tempoAndantino
+export const tempoTestnet = /*#__PURE__*/ tempoAndantino
