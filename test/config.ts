@@ -10,7 +10,7 @@ export const id =
       Math.floor(Math.random() * 10_000)) ||
   1 + Math.floor(Math.random() * 10_000)
 
-export const nodeEnv = import.meta.env.VITE_NODE_ENV || 'local'
+export const nodeEnv = import.meta.env.VITE_NODE_ENV || 'localnet'
 export const chainId = (() => {
   if (nodeEnv === 'testnet') return tempoAndantino.id
   if (nodeEnv === 'devnet') return tempoDev.id

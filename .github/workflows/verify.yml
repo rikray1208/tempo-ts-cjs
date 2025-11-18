@@ -24,8 +24,8 @@ jobs:
       - name: Check types
         run: pnpm preconstruct && pnpm check:types
 
-  test-local:
-    name: 'Test Runtime (tag: ${{ matrix.tag }})'
+  test-localnet:
+    name: 'Test Runtime (env: localnet, tag: ${{ matrix.tag }})'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -73,7 +73,7 @@ jobs:
           VITE_RPC_CREDENTIALS: ${{ secrets.VITE_RPC_CREDENTIALS }}
 
   test-deployed:
-    name: Test Runtime (e2e) (${{ matrix.node-env }})
+    name: 'Test Runtime (e2e) (env: ${{ matrix.node-env }})'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:

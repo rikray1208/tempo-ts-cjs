@@ -11,7 +11,7 @@ BigInt.prototype.toJSON = function () {
 }
 
 beforeAll(async () => {
-  if (nodeEnv === 'local') return
+  if (nodeEnv === 'localnet') return
   await Actions.faucet.fundSync(client, {
     account: accounts[0].address,
   })
@@ -22,7 +22,7 @@ beforeEach(async () => {
 })
 
 afterAll(async () => {
-  if (nodeEnv !== 'local') return
+  if (nodeEnv !== 'localnet') return
   await fetch(`${rpcUrl}/stop`)
 })
 

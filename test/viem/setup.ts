@@ -4,13 +4,13 @@ import { nodeEnv, rpcUrl } from '../config.js'
 import { accounts, client } from './config.js'
 
 beforeAll(async () => {
-  if (nodeEnv === 'local') return
+  if (nodeEnv === 'localnet') return
   await Actions.faucet.fundSync(client, {
     account: accounts[0].address,
   })
 })
 
 afterAll(async () => {
-  if (nodeEnv !== 'local') return
+  if (nodeEnv !== 'localnet') return
   await fetch(`${rpcUrl}/stop`)
 })

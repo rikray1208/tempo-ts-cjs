@@ -20,7 +20,7 @@ import { transferSync } from '../../src/viem/Actions/token.js'
 import { addresses, fetchOptions, nodeEnv, rpcUrl } from '../config.js'
 
 const accountsMnemonic = (() => {
-  if (nodeEnv === 'local')
+  if (nodeEnv === 'localnet')
     return 'test test test test test test test test test test test junk'
   return generateMnemonic(english)
 })()

@@ -9,7 +9,7 @@ interface ImportMetaEnv {
     | boolean
     | undefined
   readonly VITE_HTTP_LOG: 'true' | 'false'
-  readonly VITE_NODE_ENV: 'local' | 'testnet' | 'devnet'
+  readonly VITE_NODE_ENV: 'localnet' | 'testnet' | 'devnet'
   readonly VITE_NODE_TAG: string
   readonly VITE_RPC_CREDENTIALS: string
 }
