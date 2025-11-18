@@ -2,31 +2,23 @@ import * as Address from 'ox/Address'
 import * as Bytes from 'ox/Bytes'
 import * as Hash from 'ox/Hash'
 import * as Hex from 'ox/Hex'
-import * as Provider from 'ox/Provider'
-import * as RpcRequest from 'ox/RpcRequest'
 import {
   createClient,
   type EIP1193Provider,
   getAddress,
   type LocalAccount,
   SwitchChainError,
-  type Transport,
-  type Account as viem_Account,
 } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import {
-  getTransactionReceipt,
-  sendTransaction,
-  sendTransactionSync,
-} from 'viem/actions'
 import { ChainNotConfiguredError, createConnector } from 'wagmi'
 import * as Account from '../viem/Account.js'
 import type * as tempo_Chain from '../viem/Chain.js'
+import { walletNamespaceCompat } from '../viem/Transport.js'
 import * as WebAuthnP256 from '../viem/WebAuthnP256.js'
 
 type Chain = ReturnType<ReturnType<typeof tempo_Chain.define>>
 
-const sendCallsMagic = Hash.keccak256(Hex.fromString('TEMPO_5792'))
+const _sendCallsMagic = Hash.keccak256(Hex.fromString('TEMPO_5792'))
 
 /**
  * Connector for a Secp256k1 EOA.
@@ -185,9 +177,7 @@ export function dangerous_secp256k1(
       return createClient({
         account,
         chain: chain as Chain,
-        transport: withErc5792Compat(transport, {
-          account,
-        }),
+        transport: walletNamespaceCompat(transport),
       })
     },
     async getProvider({ chainId } = {}) {
@@ -377,9 +367,7 @@ export function webAuthn(options: webAuthn.Parameters = {}) {
       return createClient({
         account,
         chain: chain as Chain,
-        transport: withErc5792Compat(transport, {
-          account,
-        }),
+        transport: walletNamespaceCompat(transport),
       })
     },
     async getProvider({ chainId } = {}) {
@@ -412,98 +400,5 @@ export declare namespace webAuthn {
       | undefined
     /** The RP ID to use for WebAuthn. */
     rpId?: string | undefined
-  }
-}
-
-// TODO: This is a temporary workaround to support EIP-5792. To be removed
-// once we support a EIP-1193 Provider abstraction for Tempo accounts.
-// biome-ignore lint/correctness/noUnusedVariables: _
-function withErc5792Compat(
-  transport: Transport,
-  { account }: withErc5792Compat.Options,
-): Transport {
-  return (options) => {
-    const t = transport(options)
-
-    return {
-      ...t,
-      async request(args: never) {
-        const request = RpcRequest.from(args)
-
-        const client = createClient({
-          account,
-          chain: options.chain as Chain,
-          transport,
-        })
-
-        if (request.method === 'wallet_sendCalls') {
-          const params = request.params[0] ?? {}
-          const { capabilities, chainId, from } = params
-          const { sync } = capabilities ?? {}
-
-          if (!account) throw new Provider.DisconnectedError()
-          if (!chainId) throw new Provider.UnsupportedChainIdError()
-          if (Number(chainId) !== client.chain.id)
-            throw new Provider.UnsupportedChainIdError()
-          if (from && !Address.isEqual(from, account.address))
-            throw new Provider.DisconnectedError()
-
-          const calls = (params.calls ?? []).map((call) => ({
-            to: call.to,
-            value: call.value ? BigInt(call.value) : undefined,
-            data: call.data,
-          }))
-
-          const hash = await (async () => {
-            if (!sync)
-              return sendTransaction(client, {
-                account,
-                calls,
-              })
-
-            const { transactionHash } = await sendTransactionSync(client, {
-              account,
-              calls,
-            })
-            return transactionHash
-          })()
-
-          const id = Hex.concat(hash, Hex.padLeft(chainId, 32), sendCallsMagic)
-
-          return {
-            capabilities: { sync },
-            id,
-          }
-        }
-
-        if (request.method === 'wallet_getCallsStatus') {
-          const [id] = request.params ?? []
-          if (!id) throw new Error('`id` not found')
-          if (!id.endsWith(sendCallsMagic.slice(2)))
-            throw new Error('`id` not supported')
-          Hex.assert(id)
-
-          const hash = Hex.slice(id, 0, 32)
-          const chainId = Hex.slice(id, 32, 64)
-
-          const receipt = await getTransactionReceipt(client, { hash })
-          return {
-            atomic: true,
-            chainId: Number(chainId),
-            receipts: [receipt],
-            status: receipt.status === 'success' ? 200 : 500,
-            version: '2.0.0',
-          }
-        }
-
-        return t.request(args)
-      },
-    } as never
-  }
-}
-
-declare namespace withErc5792Compat {
-  type Options = {
-    account: viem_Account | undefined
   }
 }
