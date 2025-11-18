@@ -1,7 +1,6 @@
 import * as Address from 'ox/Address'
 import * as Bytes from 'ox/Bytes'
-import * as Hash from 'ox/Hash'
-import * as Hex from 'ox/Hex'
+import type * as Hex from 'ox/Hex'
 import {
   createClient,
   type EIP1193Provider,
@@ -17,8 +16,6 @@ import { walletNamespaceCompat } from '../viem/Transport.js'
 import * as WebAuthnP256 from '../viem/WebAuthnP256.js'
 
 type Chain = ReturnType<ReturnType<typeof tempo_Chain.define>>
-
-const _sendCallsMagic = Hash.keccak256(Hex.fromString('TEMPO_5792'))
 
 /**
  * Connector for a Secp256k1 EOA.
