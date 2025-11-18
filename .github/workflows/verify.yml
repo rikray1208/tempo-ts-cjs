@@ -73,7 +73,7 @@ jobs:
           VITE_RPC_CREDENTIALS: ${{ secrets.VITE_RPC_CREDENTIALS }}
 
   test-deployed:
-    name: 'Test Runtime (e2e) (env: ${{ matrix.node-env }})'
+    name: 'Test Runtime (env: ${{ matrix.node-env }}, e2e)'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
