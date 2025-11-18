@@ -80,7 +80,7 @@ jobs:
       matrix:
         node-env: 
           - devnet
-          # - testnet
+          - testnet
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
