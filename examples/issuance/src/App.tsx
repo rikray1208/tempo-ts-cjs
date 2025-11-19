@@ -160,7 +160,12 @@ export function CreateStablecoin() {
         </div>
       )}
 
-      {create.data?.token && <GrantTokenRoles token={create.data.token} roles={['issuer', 'pause', 'unpause', 'burnBlocked']} />}
+      {create.data?.token && (
+        <GrantTokenRoles
+          token={create.data.token}
+          roles={['issuer', 'pause', 'unpause', 'burnBlocked']}
+        />
+      )}
       {create.data?.token && (
         <MintFeeAmmLiquidity tokenAddress={create.data.token} />
       )}
@@ -228,7 +233,7 @@ export function GrantTokenRoles(props: {
           <BurnToken token={token} />
           <CreateTokenPolicy token={token} />
           <PauseUnpauseTransfers token={token} />
-          <RevokeTokenRoles token={token} roles={roles} /> 
+          <RevokeTokenRoles token={token} roles={roles} />
         </>
       )}
     </div>
@@ -625,9 +630,7 @@ export function LinkTokenPolicy(props: { token: Address; policyId: bigint }) {
         </div>
       )}
 
-      {linkPolicy.data &&  (
-        <BurnTokenBlocked token={token} />
-      )}
+      {linkPolicy.data && <BurnTokenBlocked token={token} />}
     </div>
   )
 }
@@ -646,7 +649,7 @@ export function PauseUnpauseTransfers(props: { token: Address }) {
     mutation: {
       onSettled(data) {
         refetchMetadata()
-        setHash(data?.receipt?.transactionHash as string || '')
+        setHash((data?.receipt?.transactionHash as string) || '')
       },
     },
   })
@@ -655,7 +658,7 @@ export function PauseUnpauseTransfers(props: { token: Address }) {
     mutation: {
       onSettled(data) {
         refetchMetadata()
-        setHash(data?.receipt?.transactionHash as string || '')
+        setHash((data?.receipt?.transactionHash as string) || '')
       },
     },
   })
@@ -752,4 +755,3 @@ export function BurnTokenBlocked(props: { token: Address }) {
     </div>
   )
 }
-
