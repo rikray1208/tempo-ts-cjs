@@ -13,7 +13,7 @@ catalog:
   react: ^19.1.1
   react-dom: ^19.1.1
   typescript: ^5.9.3
-  viem: https://pkg.pr.new/viem@17c2f3d
+  viem: https://pkg.pr.new/viem@372c009
   wagmi: 2.19.0
 
 onlyBuiltDependencies:
