@@ -100,7 +100,8 @@
 	"license": "MIT",
 	"files": [
 		"dist",
-		"src"
+		"src",
+		"CHANGELOG.md"
 	],
 	"sideEffects": false,
 	"main": "./dist/index.js",
