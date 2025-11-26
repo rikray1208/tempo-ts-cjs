@@ -168,6 +168,12 @@ importers:
         specifier: ^3
         version: 3.0.1(e1dd3959c93bdaa44bd319d2a1eca80e)
     devDependencies:
+      '@cloudflare/vite-plugin':
+        specifier: ^1.13.18
+        version: 1.15.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)(vite@7.2.2(@types/node@24.10.0)(lightningcss@1.30.2))(workerd@1.20251118.0)(wrangler@4.50.0(@cloudflare/workers-types@4.20251125.0)(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      '@cloudflare/workers-types':
+        specifier: ^4.20251014.0
+        version: 4.20251125.0
       '@types/node':
         specifier: ^24.10.0
         version: 24.10.0
@@ -189,6 +195,9 @@ importers:
       vite:
         specifier: ^7.2.2
         version: 7.2.2(@types/node@24.10.0)(lightningcss@1.30.2)
+      wrangler:
+        specifier: ^4.50.0
+        version: 4.50.0(@cloudflare/workers-types@4.20251125.0)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
   examples/accounts:
     dependencies:
@@ -355,6 +364,12 @@ importers:
         specifier: ^3
         version: 3.0.1(e1dd3959c93bdaa44bd319d2a1eca80e)
     devDependencies:
+      '@cloudflare/vite-plugin':
+        specifier: ^1.13.18
+        version: 1.15.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)(vite@7.2.2(@types/node@24.10.1)(lightningcss@1.30.2))(workerd@1.20251118.0)(wrangler@4.50.0(@cloudflare/workers-types@4.20251125.0)(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      '@cloudflare/workers-types':
+        specifier: ^4.20251014.0
+        version: 4.20251125.0
       '@types/node':
         specifier: ^24.10.0
         version: 24.10.1
@@ -376,6 +391,9 @@ importers:
       vite:
         specifier: ^7.2.2
         version: 7.2.2(@types/node@24.10.1)(lightningcss@1.30.2)
+      wrangler:
+        specifier: ^4.50.0
+        version: 4.50.0(@cloudflare/workers-types@4.20251125.0)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
   playground:
     dependencies:
@@ -4947,6 +4965,23 @@ snapshots:
       unenv: 2.0.0-rc.24
     optionalDependencies:
       workerd: 1.20251118.0
+
+  '@cloudflare/vite-plugin@1.15.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)(vite@7.2.2(@types/node@24.10.0)(lightningcss@1.30.2))(workerd@1.20251118.0)(wrangler@4.50.0(@cloudflare/workers-types@4.20251125.0)(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
+    dependencies:
+      '@cloudflare/unenv-preset': 2.7.11(unenv@2.0.0-rc.24)(workerd@1.20251118.0)
+      '@remix-run/node-fetch-server': 0.8.1
+      get-port: 7.1.0
+      miniflare: 4.20251118.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      picocolors: 1.1.1
+      tinyglobby: 0.2.15
+      unenv: 2.0.0-rc.24
+      vite: 7.2.2(@types/node@24.10.0)(lightningcss@1.30.2)
+      wrangler: 4.50.0(@cloudflare/workers-types@4.20251125.0)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - workerd
 
   '@cloudflare/vite-plugin@1.15.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)(vite@7.2.2(@types/node@24.10.1)(lightningcss@1.30.2))(workerd@1.20251118.0)(wrangler@4.50.0(@cloudflare/workers-types@4.20251125.0)(bufferutil@4.0.9)(utf-8-validate@5.0.10))':
     dependencies:
