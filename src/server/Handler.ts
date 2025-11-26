@@ -140,7 +140,9 @@ export function from(): Handler {
  * @returns Request handler.
  */
 export function keyManager(options: keyManager.Options) {
-  const { kv, path = '/key' } = options
+  const { kv } = options
+
+  const path = options.path ?? ''
 
   const rp = (() => {
     if (typeof options.rp === 'string')
@@ -464,7 +466,7 @@ export declare namespace keyManager {
  * @returns Request handler.
  */
 export function feePayer(options: feePayer.Options) {
-  const { account, onRequest, path = '/fee-payer' } = options
+  const { account, onRequest, path = '/' } = options
 
   const client = (() => {
     if ('client' in options) return options.client!

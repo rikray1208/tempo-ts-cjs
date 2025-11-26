@@ -67,20 +67,30 @@ export function localStorage(options: Storage.localStorage.Options = {}) {
  * const keyManager = KeyManager.http('https://api.example.com')
  * ```
  *
+ * @param url - The URL to use for the HTTP endpoints.
  * @param options - Configuration options for HTTP endpoints.
  * @returns A KeyManager instance that uses HTTP for credential operations.
  */
-export function http(options: http.Options = {}): KeyManager {
-  const {
-    baseUrl = '',
-    endpoints = {},
-    fetch: fetchFn = globalThis.fetch,
-  } = options
-  const {
-    getChallenge = `${baseUrl}/key/challenge`,
-    getPublicKey = `${baseUrl}/key/:credentialId`,
-    setPublicKey = `${baseUrl}/key/:credentialId`,
-  } = endpoints
+export function http(
+  url:
+    | string
+    | {
+        getChallenge?: string | Request | undefined
+        getPublicKey?: string | Request | undefined
+        setPublicKey?: string | Request | undefined
+      },
+  options: http.Options = {},
+): KeyManager {
+  const { fetch: fetchFn = globalThis.fetch } = options
+  const { getChallenge, getPublicKey, setPublicKey } = (() => {
+    const base = typeof url === 'string' ? url : ''
+    const urls = typeof url === 'object' ? url : {}
+    return {
+      getChallenge: urls.getChallenge ?? `${base}/challenge`,
+      getPublicKey: urls.getPublicKey ?? `${base}/:credentialId`,
+      setPublicKey: urls.setPublicKey ?? `${base}/:credentialId`,
+    }
+  })()
 
   return from({
     async getChallenge() {
@@ -143,16 +153,6 @@ export function http(options: http.Options = {}): KeyManager {
 
 export namespace http {
   export type Options = {
-    /** Base URL for the HTTP endpoints. */
-    baseUrl?: string | undefined
-    /** Endpoints for the HTTP endpoints. */
-    endpoints?:
-      | {
-          getChallenge?: string | Request | undefined
-          getPublicKey?: string | Request | undefined
-          setPublicKey?: string | Request | undefined
-        }
-      | undefined
     /** Custom fetch function. @default `globalThis.fetch`. */
     fetch?: typeof fetch | undefined
   }

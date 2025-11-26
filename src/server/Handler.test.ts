@@ -58,7 +58,7 @@ describe('from', () => {
 
     test('hono', async () => {
       const app = new Hono()
-      app.all('*', (c) => handler.fetch(c.req.raw))
+      app.use((c) => handler.fetch(c.req.raw))
 
       {
         const response = await app.request('/foo')
@@ -145,10 +145,10 @@ describe('keyManager', () => {
     handler = Handler.keyManager({ kv })
   })
 
-  describe('GET /key/challenge', () => {
+  describe('GET /challenge', () => {
     test('default', async () => {
       const response = await handler.fetch(
-        new Request('http://localhost/key/challenge'),
+        new Request('http://localhost/challenge'),
       )
 
       expect(response.status).toBe(200)
@@ -169,7 +169,7 @@ describe('keyManager', () => {
       })
 
       const response = await handlerWithRpId.fetch(
-        new Request('http://localhost/key/challenge'),
+        new Request('http://localhost/challenge'),
       )
 
       expect(response.status).toBe(200)
@@ -183,7 +183,7 @@ describe('keyManager', () => {
     })
   })
 
-  describe('GET /key/:id', () => {
+  describe('GET /:id', () => {
     test('default', async () => {
       const credentialId = 'test-credential-id'
       const publicKey = '0x1234567890abcdef'
@@ -191,7 +191,7 @@ describe('keyManager', () => {
       await kv.set(`credential:${credentialId}`, publicKey)
 
       const response = await handler.fetch(
-        new Request(`http://localhost/key/${credentialId}`),
+        new Request(`http://localhost/${credentialId}`),
       )
 
       expect(response.status).toBe(200)
@@ -202,7 +202,7 @@ describe('keyManager', () => {
 
     test('behavior: returns 404 for non-existent credential', async () => {
       const response = await handler.fetch(
-        new Request('http://localhost/key/non-existent'),
+        new Request('http://localhost/non-existent'),
       )
 
       expect(response.status).toBe(404)
@@ -210,7 +210,7 @@ describe('keyManager', () => {
     })
   })
 
-  describe('POST /key/:id', () => {
+  describe('POST /:id', () => {
     test('default', async () => {
       const credentialId = credential.id
       const challenge = Base64.toHex(
@@ -222,7 +222,7 @@ describe('keyManager', () => {
       await kv.set(`challenge:${challenge}`, '1')
 
       const response = await handler.fetch(
-        new Request(`http://localhost/key/${credentialId}`, {
+        new Request(`http://localhost/${credentialId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -245,7 +245,7 @@ describe('keyManager', () => {
 
     test('behavior: returns 400 when credential is missing', async () => {
       const response = await handler.fetch(
-        new Request('http://localhost/key/test-id', {
+        new Request('http://localhost/test-id', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -261,7 +261,7 @@ describe('keyManager', () => {
 
     test('behavior: returns 400 when publicKey is missing', async () => {
       const response = await handler.fetch(
-        new Request('http://localhost/key/test-id', {
+        new Request('http://localhost/test-id', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -277,7 +277,7 @@ describe('keyManager', () => {
 
     test('behavior: returns 400 for invalid or expired challenge', async () => {
       const response = await handler.fetch(
-        new Request(`http://localhost/key/${credential.id}`, {
+        new Request(`http://localhost/${credential.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -316,7 +316,7 @@ describe('keyManager', () => {
       await kv.set(`challenge:${challenge}`, '1')
 
       const response = await handler.fetch(
-        new Request(`http://localhost/key/${credential.id}`, {
+        new Request(`http://localhost/${credential.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -344,7 +344,7 @@ describe('keyManager', () => {
       await kv.set(`challenge:${challenge}`, '1')
 
       const response = await handlerWithRpId.fetch(
-        new Request(`http://localhost/key/${credential.id}`, {
+        new Request(`http://localhost/${credential.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -372,7 +372,7 @@ describe('keyManager', () => {
       await kv.set(`challenge:${challenge}`, '1')
 
       const response = await handlerWithLocalhost.fetch(
-        new Request(`http://localhost/key/${credential.id}`, {
+        new Request(`http://localhost/${credential.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -408,7 +408,7 @@ describe('keyManager', () => {
       await kv.set(`challenge:${challenge}`, '1')
 
       const response = await handler.fetch(
-        new Request(`http://localhost/key/${credential.id}`, {
+        new Request(`http://localhost/${credential.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -460,11 +460,11 @@ describe('feePayer', () => {
     requests = []
   })
 
-  describe('POST /fee-payer', () => {
+  describe('POST /', () => {
     test('behavior: eth_signRawTransaction', async () => {
       const client = getClient({
         account: userAccount,
-        transport: withFeePayer(transport, http(`${server.url}/fee-payer`)),
+        transport: withFeePayer(transport, http(server.url)),
       })
 
       await sendTransaction(client, {
@@ -489,7 +489,7 @@ describe('feePayer', () => {
     test('behavior: eth_sendRawTransaction', async () => {
       const client = getClient({
         account: userAccount,
-        transport: withFeePayer(transport, http(`${server.url}/fee-payer`), {
+        transport: withFeePayer(transport, http(server.url), {
           policy: 'sign-and-broadcast',
         }),
       })
@@ -516,7 +516,7 @@ describe('feePayer', () => {
     test('behavior: eth_sendRawTransactionSync', async () => {
       const client = getClient({
         account: userAccount,
-        transport: withFeePayer(transport, http(`${server.url}/fee-payer`), {
+        transport: withFeePayer(transport, http(server.url), {
           policy: 'sign-and-broadcast',
         }),
       })
@@ -542,7 +542,7 @@ describe('feePayer', () => {
 
     test('behavior: unsupported method', async () => {
       await expect(
-        fetch(`${server.url}/fee-payer`, {
+        fetch(server.url, {
           method: 'POST',
           body: JSON.stringify({
             jsonrpc: '2.0',

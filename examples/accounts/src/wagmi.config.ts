@@ -13,7 +13,7 @@ export const config = createConfig({
   },
   connectors: [
     webAuthn({
-      keyManager: KeyManager.http(),
+      keyManager: KeyManager.http('/key'),
     }),
   ],
   chains: [tempoAndantino({ feeToken: alphaUsd })],
