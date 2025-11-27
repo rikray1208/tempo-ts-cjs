@@ -74,6 +74,211 @@ describe('compose', () => {
     }
   })
 
+  test('behavior: headers', async () => {
+    const handler1 = Handler.from()
+    handler1.get('/test', () => new Response('test'))
+    const handler2 = Handler.from()
+    handler2.get('/test2', () => new Response('test2'))
+
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    })
+
+    const handler = Handler.compose([handler1, handler2], {
+      headers,
+    })
+
+    {
+      const response = await handler.fetch(new Request('http://localhost/test'))
+      expect(response.status).toBe(200)
+      expect(await response.text()).toBe('test')
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+      expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+        'POST, OPTIONS',
+      )
+      expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
+        'Content-Type, Authorization',
+      )
+    }
+
+    {
+      const response = await handler.fetch(
+        new Request('http://localhost/test2'),
+      )
+      expect(response.status).toBe(200)
+      expect(await response.text()).toBe('test2')
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    }
+  })
+
+  test('behavior: headers + path', async () => {
+    const handler1 = Handler.from()
+    handler1.get('/test', () => new Response('test'))
+    const handler2 = Handler.from()
+    handler2.get('/test2', () => new Response('test2'))
+
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    })
+
+    const handler = Handler.compose([handler1, handler2], {
+      headers,
+      path: '/api',
+    })
+
+    {
+      const response = await handler.fetch(
+        new Request('http://localhost/api/test'),
+      )
+      expect(response.status).toBe(200)
+      expect(await response.text()).toBe('test')
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+      expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+        'POST, OPTIONS',
+      )
+    }
+
+    {
+      const response = await handler.fetch(
+        new Request('http://localhost/api/test2'),
+      )
+      expect(response.status).toBe(200)
+      expect(await response.text()).toBe('test2')
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    }
+  })
+
+  test('behavior: headers + OPTIONS', async () => {
+    const handler1 = Handler.from()
+    handler1.get('/test', () => new Response('test'))
+
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    })
+
+    const handler = Handler.compose([handler1], {
+      headers,
+    })
+
+    const response = await handler.fetch(
+      new Request('http://localhost/test', {
+        method: 'OPTIONS',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'POST, OPTIONS',
+    )
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
+      'Content-Type, Authorization',
+    )
+    expect(response.headers.get('Access-Control-Max-Age')).toBe('86400')
+  })
+
+  test('behavior: headers + 404', async () => {
+    const handler1 = Handler.from()
+    handler1.get('/test', () => new Response('test'))
+
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+    })
+
+    const handler = Handler.compose([handler1], {
+      headers,
+    })
+
+    const response = await handler.fetch(
+      new Request('http://localhost/nonexistent'),
+    )
+
+    expect(response.status).toBe(404)
+    expect(await response.text()).toBe('Not Found')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+  })
+
+  test('behavior: headers propagation from child handlers', async () => {
+    const handler1 = Handler.from()
+    handler1.get('/test', () => {
+      const response = new Response('test')
+      response.headers.set('X-Custom-Header', 'custom-value')
+      return response
+    })
+
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+    })
+
+    const handler = Handler.compose([handler1], {
+      headers,
+    })
+
+    const response = await handler.fetch(new Request('http://localhost/test'))
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('test')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('X-Custom-Header')).toBe('custom-value')
+  })
+
+  test('behavior: headers with child handler headers', async () => {
+    const childHeaders = new Headers({
+      'X-Child-Header': 'child-value',
+    })
+    const handler1 = Handler.from({ headers: childHeaders })
+    handler1.get('/test', () => new Response('test'))
+
+    const parentHeaders = new Headers({
+      'Access-Control-Allow-Origin': '*',
+      'X-Parent-Header': 'parent-value',
+    })
+
+    const handler = Handler.compose([handler1], {
+      headers: parentHeaders,
+    })
+
+    const response = await handler.fetch(new Request('http://localhost/test'))
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('test')
+    // Both parent and child headers should be present
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('X-Parent-Header')).toBe('parent-value')
+    expect(response.headers.get('X-Child-Header')).toBe('child-value')
+  })
+
+  test('behavior: headers as object', async () => {
+    const handler1 = Handler.from()
+    handler1.get('/test', () => new Response('test'))
+
+    const handler = Handler.compose([handler1], {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    })
+
+    const response = await handler.fetch(new Request('http://localhost/test'))
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('test')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'POST, OPTIONS',
+    )
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
+      'Content-Type, Authorization',
+    )
+  })
+
   describe('integration', () => {
     const handler1 = Handler.from()
     handler1.get('/foo', () => new Response('foo'))
@@ -254,6 +459,117 @@ describe('from', () => {
 
     const data = await response.json()
     expect(data).toEqual({ message: 'hello from listener' })
+  })
+
+  test('behavior: headers', async () => {
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    })
+
+    const handler = Handler.from({ headers })
+    handler.get('/test', () => new Response('test'))
+
+    const response = await handler.fetch(new Request('http://localhost/test'))
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('test')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'POST, OPTIONS',
+    )
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
+      'Content-Type, Authorization',
+    )
+  })
+
+  test('behavior: headers + OPTIONS', async () => {
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    })
+
+    const handler = Handler.from({ headers })
+    handler.get('/test', () => new Response('test'))
+
+    const response = await handler.fetch(
+      new Request('http://localhost/test', {
+        method: 'OPTIONS',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'POST, OPTIONS',
+    )
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
+      'Content-Type, Authorization',
+    )
+    expect(response.headers.get('Access-Control-Max-Age')).toBe('86400')
+  })
+
+  test('behavior: headers + 404', async () => {
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+    })
+
+    const handler = Handler.from({ headers })
+    handler.get('/test', () => new Response('test'))
+
+    const response = await handler.fetch(
+      new Request('http://localhost/nonexistent'),
+    )
+
+    expect(response.status).toBe(404)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+  })
+
+  test('behavior: headers propagation from routes', async () => {
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': '*',
+    })
+
+    const handler = Handler.from({ headers })
+    handler.get('/test', () => {
+      const response = new Response('test')
+      response.headers.set('X-Custom-Header', 'custom-value')
+      response.headers.set('Content-Type', 'text/plain')
+      return response
+    })
+
+    const response = await handler.fetch(new Request('http://localhost/test'))
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('test')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('X-Custom-Header')).toBe('custom-value')
+    expect(response.headers.get('Content-Type')).toBe('text/plain')
+  })
+
+  test('behavior: headers as object', async () => {
+    const handler = Handler.from({
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    })
+    handler.get('/test', () => new Response('test'))
+
+    const response = await handler.fetch(new Request('http://localhost/test'))
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('test')
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'POST, OPTIONS',
+    )
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
+      'Content-Type, Authorization',
+    )
   })
 
   describe('integration', () => {

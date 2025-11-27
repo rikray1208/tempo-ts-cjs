@@ -1,5 +1,6 @@
 import {
   createRouter,
+  type Middleware,
   type Router,
   type RouterOptions,
 } from '@remix-run/fetch-router'
@@ -27,6 +28,7 @@ export function compose(
   const path = options.path ?? '/'
 
   return from({
+    ...options,
     async defaultHandler(context) {
       const url = new URL(context.request.url)
       if (!url.pathname.startsWith(path))
@@ -44,7 +46,7 @@ export function compose(
 }
 
 export declare namespace compose {
-  export type Options = {
+  export type Options = from.Options & {
     /** The path to use for the handler. */
     path?: string | undefined
   }
@@ -57,7 +59,11 @@ export declare namespace compose {
  * @returns Handler instance
  */
 export function from(options: from.Options = {}): Handler {
-  const router = createRouter(options)
+  const router = createRouter({
+    ...options,
+    middleware: [headers(options.headers), preflight(options.headers)],
+  })
+
   return {
     ...router,
     listener: RequestListener.fromFetchHandler((request) => {
@@ -67,7 +73,10 @@ export function from(options: from.Options = {}): Handler {
 }
 
 export declare namespace from {
-  export type Options = RouterOptions
+  export type Options = RouterOptions & {
+    /** Headers to add to the response. */
+    headers?: Headers | Record<string, string> | undefined
+  }
 }
 
 /**
@@ -193,7 +202,7 @@ export function keyManager(options: keyManager.Options) {
     return undefined
   })()
 
-  const router = from()
+  const router = from(options)
 
   // Get challenge for WebAuthn credential creation
   router.get(`${path}/challenge`, async () => {
@@ -295,7 +304,7 @@ export function keyManager(options: keyManager.Options) {
 }
 
 export declare namespace keyManager {
-  export type Options = {
+  export type Options = from.Options & {
     /** The KV store to use for key management. */
     kv: Kv.Kv
     /** The path to use for the handler. */
@@ -607,7 +616,7 @@ export function feePayer(options: feePayer.Options) {
 }
 
 export declare namespace feePayer {
-  export type Options = {
+  export type Options = from.Options & {
     /** Account to use as the fee payer. */
     account: LocalAccount
     /** Function to call before handling the request. */
@@ -615,15 +624,47 @@ export declare namespace feePayer {
     /** Path to use for the handler. */
     path?: string | undefined
   } & OneOf<
-    | {
-        /** Client to use. */
-        client: Client
-      }
-    | {
-        /** Chain to use. */
-        chain: Chain
-        /** Transport to use. */
-        transport: Transport
-      }
-  >
+      | {
+          /** Client to use. */
+          client: Client
+        }
+      | {
+          /** Chain to use. */
+          chain: Chain
+          /** Transport to use. */
+          transport: Transport
+        }
+    >
+}
+
+/** @internal */
+function normalizeHeaders(headers?: Headers | Record<string, string>): Headers {
+  if (!headers) return new Headers()
+  if (headers instanceof Headers) return headers
+  return new Headers(headers)
+}
+
+/** @internal */
+function headers(headers?: Headers | Record<string, string>): Middleware {
+  const normalizedHeaders = normalizeHeaders(headers)
+  return async (_, next) => {
+    const response = await next()
+    const headers = new Headers(response.headers)
+    for (const [key, value] of normalizedHeaders.entries())
+      headers.set(key, value)
+    return new Response(response.body, {
+      headers,
+      status: response.status,
+      statusText: response.statusText,
+    })
+  }
+}
+
+/** @internal */
+function preflight(headers?: Headers | Record<string, string>): Middleware {
+  const normalizedHeaders = normalizeHeaders(headers)
+  return async (context) => {
+    if (context.request.method === 'OPTIONS')
+      return new Response(null, { headers: normalizedHeaders })
+  }
 }
