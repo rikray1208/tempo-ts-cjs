@@ -1,3 +1,4 @@
+export * as AuthorizationTempo from './AuthorizationTempo.js'
 export * as KeyAuthorization from './KeyAuthorization.js'
 export * as Order from './Order.js'
 export * as OrdersFilters from './OrdersFilters.js'

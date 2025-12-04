@@ -1,8 +1,8 @@
-import type * as Authorization from 'ox/Authorization'
 import type * as Errors from 'ox/Errors'
 import * as Hex from 'ox/Hex'
 import * as ox_TransactionRequest from 'ox/TransactionRequest'
 import type { Compute } from '../internal/types.js'
+import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
@@ -16,7 +16,13 @@ export type TransactionRequest<
   numberType = number,
   type extends string = string,
 > = Compute<
-  ox_TransactionRequest.TransactionRequest<bigintType, numberType, type> & {
+  Omit<
+    ox_TransactionRequest.TransactionRequest<bigintType, numberType, type>,
+    'authorizationList'
+  > & {
+    authorizationList?:
+      | AuthorizationTempo.ListSigned<bigintType, numberType>
+      | undefined
     calls?: readonly Call<bigintType>[] | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
@@ -31,8 +37,9 @@ export type TransactionRequest<
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string>,
-  'keyAuthorization'
+  'authorizationList' | 'keyAuthorization'
 > & {
+  authorizationList?: AuthorizationTempo.ListRpc | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
 }
@@ -81,8 +88,15 @@ export type Rpc = Omit<
  * @returns An RPC request.
  */
 export function toRpc(request: TransactionRequest): Rpc {
-  const request_rpc = ox_TransactionRequest.toRpc(request) as Rpc
+  const request_rpc = ox_TransactionRequest.toRpc({
+    ...request,
+    authorizationList: undefined,
+  }) as Rpc
 
+  if (request.authorizationList)
+    request_rpc.authorizationList = AuthorizationTempo.toRpcList(
+      request.authorizationList,
+    )
   if (request.calls)
     request_rpc.calls = request.calls.map((call) => ({
       to: call.to ?? '0x',
@@ -127,7 +141,7 @@ export function toRpc(request: TransactionRequest): Rpc {
 
 export declare namespace toRpc {
   export type ErrorType =
-    | Authorization.toRpcList.ErrorType
+    | AuthorizationTempo.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }
