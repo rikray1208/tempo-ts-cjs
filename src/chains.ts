@@ -30,6 +30,12 @@ export const tempoLocal = /*#__PURE__*/ Chain.define({
 
 export const tempoTestnet = /*#__PURE__*/ Chain.define({
   id: 42429,
+  blockExplorers: {
+    default: {
+      name: 'Tempo Explorer',
+      url: 'https://explore.tempo.xyz',
+    },
+  },
   name: 'Tempo Testnet',
   nativeCurrency: {
     name: 'USD',
