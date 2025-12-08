@@ -1,7 +1,7 @@
 import * as Chain from './viem/Chain.js'
 
 export const tempoDevnet = /*#__PURE__*/ Chain.define({
-  id: 42429,
+  id: 1337,
   name: 'Tempo Devnet',
   nativeCurrency: {
     name: 'USD',
