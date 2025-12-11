@@ -15,6 +15,8 @@ beforeAll(async () => {
   await Actions.faucet.fundSync(client, {
     account: accounts[0].address,
   })
+  // TODO: remove once testnet load balancing is fixed.
+  await new Promise((resolve) => setTimeout(resolve, 2000))
 })
 
 beforeEach(async () => {

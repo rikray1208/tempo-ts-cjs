@@ -1,3 +1,4 @@
+import { setTimeout } from 'node:timers/promises'
 import { afterAll, beforeAll } from 'vitest'
 import { Actions } from '../../src/viem/index.js'
 import { nodeEnv, rpcUrl } from '../config.js'
@@ -8,6 +9,8 @@ beforeAll(async () => {
   await Actions.faucet.fundSync(client, {
     account: accounts[0].address,
   })
+  // TODO: remove once testnet load balancing is fixed.
+  await setTimeout(2000)
 })
 
 afterAll(async () => {
