@@ -1,4 +1,15 @@
-export * as Tick from '../ox/Tick.js'
+// Export types required for inference.
+export type {
+  /** @deprecated */
+  KeyAuthorization as z_KeyAuthorization,
+  /** @deprecated */
+  SignatureEnvelope as z_SignatureEnvelope,
+  /** @deprecated */
+  TokenId as z_TokenId,
+  /** @deprecated */
+  TxEnvelopeTempo as z_TxEnvelopeTempo,
+} from 'ox/tempo'
+export { Tick } from 'ox/tempo'
 export * as Abis from './Abis.js'
 export * as Account from './Account.js'
 export * as Actions from './Actions/index.js'
