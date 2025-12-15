@@ -93,7 +93,11 @@ export function formatTransactionRequest<chain extends Chain | undefined>(
   if (action)
     request.calls = request.calls ?? [
       {
-        to: r.to || '0x0000000000000000000000000000000000000000',
+        to:
+          r.to ||
+          (!r.data || r.data === '0x'
+            ? '0x0000000000000000000000000000000000000000'
+            : undefined),
         value: r.value,
         data: r.data,
       },
