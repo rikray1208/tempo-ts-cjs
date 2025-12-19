@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"build": "zile --project ./tsconfig.build.json",
+        "build": "tsup",
 		"changeset:prepublish": "pnpm build && node ./scripts/prepublish.ts",
 		"changeset:publish": "pnpm changeset:prepublish && changeset publish",
 		"changeset:version": "changeset version && pnpm check",
@@ -114,34 +114,59 @@
 		"CHANGELOG.md"
 	],
 	"sideEffects": false,
-	"main": "./dist/index.js",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/types/index.d.ts",
 	"exports": {
-		".": {
-			"src": "./src/index.ts",
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./chains": {
-			"src": "./src/chains.ts",
-			"types": "./dist/chains.d.ts",
-			"default": "./dist/chains.js"
-		},
-		"./server": {
-			"src": "./src/server/index.ts",
-			"types": "./dist/server/index.d.ts",
-			"default": "./dist/server/index.js"
-		},
-		"./viem": {
-			"src": "./src/viem/index.ts",
-			"types": "./dist/viem/index.d.ts",
-			"default": "./dist/viem/index.js"
-		},
-		"./wagmi": {
-			"src": "./src/wagmi/index.ts",
-			"types": "./dist/wagmi/index.d.ts",
-			"default": "./dist/wagmi/index.js"
-		}
-	}
+      ".": {
+        "import": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/esm/index.js"
+        },
+        "require": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/cjs/index.cjs"
+        }
+      },
+      "./chains": {
+        "import": {
+          "types": "./dist/types/chains.d.ts",
+          "default": "./dist/esm/chains.js"
+        },
+        "require": {
+          "types": "./dist/types/chains.d.ts",
+          "default": "./dist/cjs/chains.cjs"
+        }
+      },
+      "./server": {
+        "import": {
+          "types": "./dist/types/server/index.d.ts",
+          "default": "./dist/esm/server/index.js"
+        },
+        "require": {
+          "types": "./dist/types/server/index.d.ts",
+          "default": "./dist/cjs/server/index.cjs"
+        }
+      },
+      "./viem": {
+        "import": {
+          "types": "./dist/types/viem/index.d.ts",
+          "default": "./dist/esm/viem/index.js"
+        },
+        "require": {
+          "types": "./dist/types/viem/index.d.ts",
+          "default": "./dist/cjs/viem/index.cjs"
+        }
+      },
+      "./wagmi": {
+        "import": {
+          "types": "./dist/types/wagmi/index.d.ts",
+          "default": "./dist/esm/wagmi/index.js"
+        },
+        "require": {
+          "types": "./dist/types/wagmi/index.d.ts",
+          "default": "./dist/cjs/wagmi/index.cjs"
+        }
+      }
+    }
 }
