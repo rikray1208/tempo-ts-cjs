@@ -9,7 +9,6 @@
 		"check:types:examples": "pnpm --filter *-example check:types",
 		"gen:abis": "node scripts/gen:abis.ts && pnpm check",
 		"playground": "pnpm preconstruct && pnpm --filter playground dev",
-		"postinstall": "git submodule update --init --recursive",
 		"preconstruct": "zile dev --project ./tsconfig.build.json && pnpm check",
 		"submodules:pull": "git submodule foreach git pull origin main && pnpm gen:abis",
 		"test": "vitest"
@@ -63,14 +62,14 @@
 	"pnpm": {
 		"overrides": {
 			"ox": "~0.10.2",
-			"tempo.ts": "workspace:*",
+			"@rikray1208/tempo-ts-cjs": "workspace:*",
 			"viem": "catalog:default"
 		}
 	},
 	"[!start-pkg]": "",
 	"name": "@rikray1208/tempo-ts-cjs",
 	"type": "module",
-	"version": "0.11.1",
+	"version": "0.11.2",
 	"dependencies": {
 		"@remix-run/fetch-router": "~0.12.0",
 		"idb-keyval": "^6.2.2",
@@ -105,7 +104,8 @@
 		}
 	},
 	"repository": {
-		"url": "https://github.com/tempoxyz/tempo-ts"
+		"type": "git",
+		"url": "git+https://github.com/rikray1208/tempo-ts-cjs.git"
 	},
 	"license": "MIT",
 	"files": [
@@ -114,58 +114,47 @@
 		"CHANGELOG.md"
 	],
 	"sideEffects": false,
-    "main": "./dist/cjs/index.cjs",
-    "module": "./dist/esm/index.js",
-    "types": "./dist/types/index.d.ts",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
 	"exports": {
       ".": {
         "import": {
-          "types": "./dist/types/index.d.ts",
-          "default": "./dist/esm/index.js"
+          "default": "./dist/index.js"
         },
         "require": {
-          "types": "./dist/types/index.d.ts",
-          "default": "./dist/cjs/index.cjs"
+          "default": "./dist/index.cjs"
         }
       },
       "./chains": {
         "import": {
-          "types": "./dist/types/chains.d.ts",
-          "default": "./dist/esm/chains.js"
+          "default": "./dist/chains.js"
         },
         "require": {
-          "types": "./dist/types/chains.d.ts",
-          "default": "./dist/cjs/chains.cjs"
+          "default": "./dist/chains.cjs"
         }
       },
       "./server": {
         "import": {
-          "types": "./dist/types/server/index.d.ts",
-          "default": "./dist/esm/server/index.js"
+          "default": "./dist/server/index.js"
         },
         "require": {
-          "types": "./dist/types/server/index.d.ts",
-          "default": "./dist/cjs/server/index.cjs"
+          "default": "./dist/server/index.cjs"
         }
       },
       "./viem": {
         "import": {
-          "types": "./dist/types/viem/index.d.ts",
-          "default": "./dist/esm/viem/index.js"
+          "default": "./dist/viem/index.js"
         },
         "require": {
-          "types": "./dist/types/viem/index.d.ts",
-          "default": "./dist/cjs/viem/index.cjs"
+          "default": "./dist/viem/index.cjs"
         }
       },
       "./wagmi": {
         "import": {
-          "types": "./dist/types/wagmi/index.d.ts",
-          "default": "./dist/esm/wagmi/index.js"
+          "default": "./dist/wagmi/index.js"
         },
         "require": {
-          "types": "./dist/types/wagmi/index.d.ts",
-          "default": "./dist/cjs/wagmi/index.cjs"
+          "default": "./dist/wagmi/index.cjs"
         }
       }
     }
